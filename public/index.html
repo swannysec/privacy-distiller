@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self';
+               script-src 'self' 'unsafe-inline';
+               connect-src 'self' https://openrouter.ai https://api.openrouter.ai http://localhost:11434 http://localhost:1234;
+               style-src 'self' 'unsafe-inline';"
+    />
+    <meta name="description" content="Analyze privacy policies and terms of service with AI to understand privacy risks in plain language" />
+    <title>Privacy Policy Analyzer</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
