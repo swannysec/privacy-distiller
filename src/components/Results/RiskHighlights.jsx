@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Card } from '../Common';
-import { sanitizeHTML } from '../../utils/sanitization';
+import { sanitizeHtml } from '../../utils/sanitization';
 
 /**
  * Severity levels with colors and icons
@@ -147,8 +147,8 @@ export function RiskHighlights({ risks, documentMetadata, className = '' }) {
         {filteredRisks.map((risk, index) => {
           const config = SEVERITY_CONFIG[risk.severity];
           const isExpanded = expandedRisks.has(index);
-          const sanitizedDescription = sanitizeHTML(risk.description);
-          const sanitizedExplanation = sanitizeHTML(risk.explanation);
+          const sanitizedDescription = sanitizeHtml(risk.description);
+          const sanitizedExplanation = sanitizeHtml(risk.explanation);
 
           return (
             <div

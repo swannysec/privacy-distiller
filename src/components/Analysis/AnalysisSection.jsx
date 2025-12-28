@@ -13,7 +13,7 @@ import { ANALYSIS_STATUS } from '../../utils/constants';
  * @returns {JSX.Element}
  */
 export function AnalysisSection({ onNewAnalysis, onExportResults, className = '' }) {
-  const { state, resetAnalysis } = useAnalysis();
+  const { status, result, error, progress, currentStep, resetAnalysis } = useAnalysis();
 
   /**
    * Handle retry
@@ -26,11 +26,11 @@ export function AnalysisSection({ onNewAnalysis, onExportResults, className = ''
   };
 
   // Show results if analysis completed successfully
-  if (state.status === ANALYSIS_STATUS.COMPLETED && state.result) {
+  if (status === ANALYSIS_STATUS.COMPLETED && result) {
     return (
       <div className={`analysis-section ${className}`}>
         <ResultsDisplay
-          result={state.result}
+          result={result}
           onNewAnalysis={handleRetry}
           onExport={onExportResults}
         />
@@ -39,20 +39,20 @@ export function AnalysisSection({ onNewAnalysis, onExportResults, className = ''
   }
 
   // Show progress indicator for active analysis
-  if (state.status === ANALYSIS_STATUS.EXTRACTING || state.status === ANALYSIS_STATUS.ANALYZING) {
+  if (status === ANALYSIS_STATUS.EXTRACTING || status === ANALYSIS_STATUS.ANALYZING) {
     return (
       <div className={`analysis-section ${className}`}>
         <Card className="analysis-section__progress-card">
           <ProgressIndicator
-            status={state.status}
-            progress={state.progress}
-            currentStep={state.currentStep}
+            status={status}
+            progress={progress}
+            currentStep={currentStep}
           />
 
           <div className="analysis-section__info">
             <h3 className="analysis-section__info-title">What's happening?</h3>
             <div className="analysis-section__info-content">
-              {state.status === ANALYSIS_STATUS.EXTRACTING && (
+              {status === ANALYSIS_STATUS.EXTRACTING && (
                 <>
                   <p>
                     Extracting text content from your document. This may take a moment
@@ -65,7 +65,7 @@ export function AnalysisSection({ onNewAnalysis, onExportResults, className = ''
                 </>
               )}
 
-              {state.status === ANALYSIS_STATUS.ANALYZING && (
+              {status === ANALYSIS_STATUS.ANALYZING && (
                 <>
                   <p>
                     Analyzing the privacy policy with AI. This involves multiple steps
@@ -92,7 +92,7 @@ export function AnalysisSection({ onNewAnalysis, onExportResults, className = ''
   }
 
   // Show error state
-  if (state.status === ANALYSIS_STATUS.FAILED) {
+  if (status === ANALYSIS_STATUS.FAILED) {
     return (
       <div className={`analysis-section ${className}`}>
         <Card className="analysis-section__error-card">
@@ -106,7 +106,7 @@ export function AnalysisSection({ onNewAnalysis, onExportResults, className = ''
             </h3>
 
             <p className="analysis-section__error-message">
-              {state.error || 'An unexpected error occurred during analysis.'}
+              {error || 'An unexpected error occurred during analysis.'}
             </p>
 
             {/* Common error scenarios */}

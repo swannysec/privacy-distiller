@@ -28,3 +28,8 @@ coverage
 
 # Build
 build
+
+# ConPort and Serena context directories
+.serena
+context_portal
+nul

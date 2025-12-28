@@ -169,11 +169,47 @@ Build a simple web application hosted on GitHub Pages that uses LLMs (local or O
 - **`testing-suite:test-engineer`** - Test automation and quality assurance
 - **`testing-suite:generate-tests`** - Generate comprehensive test suites
 
+**CRITICAL TEST DEVELOPMENT RULES**:
+
+**BEFORE Writing Any Tests**:
+1. **ALWAYS inspect the actual implementation first** using Serena:
+   ```
+   mcp__plugin_serena_serena__get_symbols_overview(relative_path, depth=1)
+   mcp__plugin_serena_serena__find_symbol(name_path_pattern, include_body=true)
+   ```
+2. **Verify the actual API** - method names, signatures, return types, static vs instance
+3. **DO NOT write tests for imagined or ideal APIs** - test what actually exists
+4. **DO NOT assume method behavior** - read the actual implementation
+
+**Test Structure Requirements**:
+1. **Match actual method signatures**: If class methods are static, call them as static (`ClassName.method()` not `instance.method()`)
+2. **Match actual return types**: If function returns `null`, test for `null` (not `{}` or `[]`)
+3. **Match actual validation structures**: Verify exact shape of return objects (e.g., `{valid, errors}` vs `{isValid, error}`)
+4. **Use correct imports**: Include all needed test utilities (`describe`, `it`, `expect`, `beforeEach`, etc.)
+
+**Common Pitfalls to Avoid**:
+- ❌ Testing for methods that don't exist in the codebase
+- ❌ Assuming instance methods when they're actually static
+- ❌ Wrong return type expectations (null vs empty object/array)
+- ❌ Using wrong property names in return objects
+- ❌ Testing ideal behavior instead of actual behavior
+- ❌ Missing test utility imports
+
+**Test Validation Process**:
+1. Write tests based on actual implementation
+2. Tests should fail if implementation changes unexpectedly
+3. Tests should accurately document what the code actually does
+4. Log any discovered API gaps or missing features in ConPort for future implementation
+5. Use Serena memories to document test patterns and implementation quirks
+
 **Process**:
-1. Write tests for LLM prompt processing
-2. Test PDF extraction with various document formats
-3. Test privacy risk detection accuracy
-4. Log test coverage decisions in ConPort
+1. Use Serena to inspect implementation before writing tests
+2. Write tests that match actual API and behavior
+3. Test LLM prompt processing with actual method signatures
+4. Test PDF extraction with various document formats
+5. Test privacy risk detection accuracy
+6. Log test coverage decisions and any API gaps discovered in ConPort
+7. Document test patterns in Serena memories
 
 ### Phase 8: Performance Optimization
 

@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Card } from '../Common';
-import { sanitizeHTML } from '../../utils/sanitization';
+import { sanitizeHtml } from '../../utils/sanitization';
 
 /**
  * KeyTermsGlossary - Component for displaying and searching key terms
@@ -153,7 +153,7 @@ export function KeyTermsGlossary({ keyTerms, className = '' }) {
               <div className="key-terms-glossary__terms" role="list">
                 {terms.map((term) => {
                   const isExpanded = expandedTerms.has(term.originalIndex);
-                  const sanitizedDefinition = sanitizeHTML(term.definition);
+                  const sanitizedDefinition = sanitizeHtml(term.definition);
 
                   return (
                     <div
