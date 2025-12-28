@@ -25,7 +25,7 @@ import "./globals.css";
  */
 function AppContent() {
   const { config, validateConfig } = useLLMConfig();
-  const { state } = useAnalysis();
+  const { status, result, error, progress, currentStep } = useAnalysis();
   const { startAnalysis } = useAnalysisOrchestrator();
 
   const [showConfig, setShowConfig] = useState(false);
@@ -80,9 +80,9 @@ function AppContent() {
   }, []);
 
   const isAnalyzing =
-    state.status === ANALYSIS_STATUS.EXTRACTING ||
-    state.status === ANALYSIS_STATUS.ANALYZING;
-  const hasResults = state.status === ANALYSIS_STATUS.COMPLETED && state.result;
+    status === ANALYSIS_STATUS.EXTRACTING ||
+    status === ANALYSIS_STATUS.ANALYZING;
+  const hasResults = status === ANALYSIS_STATUS.COMPLETED && result;
   const showInput = !isAnalyzing && !hasResults;
 
   return (

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Card } from '../Common';
-import { sanitizeHTML } from '../../utils/sanitization';
+import { sanitizeHtml } from '../../utils/sanitization';
 
 /**
  * @typedef {'brief' | 'detailed' | 'full'} SummaryLevel
@@ -33,7 +33,7 @@ export function SummaryView({ summary, className = '' }) {
   };
 
   const content = getCurrentContent();
-  const sanitizedContent = sanitizeHTML(content);
+  const sanitizedContent = sanitizeHtml(content);
 
   return (
     <Card

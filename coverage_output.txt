@@ -1,0 +1,691 @@
+
+> policy-analyzer@0.1.0 test
+> vitest --run --coverage
+
+
+[1m[46m RUN [49m[22m [36mv4.0.16 [39m[90mC:/Users/sabre/zed/policy-analyzer[39m
+      [2mCoverage enabled with [22m[33mv8[39m
+
+ [31m❯[39m src/services/llm/OpenRouterProvider.test.js [2m([22m[2m18 tests[22m[2m | [22m[31m17 failed[39m[2m)[22m[32m 25[2mms[22m[39m
+[31m       [31m×[31m should initialize with valid config[39m[32m 13[2mms[22m[39m
+       [32m✓[39m should store configuration[32m 0[2mms[22m[39m
+[31m       [31m×[31m should return true when configured[39m[32m 1[2mms[22m[39m
+[31m       [31m×[31m should return false without API key[39m[32m 0[2mms[22m[39m
+[31m       [31m×[31m should return false without model[39m[32m 0[2mms[22m[39m
+[31m       [31m×[31m should validate correct config[39m[32m 1[2mms[22m[39m
+[31m       [31m×[31m should detect missing API key[39m[32m 0[2mms[22m[39m
+[31m       [31m×[31m should detect missing model[39m[32m 1[2mms[22m[39m
+[31m       [31m×[31m should successfully analyze policy[39m[32m 1[2mms[22m[39m
+[31m       [31m×[31m should make correct API request[39m[32m 0[2mms[22m[39m
+[31m       [31m×[31m should include policy text in request[39m[32m 1[2mms[22m[39m
+[31m       [31m×[31m should handle API errors[39m[32m 0[2mms[22m[39m
+[31m       [31m×[31m should handle network errors[39m[32m 0[2mms[22m[39m
+[31m       [31m×[31m should handle malformed JSON responses[39m[32m 0[2mms[22m[39m
+[31m       [31m×[31m should handle empty policy text[39m[32m 1[2mms[22m[39m
+[31m       [31m×[31m should handle rate limiting[39m[32m 0[2mms[22m[39m
+[31m       [31m×[31m should return available models[39m[32m 1[2mms[22m[39m
+[31m       [31m×[31m should handle errors when fetching models[39m[32m 1[2mms[22m[39m
+ [31m❯[39m src/services/llm/OllamaProvider.test.js [2m([22m[2m14 tests[22m[2m | [22m[31m14 failed[39m[2m)[22m[32m 28[2mms[22m[39m
+[31m       [31m×[31m should initialize with valid config[39m[32m 13[2mms[22m[39m
+[31m       [31m×[31m should use default baseUrl if not provided[39m[32m 1[2mms[22m[39m
+[31m       [31m×[31m should return true when configured[39m[32m 1[2mms[22m[39m
+[31m       [31m×[31m should return false without model[39m[32m 1[2mms[22m[39m
+[31m       [31m×[31m should validate correct config[39m[32m 1[2mms[22m[39m
+[31m       [31m×[31m should detect missing model[39m[32m 1[2mms[22m[39m
+[31m       [31m×[31m should detect invalid baseUrl[39m[32m 1[2mms[22m[39m
+[31m       [31m×[31m should successfully analyze policy[39m[32m 1[2mms[22m[39m
+[31m       [31m×[31m should make correct API request[39m[32m 1[2mms[22m[39m
+[31m       [31m×[31m should handle connection errors[39m[32m 1[2mms[22m[39m
+[31m       [31m×[31m should handle empty policy text[39m[32m 1[2mms[22m[39m
+[31m       [31m×[31m should return available models[39m[32m 1[2mms[22m[39m
+[31m       [31m×[31m should check if Ollama is running[39m[32m 1[2mms[22m[39m
+[31m       [31m×[31m should return false if Ollama is not running[39m[32m 2[2mms[22m[39m
+ [31m❯[39m src/services/llm/LLMProviderFactory.test.js [2m([22m[2m11 tests[22m[2m | [22m[31m5 failed[39m[2m)[22m[32m 21[2mms[22m[39m
+       [32m✓[39m should create OpenRouter provider[32m 2[2mms[22m[39m
+       [32m✓[39m should create Ollama provider[32m 0[2mms[22m[39m
+       [32m✓[39m should create LM Studio provider[32m 0[2mms[22m[39m
+       [32m✓[39m should throw error for unknown provider[32m 2[2mms[22m[39m
+       [32m✓[39m should throw error for missing config[32m 1[2mms[22m[39m
+[31m       [31m×[31m should throw error for invalid config[39m[32m 9[2mms[22m[39m
+[31m       [31m×[31m should return list of supported providers[39m[32m 1[2mms[22m[39m
+[31m       [31m×[31m should return array[39m[32m 1[2mms[22m[39m
+[31m       [31m×[31m should return info for OpenRouter[39m[32m 0[2mms[22m[39m
+[31m       [31m×[31m should return info for Ollama[39m[32m 0[2mms[22m[39m
+       [32m✓[39m should throw error for unknown provider[32m 0[2mms[22m[39m
+ [32m✓[39m src/utils/sanitization.test.js [2m([22m[2m45 tests[22m[2m)[22m[32m 75[2mms[22m[39m
+ [31m❯[39m src/services/document/TextPreprocessor.test.js [2m([22m[2m22 tests[22m[2m | [22m[31m11 failed[39m[2m)[22m[32m 55[2mms[22m[39m
+       [32m✓[39m should clean basic text[32m 3[2mms[22m[39m
+       [32m✓[39m should remove excessive whitespace[32m 0[2mms[22m[39m
+       [32m✓[39m should normalize line breaks[32m 0[2mms[22m[39m
+       [32m✓[39m should remove special characters[32m 0[2mms[22m[39m
+       [32m✓[39m should preserve section structure[32m 0[2mms[22m[39m
+       [32m✓[39m should handle empty text[32m 0[2mms[22m[39m
+       [32m✓[39m should handle null/undefined[32m 0[2mms[22m[39m
+[31m       [31m×[31m should extract word count[39m[32m 9[2mms[22m[39m
+[31m       [31m×[31m should extract character count[39m[32m 1[2mms[22m[39m
+[31m       [31m×[31m should detect sections[39m[32m 0[2mms[22m[39m
+[31m       [31m×[31m should estimate reading time[39m[32m 1[2mms[22m[39m
+[31m       [31m×[31m should handle empty text[39m[32m 1[2mms[22m[39m
+[31m       [31m×[31m should split by numbered sections[39m[32m 0[2mms[22m[39m
+[31m       [31m×[31m should split by headers[39m[32m 0[2mms[22m[39m
+[31m       [31m×[31m should handle text without clear sections[39m[32m 0[2mms[22m[39m
+[31m       [31m×[31m should handle empty text[39m[32m 0[2mms[22m[39m
+[31m       [31m×[31m should remove common boilerplate phrases[39m[32m 31[2mms[22m[39m
+       [32m✓[39m should preserve important content[32m 0[2mms[22m[39m
+       [32m✓[39m should handle text without boilerplate[32m 0[2mms[22m[39m
+[31m       [31m×[31m should truncate long text[39m[32m 1[2mms[22m[39m
+       [32m✓[39m should not truncate short text[32m 0[2mms[22m[39m
+       [32m✓[39m should preserve whole words[32m 0[2mms[22m[39m
+ [31m❯[39m src/components/Layout/Main.test.jsx [2m([22m[2m55 tests[22m[2m | [22m[31m55 failed[39m[2m)[22m[32m 239[2mms[22m[39m
+[31m       [31m×[31m should render main element[39m[32m 30[2mms[22m[39m
+[31m       [31m×[31m should render main with correct class[39m[32m 3[2mms[22m[39m
+[31m       [31m×[31m should render children[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render multiple children[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render text children[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render without children[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should have role="main"[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should have aria-label for main content[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should be landmark for screen readers[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should allow focus on main element[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should have tabindex="-1" for skip links[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should have id for skip link target[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should accept children prop[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should accept className prop[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should merge className with default class[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should accept id prop[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should accept aria-label prop[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should accept style prop[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should accept data attributes[39m[32m 3[2mms[22m[39m
+[31m       [31m×[31m should spread additional props[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render React elements as children[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render arrays of children[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render fragments as children[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render null children gracefully[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render undefined children gracefully[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render false children gracefully[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render conditional children[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should handle empty children[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should apply main class[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should apply container class[39m[32m 3[2mms[22m[39m
+[31m       [31m×[31m should have default padding[39m[32m 29[2mms[22m[39m
+[31m       [31m×[31m should support custom className[39m[32m 6[2mms[22m[39m
+[31m       [31m×[31m should preserve existing classes when adding custom[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should use semantic main element[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should not have nested main elements[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should be a direct child of body in document structure[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render without crashing when no props provided[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should handle null as children prop[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should handle undefined as children prop[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should handle empty string as children[39m[32m 3[2mms[22m[39m
+[31m       [31m×[31m should handle number as children[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should handle zero as children[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should handle very long content[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should handle deeply nested children[39m[32m 53[2mms[22m[39m
+[31m       [31m×[31m should update children on re-render[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should maintain element reference across re-renders[39m[32m 3[2mms[22m[39m
+[31m       [31m×[31m should update className on re-render[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should work with DocumentInput component[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should work with AnalysisSection component[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should work with ResultsDisplay component[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should work with multiple components[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should not cause unnecessary re-renders[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should handle large number of children efficiently[39m[32m 4[2mms[22m[39m
+[31m       [31m×[31m should accept children of any valid React type[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should accept standard HTML attributes[39m[32m 2[2mms[22m[39m
+ [31m❯[39m src/components/Layout/Header.test.jsx [2m([22m[2m59 tests[22m[2m | [22m[31m59 failed[39m[2m)[22m[32m 195[2mms[22m[39m
+[31m       [31m×[31m should render header element[39m[32m 26[2mms[22m[39m
+[31m       [31m×[31m should render header with correct class[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render logo/branding section[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render navigation section[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render mobile menu toggle[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render application title[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render logo image[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should have alt text for logo[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should link branding to home[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render tagline[39m[32m 3[2mms[22m[39m
+[31m       [31m×[31m should render desktop navigation[39m[32m 3[2mms[22m[39m
+[31m       [31m×[31m should render Configure link[39m[32m 3[2mms[22m[39m
+[31m       [31m×[31m should render About link[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render GitHub link[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should have correct href for Configure link[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should have correct href for About link[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should have correct href for GitHub link[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should open GitHub link in new tab[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should have rel="noopener noreferrer" for GitHub link[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render navigation as list[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render navigation items as list items[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render mobile menu toggle button[39m[32m 4[2mms[22m[39m
+[31m       [31m×[31m should have aria-label for mobile menu toggle[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should toggle mobile menu on click[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should update aria-expanded on toggle[39m[32m 3[2mms[22m[39m
+[31m       [31m×[31m should render hamburger icon when menu closed[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render close icon when menu open[39m[32m 3[2mms[22m[39m
+[31m       [31m×[31m should render mobile navigation[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render same links in mobile menu[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should close mobile menu when clicking link[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should close mobile menu on Escape key[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should have role="banner" for header[39m[32m 3[2mms[22m[39m
+[31m       [31m×[31m should have role="navigation" for nav[39m[32m 19[2mms[22m[39m
+[31m       [31m×[31m should have aria-label for main navigation[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should have accessible branding link text[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should have focus visible styles for links[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should have keyboard-accessible mobile toggle[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should maintain focus after mobile menu toggle[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should have descriptive alt text for logo[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should show desktop nav by default[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should hide mobile nav by default[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render mobile toggle button[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should handle rapid mobile menu toggling[39m[32m 7[2mms[22m[39m
+[31m       [31m×[31m should handle multiple mobile menu link clicks[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render without crashing when no props provided[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should handle missing logo gracefully[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should handle empty navigation links gracefully[39m[32m 28[2mms[22m[39m
+[31m       [31m×[31m should apply header class[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should apply branding class[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should apply nav class[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should apply mobile toggle class[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should apply active class to current page link[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render all navigation links[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should have correct number of navigation links[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render external link indicator for GitHub[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should not have external link indicator for internal links[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should initialize with mobile menu closed[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should maintain menu state across renders[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should handle menu state independently[39m[32m 2[2mms[22m[39m
+ [31m❯[39m src/components/Layout/Footer.test.jsx [2m([22m[2m70 tests[22m[2m | [22m[31m70 failed[39m[2m)[22m[33m 316[2mms[22m[39m
+[31m       [31m×[31m should render footer element[39m[32m 31[2mms[22m[39m
+[31m       [31m×[31m should render footer with correct class[39m[32m 3[2mms[22m[39m
+[31m       [31m×[31m should render disclaimer section[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render links section[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render copyright section[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render disclaimer heading[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render disclaimer text[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should mention not legal advice[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should mention consult professionals[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should have prominent disclaimer styling[39m[32m 1[2mms[22m[39m
+[31m       [31m×[31m should render privacy section heading[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should mention data not stored[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should mention client-side processing[39m[32m 3[2mms[22m[39m
+[31m       [31m×[31m should mention LLM API usage[39m[32m 3[2mms[22m[39m
+[31m       [31m×[31m should link to API provider privacy policies[39m[32m 3[2mms[22m[39m
+[31m       [31m×[31m should open external links in new tab[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should have rel="noopener noreferrer" for external links[39m[32m 3[2mms[22m[39m
+[31m       [31m×[31m should render how it works heading[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should list analysis steps[39m[32m 3[2mms[22m[39m
+[31m       [31m×[31m should render steps as ordered list[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should have correct number of steps[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render resources heading[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render GitHub repository link[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render Documentation link[39m[32m 4[2mms[22m[39m
+[31m       [31m×[31m should render Report Issues link[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should have correct href for GitHub link[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should have correct href for Documentation link[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should have correct href for Report Issues link[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should open resource links in new tab[39m[32m 3[2mms[22m[39m
+[31m       [31m×[31m should render resources as unordered list[39m[32m 12[2mms[22m[39m
+[31m       [31m×[31m should render copyright text[39m[32m 3[2mms[22m[39m
+[31m       [31m×[31m should include current year[39m[32m 3[2mms[22m[39m
+[31m       [31m×[31m should mention open source license[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should link to license[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should have correct href for license link[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should have role="contentinfo" for footer[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should have semantic heading hierarchy[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should have descriptive link text[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should have aria-label for external links[39m[32m 54[2mms[22m[39m
+[31m       [31m×[31m should have focus visible styles for links[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should have keyboard-accessible links[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render sections in correct order[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render links in grid layout[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render privacy section in links[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render how it works section in links[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render resources section in links[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render without crashing when no props provided[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should handle missing copyright year gracefully[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should handle missing links gracefully[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should handle long disclaimer text[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should apply footer class[39m[32m 73[2mms[22m[39m
+[31m       [31m×[31m should apply disclaimer class[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should apply links class[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should apply copyright class[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should apply section heading classes[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render all external links[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should have security attributes for external links[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should render at least 5 links total[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should not have any broken href attributes[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should have meaningful disclaimer text[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should have privacy information[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should have how it works information[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should have resource descriptions[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should have responsive classes[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should have mobile-friendly link spacing[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should stack sections vertically on mobile[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should include all required legal disclaimers[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should mention MIT License[39m[32m 3[2mms[22m[39m
+[31m       [31m×[31m should include current year in copyright[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should link to full license text[39m[32m 2[2mms[22m[39m
+ [32m✓[39m src/components/Common/Card.test.jsx [2m([22m[2m30 tests[22m[2m)[22m[33m 426[2mms[22m[39m
+ [32m✓[39m src/components/Common/LoadingSpinner.test.jsx [2m([22m[2m28 tests[22m[2m)[22m[33m 426[2mms[22m[39m
+ [31m❯[39m src/hooks/useDocumentExtractor.test.js [2m([22m[2m15 tests[22m[2m | [22m[31m15 failed[39m[2m)[22m[32m 124[2mms[22m[39m
+[31m       [31m×[31m should have initial state[39m[32m 41[2mms[22m[39m
+[31m       [31m×[31m should extract text from PDF file[39m[32m 1[2mms[22m[39m
+[31m       [31m×[31m should set extracting state during extraction[39m[32m 1[2mms[22m[39m
+[31m       [31m×[31m should handle extraction errors[39m[32m 1[2mms[22m[39m
+[31m       [31m×[31m should validate file before extraction[39m[32m 4[2mms[22m[39m
+[31m       [31m×[31m should handle null file[39m[32m 3[2mms[22m[39m
+[31m       [31m×[31m should extract text from URL[39m[32m 1[2mms[22m[39m
+[31m       [31m×[31m should set extracting state during fetch[39m[32m 1[2mms[22m[39m
+[31m       [31m×[31m should handle fetch errors[39m[32m 50[2mms[22m[39m
+[31m       [31m×[31m should validate URL before fetching[39m[32m 6[2mms[22m[39m
+[31m       [31m×[31m should handle empty URL[39m[32m 3[2mms[22m[39m
+[31m       [31m×[31m should reject javascript: URLs[39m[32m 7[2mms[22m[39m
+[31m       [31m×[31m should clear extracted text and errors[39m[32m 1[2mms[22m[39m
+[31m       [31m×[31m should handle sequential extractions[39m[32m 1[2mms[22m[39m
+[31m       [31m×[31m should clear previous error on new extraction[39m[32m 1[2mms[22m[39m
+ [32m✓[39m src/components/Common/Button.test.jsx [2m([22m[2m35 tests[22m[2m)[22m[33m 524[2mms[22m[39m
+ [32m✓[39m src/components/Common/ErrorBoundary.test.jsx [2m([22m[2m30 tests[22m[2m)[22m[33m 759[2mms[22m[39m
+ [32m✓[39m src/components/Common/Input.test.jsx [2m([22m[2m43 tests[22m[2m)[22m[33m 683[2mms[22m[39m
+ [32m✓[39m src/components/Analysis/ProgressIndicator.test.jsx [2m([22m[2m74 tests[22m[2m)[22m[33m 928[2mms[22m[39m
+ [31m❯[39m src/components/Analysis/AnalysisSection.test.jsx [2m([22m[2m26 tests[22m[2m | [22m[31m4 failed[39m[2m)[22m[33m 596[2mms[22m[39m
+       [32m✓[39m should render ResultsDisplay when analysis completed[32m 60[2mms[22m[39m
+[31m       [31m×[31m should pass result to ResultsDisplay[39m[32m 89[2mms[22m[39m
+[31m       [31m×[31m should pass onExport callback to ResultsDisplay[39m[32m 14[2mms[22m[39m
+       [32m✓[39m should handle retry from ResultsDisplay[32m 165[2mms[22m[39m
+       [32m✓[39m should apply custom className[32m 7[2mms[22m[39m
+       [32m✓[39m should render ProgressIndicator when extracting[32m 13[2mms[22m[39m
+[31m       [31m×[31m should pass status, progress, and currentStep to ProgressIndicator[39m[32m 19[2mms[22m[39m
+       [32m✓[39m should show extraction explanation[32m 11[2mms[22m[39m
+       [32m✓[39m should show wait time estimate[32m 8[2mms[22m[39m
+       [32m✓[39m should render ProgressIndicator when analyzing[32m 7[2mms[22m[39m
+[31m       [31m×[31m should show analyzing explanation[39m[32m 16[2mms[22m[39m
+       [32m✓[39m should render error card when failed[32m 12[2mms[22m[39m
+       [32m✓[39m should show error message[32m 8[2mms[22m[39m
+       [32m✓[39m should show default error message if no error provided[32m 8[2mms[22m[39m
+       [32m✓[39m should show error icon[32m 8[2mms[22m[39m
+       [32m✓[39m should show common issues help[32m 12[2mms[22m[39m
+       [32m✓[39m should render Try Again button[32m 18[2mms[22m[39m
+       [32m✓[39m should render Start Over button[32m 16[2mms[22m[39m
+       [32m✓[39m should handle Try Again click[32m 20[2mms[22m[39m
+       [32m✓[39m should handle Start Over click[32m 16[2mms[22m[39m
+       [32m✓[39m should render nothing when idle[32m 3[2mms[22m[39m
+       [32m✓[39m should not render ResultsDisplay if no result even when completed[32m 2[2mms[22m[39m
+       [32m✓[39m should handle missing onNewAnalysis callback[32m 15[2mms[22m[39m
+       [32m✓[39m should handle missing onExportResults callback[32m 7[2mms[22m[39m
+       [32m✓[39m should have aria-hidden on decorative icons[32m 19[2mms[22m[39m
+       [32m✓[39m should have proper button labels[32m 19[2mms[22m[39m
+ [32m✓[39m src/contexts/LLMConfigContext.test.jsx [2m([22m[2m22 tests[22m[2m)[22m[33m 863[2mms[22m[39m
+ [31m❯[39m src/components/Config/APIKeyInput.test.jsx [2m([22m[2m44 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 975[2mms[22m[39m
+       [32m✓[39m should render Input component[32m 108[2mms[22m[39m
+       [32m✓[39m should render as password field by default[32m 10[2mms[22m[39m
+       [32m✓[39m should render toggle visibility button[32m 48[2mms[22m[39m
+       [32m✓[39m should render toggle button with hide icon when visible[32m 29[2mms[22m[39m
+       [32m✓[39m should render toggle button with show icon when hidden[32m 12[2mms[22m[39m
+       [32m✓[39m should render Clear button when value exists[32m 8[2mms[22m[39m
+       [32m✓[39m should NOT render Clear button when value is empty[32m 7[2mms[22m[39m
+       [32m✓[39m should render help text[32m 9[2mms[22m[39m
+       [32m✓[39m should render security notice[32m 10[2mms[22m[39m
+       [32m✓[39m should apply custom className[32m 9[2mms[22m[39m
+       [32m✓[39m should show OpenRouter link when provider is openrouter[32m 226[2mms[22m[39m
+       [32m✓[39m should mention OpenRouter in help text[32m 17[2mms[22m[39m
+       [32m✓[39m should mention provider in help text for non-OpenRouter[32m 7[2mms[22m[39m
+       [32m✓[39m should not show OpenRouter link for other providers[32m 8[2mms[22m[39m
+       [32m✓[39m should toggle input type when visibility button clicked[32m 16[2mms[22m[39m
+       [32m✓[39m should update button label when toggling visibility[32m 10[2mms[22m[39m
+       [32m✓[39m should disable toggle button when input is disabled[32m 8[2mms[22m[39m
+       [32m✓[39m should disable toggle button when value is empty[32m 6[2mms[22m[39m
+       [32m✓[39m should call onChange when value changes[32m 44[2mms[22m[39m
+       [32m✓[39m should clear error when value changes[32m 19[2mms[22m[39m
+       [32m✓[39m should validate API key on blur[32m 14[2mms[22m[39m
+       [32m✓[39m should not validate when value is empty[32m 7[2mms[22m[39m
+       [32m✓[39m should show validation error when invalid[32m 14[2mms[22m[39m
+       [32m✓[39m should not show error when validation passes[32m 7[2mms[22m[39m
+       [32m✓[39m should call onChange with empty string when Clear clicked[32m 17[2mms[22m[39m
+       [32m✓[39m should clear error when Clear clicked[32m 17[2mms[22m[39m
+       [32m✓[39m should disable Clear button when input is disabled[32m 22[2mms[22m[39m
+       [32m✓[39m should disable input when disabled prop is true[32m 8[2mms[22m[39m
+       [32m✓[39m should disable all buttons when disabled prop is true[32m 38[2mms[22m[39m
+       [32m✓[39m should have required attribute[32m 5[2mms[22m[39m
+       [32m✓[39m should have autoComplete="off"[32m 8[2mms[22m[39m
+       [32m✓[39m should have spellCheck="false"[32m 12[2mms[22m[39m
+       [32m✓[39m should have placeholder text[32m 7[2mms[22m[39m
+       [32m✓[39m should have name attribute[32m 7[2mms[22m[39m
+       [32m✓[39m should have aria-describedby for help text[32m 7[2mms[22m[39m
+       [32m✓[39m should have aria-invalid when error exists[32m 31[2mms[22m[39m
+       [32m✓[39m should mark error as alert role[32m 16[2mms[22m[39m
+       [32m✓[39m should have aria-hidden on security icon[32m 5[2mms[22m[39m
+       [32m✓[39m should have proper button labels[32m 7[2mms[22m[39m
+       [32m✓[39m should have target="_blank" and rel="noopener noreferrer" on external links[32m 38[2mms[22m[39m
+       [32m✓[39m should handle undefined value[32m 24[2mms[22m[39m
+       [32m✓[39m should handle null value[32m 9[2mms[22m[39m
+       [32m✓[39m should handle validation errors as array[32m 12[2mms[22m[39m
+[31m       [31m×[31m should handle rapid visibility toggles[39m[32m 24[2mms[22m[39m
+ [32m✓[39m src/components/Input/URLInput.test.jsx [2m([22m[2m43 tests[22m[2m)[22m[33m 1031[2mms[22m[39m
+ [31m❯[39m src/components/Config/ProviderSelector.test.jsx [2m([22m[2m31 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[33m 1291[2mms[22m[39m
+       [32m✓[39m should render label[32m 61[2mms[22m[39m
+[31m       [31m×[31m should render all provider options[39m[32m 124[2mms[22m[39m
+       [33m[2m✓[22m[39m should render radio buttons for each provider [33m 407[2mms[22m[39m
+       [32m✓[39m should check the selected provider[32m 34[2mms[22m[39m
+       [32m✓[39m should not check other providers[32m 101[2mms[22m[39m
+       [32m✓[39m should apply custom className[32m 10[2mms[22m[39m
+       [32m✓[39m should show "API Key Required" badge for OpenRouter[32m 35[2mms[22m[39m
+       [32m✓[39m should show "Local" badge for Ollama[32m 12[2mms[22m[39m
+       [32m✓[39m should show "Local" badge for LM Studio[32m 24[2mms[22m[39m
+       [32m✓[39m should display base URLs for all providers[32m 21[2mms[22m[39m
+       [32m✓[39m should show OpenRouter info when OpenRouter is selected[32m 15[2mms[22m[39m
+       [32m✓[39m should show Ollama info when Ollama is selected[32m 14[2mms[22m[39m
+       [32m✓[39m should show LM Studio info when LM Studio is selected[32m 14[2mms[22m[39m
+       [32m✓[39m should have links with target="_blank" and rel="noopener noreferrer"[32m 18[2mms[22m[39m
+       [32m✓[39m should call onChange when provider is clicked[32m 42[2mms[22m[39m
+       [32m✓[39m should call onChange when different provider is selected[32m 32[2mms[22m[39m
+       [32m✓[39m should not call onChange when disabled[32m 28[2mms[22m[39m
+       [32m✓[39m should disable all radio buttons when disabled prop is true[32m 18[2mms[22m[39m
+[31m       [31m×[31m should allow selecting currently selected provider (no-op)[39m[32m 35[2mms[22m[39m
+       [32m✓[39m should apply selected class to selected provider option[32m 19[2mms[22m[39m
+       [32m✓[39m should apply disabled class when disabled[32m 9[2mms[22m[39m
+       [32m✓[39m should not apply disabled class when not disabled[32m 8[2mms[22m[39m
+       [32m✓[39m should have radiogroup role[32m 18[2mms[22m[39m
+       [32m✓[39m should have proper aria-labelledby[32m 10[2mms[22m[39m
+       [32m✓[39m should have proper label association[32m 9[2mms[22m[39m
+       [32m✓[39m should have unique IDs for each radio button[32m 80[2mms[22m[39m
+       [32m✓[39m should have proper name attribute for radio group[32m 21[2mms[22m[39m
+       [32m✓[39m should have labels associated with radio inputs[32m 32[2mms[22m[39m
+       [32m✓[39m should handle empty value gracefully[32m 15[2mms[22m[39m
+       [32m✓[39m should handle invalid value gracefully[32m 17[2mms[22m[39m
+       [32m✓[39m should render when onChange is not provided (edge case)[32m 6[2mms[22m[39m
+ [32m✓[39m src/components/Input/DocumentInput.test.jsx [2m([22m[2m28 tests[22m[2m)[22m[33m 887[2mms[22m[39m
+ [32m✓[39m src/contexts/AnalysisContext.test.jsx [2m([22m[2m21 tests[22m[2m)[22m[33m 1187[2mms[22m[39m
+ [31m❯[39m src/components/Config/ModelSelector.test.jsx [2m([22m[2m39 tests[22m[2m | [22m[31m5 failed[39m[2m)[22m[33m 1260[2mms[22m[39m
+       [32m✓[39m should render label[32m 127[2mms[22m[39m
+       [32m✓[39m should render select dropdown[32m 182[2mms[22m[39m
+       [32m✓[39m should render dropdown icon[32m 10[2mms[22m[39m
+       [32m✓[39m should apply custom className[32m 31[2mms[22m[39m
+[31m       [31m×[31m should render all OpenRouter models[39m[32m 194[2mms[22m[39m
+       [32m✓[39m should display description for selected model[32m 45[2mms[22m[39m
+       [32m✓[39m should show OpenRouter pricing note[32m 13[2mms[22m[39m
+       [32m✓[39m should have link with correct href[32m 14[2mms[22m[39m
+       [32m✓[39m should render all Ollama models[32m 124[2mms[22m[39m
+       [32m✓[39m should display description for selected Ollama model[32m 11[2mms[22m[39m
+       [32m✓[39m should show Ollama pull command note[32m 34[2mms[22m[39m
+       [32m✓[39m should show pull command for currently selected model[32m 7[2mms[22m[39m
+       [32m✓[39m should render LM Studio model option[32m 12[2mms[22m[39m
+       [32m✓[39m should display description for LM Studio model[32m 33[2mms[22m[39m
+       [32m✓[39m should show LM Studio note[32m 6[2mms[22m[39m
+       [32m✓[39m should call onChange when model is selected[32m 43[2mms[22m[39m
+       [32m✓[39m should update selected value in dropdown[32m 18[2mms[22m[39m
+       [32m✓[39m should update description when model changes[32m 21[2mms[22m[39m
+[31m       [31m×[31m should not call onChange when disabled[39m[32m 16[2mms[22m[39m
+       [32m✓[39m should disable select when disabled prop is true[32m 11[2mms[22m[39m
+[31m       [31m×[31m should still render models when disabled[39m[32m 25[2mms[22m[39m
+       [32m✓[39m should update available models when provider changes[32m 36[2mms[22m[39m
+       [32m✓[39m should update provider-specific notes when provider changes[32m 23[2mms[22m[39m
+       [32m✓[39m should show "No models available" for unknown provider[32m 12[2mms[22m[39m
+       [32m✓[39m should not show description when no models available[32m 5[2mms[22m[39m
+       [32m✓[39m should have proper id on select element[32m 14[2mms[22m[39m
+       [32m✓[39m should have label associated with select[32m 12[2mms[22m[39m
+       [32m✓[39m should have aria-describedby for description[32m 10[2mms[22m[39m
+       [32m✓[39m should have description with matching id[32m 16[2mms[22m[39m
+       [32m✓[39m should have aria-hidden on dropdown icon[32m 8[2mms[22m[39m
+       [32m✓[39m should have target="_blank" and rel="noopener noreferrer" on external links[32m 11[2mms[22m[39m
+       [32m✓[39m should have correct value attributes for OpenRouter models[32m 26[2mms[22m[39m
+       [32m✓[39m should have correct value attributes for Ollama models[32m 29[2mms[22m[39m
+       [32m✓[39m should have correct value attribute for LM Studio model[32m 10[2mms[22m[39m
+       [32m✓[39m should handle undefined value gracefully[32m 9[2mms[22m[39m
+[31m       [31m×[31m should handle empty string value[39m[32m 13[2mms[22m[39m
+[31m       [31m×[31m should handle invalid model value[39m[32m 11[2mms[22m[39m
+       [32m✓[39m should not show description for invalid model[32m 7[2mms[22m[39m
+       [32m✓[39m should handle rapid provider switches[32m 26[2mms[22m[39m
+ [31m❯[39m src/components/Results/SummaryView.test.jsx [2m([22m[2m36 tests[22m[2m | [22m[31m5 failed[39m[2m)[22m[33m 1493[2mms[22m[39m
+       [32m✓[39m should render with title and subtitle[32m 166[2mms[22m[39m
+       [33m[2m✓[22m[39m should render three level buttons [33m 443[2mms[22m[39m
+       [32m✓[39m should show brief content by default[32m 10[2mms[22m[39m
+       [32m✓[39m should show level icons[32m 11[2mms[22m[39m
+       [32m✓[39m should show level descriptions[32m 12[2mms[22m[39m
+       [32m✓[39m should show reading time estimate[32m 9[2mms[22m[39m
+       [32m✓[39m should show word count estimate[32m 9[2mms[22m[39m
+       [32m✓[39m should apply custom className[32m 17[2mms[22m[39m
+       [32m✓[39m should mark Brief as active by default[32m 30[2mms[22m[39m
+       [32m✓[39m should switch to detailed view when Detailed clicked[32m 42[2mms[22m[39m
+       [32m✓[39m should switch to full view when Full clicked[32m 29[2mms[22m[39m
+       [32m✓[39m should update active state when switching levels[32m 44[2mms[22m[39m
+       [32m✓[39m should update word count when switching levels[32m 51[2mms[22m[39m
+       [32m✓[39m should show "~1000+ words" for full level[32m 59[2mms[22m[39m
+       [32m✓[39m should calculate reading time for brief summary[32m 12[2mms[22m[39m
+       [32m✓[39m should calculate reading time for detailed summary[32m 103[2mms[22m[39m
+       [32m✓[39m should round up reading time[32m 25[2mms[22m[39m
+[31m       [31m×[31m should sanitize HTML content[39m[32m 33[2mms[22m[39m
+[31m       [31m×[31m should sanitize content when switching levels[39m[32m 38[2mms[22m[39m
+       [32m✓[39m should render sanitized HTML with dangerouslySetInnerHTML[32m 7[2mms[22m[39m
+       [32m✓[39m should have role="group" on level selector[32m 36[2mms[22m[39m
+       [32m✓[39m should have aria-pressed on level buttons[32m 53[2mms[22m[39m
+       [32m✓[39m should have aria-hidden on decorative icons[32m 12[2mms[22m[39m
+       [32m✓[39m should have type="button" on level buttons[32m 15[2mms[22m[39m
+       [32m✓[39m should apply active class to selected level button[32m 7[2mms[22m[39m
+       [32m✓[39m should update active class when switching levels[32m 21[2mms[22m[39m
+       [32m✓[39m should not apply active class to non-selected buttons[32m 7[2mms[22m[39m
+       [32m✓[39m should handle empty brief summary[32m 6[2mms[22m[39m
+[31m       [31m×[31m should handle undefined summary properties[39m[32m 27[2mms[22m[39m
+[31m       [31m×[31m should handle null summary[39m[32m 2[2mms[22m[39m
+       [32m✓[39m should handle very long content[32m 37[2mms[22m[39m
+       [32m✓[39m should handle rapid level switching[32m 82[2mms[22m[39m
+       [32m✓[39m should handle summary with only whitespace[32m 6[2mms[22m[39m
+       [32m✓[39m should handle HTML entities in summary[32m 7[2mms[22m[39m
+[31m       [31m×[31m should render reading time icon[39m[32m 13[2mms[22m[39m
+       [32m✓[39m should have proper structure for meta items[32m 8[2mms[22m[39m
+ [31m❯[39m src/components/Results/ResultsDisplay.test.jsx [2m([22m[2m40 tests[22m[2m | [22m[31m4 failed[39m[2m)[22m[33m 1212[2mms[22m[39m
+       [32m✓[39m should render metadata section[32m 171[2mms[22m[39m
+       [32m✓[39m should render overall risk score[32m 80[2mms[22m[39m
+       [32m✓[39m should render view mode tabs[32m 188[2mms[22m[39m
+       [32m✓[39m should render badges on tabs with counts[32m 49[2mms[22m[39m
+       [32m✓[39m should render "Analyze Another Document" button[32m 56[2mms[22m[39m
+       [32m✓[39m should render "Export Results" button when onExport provided[32m 40[2mms[22m[39m
+       [32m✓[39m should NOT render "Export Results" button when onExport not provided[32m 18[2mms[22m[39m
+       [32m✓[39m should render disclaimer[32m 13[2mms[22m[39m
+       [32m✓[39m should apply custom className[32m 14[2mms[22m[39m
+       [32m✓[39m should calculate "high" risk for critical risks[32m 13[2mms[22m[39m
+       [32m✓[39m should calculate "high" risk for 3+ high severity risks[32m 9[2mms[22m[39m
+       [32m✓[39m should calculate "medium" risk for 1 high severity risk[32m 8[2mms[22m[39m
+       [32m✓[39m should calculate "medium" risk for 3+ medium severity risks[32m 8[2mms[22m[39m
+       [32m✓[39m should calculate "low" risk for no risks[32m 8[2mms[22m[39m
+       [32m✓[39m should calculate "low" risk for only low severity risks[32m 11[2mms[22m[39m
+       [32m✓[39m should default to summary view[32m 9[2mms[22m[39m
+       [32m✓[39m should show summary tab as active by default[32m 44[2mms[22m[39m
+       [32m✓[39m should switch to risks view when risks tab clicked[32m 83[2mms[22m[39m
+       [32m✓[39m should switch to terms view when terms tab clicked[32m 37[2mms[22m[39m
+       [32m✓[39m should switch to all view when full report tab clicked[32m 22[2mms[22m[39m
+       [32m✓[39m should update aria-selected when switching tabs[32m 49[2mms[22m[39m
+       [32m✓[39m should call onNewAnalysis when button clicked[32m 17[2mms[22m[39m
+       [32m✓[39m should call onExport with result when Export button clicked[32m 18[2mms[22m[39m
+       [32m✓[39m should have tablist role[32m 12[2mms[22m[39m
+       [32m✓[39m should have tab roles with aria-controls[32m 31[2mms[22m[39m
+       [32m✓[39m should have tabpanel roles[32m 16[2mms[22m[39m
+       [32m✓[39m should have proper aria-labelledby on panels[32m 11[2mms[22m[39m
+       [32m✓[39m should have button types[32m 21[2mms[22m[39m
+       [32m✓[39m should apply green background for low risk[32m 18[2mms[22m[39m
+       [32m✓[39m should apply amber background for medium risk[32m 10[2mms[22m[39m
+       [32m✓[39m should apply red background for high risk[32m 9[2mms[22m[39m
+[31m       [31m×[31m should apply white text color[39m[32m 23[2mms[22m[39m
+       [32m✓[39m should handle result with no risks[32m 17[2mms[22m[39m
+       [32m✓[39m should handle result with no key terms[32m 16[2mms[22m[39m
+       [32m✓[39m should handle result with empty summary[32m 8[2mms[22m[39m
+       [32m✓[39m should handle result with undefined documentMetadata.source[32m 11[2mms[22m[39m
+       [32m✓[39m should handle rapid tab switching[32m 30[2mms[22m[39m
+[31m       [31m×[31m should pass summary to SummaryView[39m[32m 3[2mms[22m[39m
+[31m       [31m×[31m should pass risks and documentMetadata to RiskHighlights[39m[32m 2[2mms[22m[39m
+[31m       [31m×[31m should pass keyTerms to KeyTermsGlossary[39m[32m 2[2mms[22m[39m
+ [32m✓[39m src/components/Input/FileUpload.test.jsx [2m([22m[2m47 tests[22m[2m)[22m[33m 1218[2mms[22m[39m
+       [33m[2m✓[22m[39m should render dropzone [33m 332[2mms[22m[39m
+       [33m[2m✓[22m[39m should format file sizes correctly [33m 308[2mms[22m[39m
+ [31m❯[39m src/components/Config/LLMConfigPanel.test.jsx [2m([22m[2m40 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[33m 1517[2mms[22m[39m
+       [32m✓[39m should render with title and subtitle[32m 136[2mms[22m[39m
+       [32m✓[39m should render ProviderSelector[32m 14[2mms[22m[39m
+       [32m✓[39m should render APIKeyInput when provider requires API key[32m 12[2mms[22m[39m
+[31m       [31m×[31m should NOT render APIKeyInput when provider does not require API key[39m[32m 8[2mms[22m[39m
+       [32m✓[39m should render ModelSelector[32m 13[2mms[22m[39m
+       [32m✓[39m should render advanced settings in details element[32m 16[2mms[22m[39m
+       [32m✓[39m should render temperature slider with current value[32m 23[2mms[22m[39m
+       [32m✓[39m should render max tokens slider with current value[32m 21[2mms[22m[39m
+       [33m[2m✓[22m[39m should render Save and Reset buttons [33m 306[2mms[22m[39m
+       [32m✓[39m should render security note[32m 20[2mms[22m[39m
+       [32m✓[39m should apply custom className[32m 13[2mms[22m[39m
+       [32m✓[39m should call setProvider when provider changes[32m 29[2mms[22m[39m
+       [32m✓[39m should mark as having changes when provider changes[32m 26[2mms[22m[39m
+[31m       [31m×[31m should clear validation error when provider changes[39m[32m 245[2mms[22m[39m
+       [32m✓[39m should call updateConfig when API key changes[32m 38[2mms[22m[39m
+       [32m✓[39m should mark as having changes when API key changes[32m 24[2mms[22m[39m
+       [32m✓[39m should call updateConfig when model changes[32m 48[2mms[22m[39m
+       [32m✓[39m should mark as having changes when model changes[32m 33[2mms[22m[39m
+       [32m✓[39m should call updateConfig when temperature changes[32m 29[2mms[22m[39m
+       [32m✓[39m should mark as having changes when temperature changes[32m 26[2mms[22m[39m
+       [32m✓[39m should have correct range constraints[32m 12[2mms[22m[39m
+       [32m✓[39m should call updateConfig when max tokens changes[32m 22[2mms[22m[39m
+       [32m✓[39m should mark as having changes when max tokens changes[32m 26[2mms[22m[39m
+       [32m✓[39m should have correct range constraints[32m 12[2mms[22m[39m
+       [32m✓[39m should validate config before saving[32m 38[2mms[22m[39m
+       [32m✓[39m should show validation error if config is invalid[32m 31[2mms[22m[39m
+       [32m✓[39m should call onSave callback if config is valid[32m 24[2mms[22m[39m
+       [32m✓[39m should clear hasChanges flag after successful save[32m 26[2mms[22m[39m
+       [32m✓[39m should clear validation error after successful save[32m 30[2mms[22m[39m
+       [32m✓[39m should call resetConfig when Reset button clicked[32m 24[2mms[22m[39m
+       [32m✓[39m should clear hasChanges flag after reset[32m 24[2mms[22m[39m
+       [32m✓[39m should clear validation error after reset[32m 34[2mms[22m[39m
+       [32m✓[39m should disable all inputs when disabled prop is true[32m 11[2mms[22m[39m
+       [32m✓[39m should disable Save and Reset buttons when disabled prop is true[32m 20[2mms[22m[39m
+       [32m✓[39m should have proper ARIA attributes on temperature input[32m 8[2mms[22m[39m
+       [32m✓[39m should have proper ARIA attributes on max tokens input[32m 10[2mms[22m[39m
+       [32m✓[39m should mark validation error as alert with aria-live[32m 28[2mms[22m[39m
+       [32m✓[39m should have aria-hidden on error icon[32m 29[2mms[22m[39m
+       [32m✓[39m should have proper labels for all inputs[32m 11[2mms[22m[39m
+       [32m✓[39m should have descriptions for sliders[32m 9[2mms[22m[39m
+ [31m❯[39m src/components/Results/RiskHighlights.test.jsx [2m([22m[2m45 tests[22m[2m | [22m[31m4 failed[39m[2m)[22m[33m 1809[2mms[22m[39m
+       [32m✓[39m should render title and subtitle[32m 94[2mms[22m[39m
+       [32m✓[39m should render singular "concern" for single risk[32m 9[2mms[22m[39m
+       [33m[2m✓[22m[39m should render filter buttons [33m 335[2mms[22m[39m
+       [32m✓[39m should not render filter button for severity with 0 count[32m 128[2mms[22m[39m
+       [32m✓[39m should render all risk items collapsed by default[32m 23[2mms[22m[39m
+       [32m✓[39m should render severity badges[32m 16[2mms[22m[39m
+[31m       [31m×[31m should render severity icons[39m[32m 32[2mms[22m[39m
+       [32m✓[39m should apply custom className[32m 16[2mms[22m[39m
+       [32m✓[39m should render empty state when no risks[32m 5[2mms[22m[39m
+       [32m✓[39m should render checkmark icon in empty state[32m 4[2mms[22m[39m
+       [32m✓[39m should render disclaimer in empty state[32m 4[2mms[22m[39m
+       [32m✓[39m should not render filter buttons in empty state[32m 3[2mms[22m[39m
+       [32m✓[39m should expand risk when clicked[32m 117[2mms[22m[39m
+       [32m✓[39m should show explanation when expanded[32m 92[2mms[22m[39m
+       [32m✓[39m should show affected sections when expanded[32m 56[2mms[22m[39m
+       [32m✓[39m should not show affected sections if empty[32m 47[2mms[22m[39m
+       [32m✓[39m should collapse risk when clicked again[32m 50[2mms[22m[39m
+       [32m✓[39m should update aria-expanded attribute[32m 50[2mms[22m[39m
+       [32m✓[39m should allow multiple risks to be expanded simultaneously[32m 79[2mms[22m[39m
+       [32m✓[39m should show all risks by default[32m 11[2mms[22m[39m
+       [32m✓[39m should filter to high severity risks only[32m 46[2mms[22m[39m
+       [32m✓[39m should filter to medium severity risks only[32m 46[2mms[22m[39m
+       [32m✓[39m should return to all risks when All clicked[32m 67[2mms[22m[39m
+       [32m✓[39m should mark active filter button[32m 49[2mms[22m[39m
+       [32m✓[39m should sort risks by severity (critical > high > medium > low)[32m 29[2mms[22m[39m
+[31m       [31m×[31m should sanitize description HTML[39m[32m 58[2mms[22m[39m
+[31m       [31m×[31m should sanitize explanation HTML[39m[32m 36[2mms[22m[39m
+       [32m✓[39m should render sanitized HTML with dangerouslySetInnerHTML[32m 32[2mms[22m[39m
+       [32m✓[39m should apply correct colors for critical severity[32m 6[2mms[22m[39m
+       [32m✓[39m should apply correct colors for high severity[32m 7[2mms[22m[39m
+       [32m✓[39m should apply correct colors for medium severity[32m 9[2mms[22m[39m
+       [32m✓[39m should apply correct colors for low severity[32m 8[2mms[22m[39m
+       [32m✓[39m should have role="group" on filter buttons[32m 11[2mms[22m[39m
+       [32m✓[39m should have type="button" on all interactive buttons[32m 23[2mms[22m[39m
+       [32m✓[39m should have aria-hidden on decorative icons[32m 8[2mms[22m[39m
+       [32m✓[39m should have aria-hidden on expand icons[32m 6[2mms[22m[39m
+       [32m✓[39m should have aria-hidden on empty state icon[32m 2[2mms[22m[39m
+       [32m✓[39m should handle risk without explanation[32m 17[2mms[22m[39m
+       [32m✓[39m should handle risk without affected sections[32m 14[2mms[22m[39m
+       [32m✓[39m should handle rapid expansion/collapse[32m 55[2mms[22m[39m
+       [32m✓[39m should handle rapid filter switching[32m 23[2mms[22m[39m
+       [32m✓[39m should handle undefined documentMetadata[32m 5[2mms[22m[39m
+       [32m✓[39m should maintain expanded state when filtering[32m 41[2mms[22m[39m
+[31m       [31m×[31m should show critical icon for critical severity[39m[32m 7[2mms[22m[39m
+       [32m✓[39m should show correct icon in filter button[32m 28[2mms[22m[39m
+ [32m✓[39m src/utils/formatting.test.js [2m([22m[2m52 tests[22m[2m)[22m[32m 29[2mms[22m[39m
+ [31m❯[39m src/components/Results/KeyTermsGlossary.test.jsx [2m([22m[2m55 tests[22m[2m | [22m[31m5 failed[39m[2m)[22m[33m 2080[2mms[22m[39m
+       [32m✓[39m should render title and subtitle[32m 92[2mms[22m[39m
+       [32m✓[39m should render singular "term" for single term[32m 17[2mms[22m[39m
+       [32m✓[39m should render search input[32m 131[2mms[22m[39m
+       [32m✓[39m should render Expand All and Collapse All buttons[32m 88[2mms[22m[39m
+       [32m✓[39m should render all terms collapsed by default[32m 76[2mms[22m[39m
+       [32m✓[39m should render category badges[32m 27[2mms[22m[39m
+       [32m✓[39m should apply custom className[32m 25[2mms[22m[39m
+       [32m✓[39m should render empty state when no terms[32m 4[2mms[22m[39m
+       [32m✓[39m should render book icon in empty state[32m 7[2mms[22m[39m
+       [32m✓[39m should not render search or controls in empty state[32m 5[2mms[22m[39m
+       [32m✓[39m should expand term when clicked[32m 122[2mms[22m[39m
+       [32m✓[39m should show examples when expanded[32m 64[2mms[22m[39m
+       [32m✓[39m should not show examples section if empty array[32m 54[2mms[22m[39m
+       [32m✓[39m should not show examples section if null[32m 113[2mms[22m[39m
+       [32m✓[39m should collapse term when clicked again[32m 87[2mms[22m[39m
+       [32m✓[39m should update aria-expanded attribute[32m 84[2mms[22m[39m
+       [32m✓[39m should allow multiple terms to be expanded simultaneously[32m 110[2mms[22m[39m
+[31m       [31m×[31m should expand all terms when Expand All clicked[39m[32m 69[2mms[22m[39m
+       [32m✓[39m should collapse all terms when Collapse All clicked[32m 102[2mms[22m[39m
+       [32m✓[39m should disable Expand All when all terms are expanded[32m 46[2mms[22m[39m
+       [32m✓[39m should disable Collapse All when all terms are collapsed[32m 49[2mms[22m[39m
+       [32m✓[39m should enable both buttons when some terms are expanded[32m 83[2mms[22m[39m
+       [32m✓[39m should filter terms by term name[32m 27[2mms[22m[39m
+       [32m✓[39m should filter terms by definition[32m 28[2mms[22m[39m
+       [32m✓[39m should be case insensitive[32m 20[2mms[22m[39m
+       [32m✓[39m should show results count when searching[32m 26[2mms[22m[39m
+       [32m✓[39m should show "No terms match" when no results[32m 22[2mms[22m[39m
+       [32m✓[39m should clear search when input is emptied[32m 35[2mms[22m[39m
+[31m       [31m×[31m should trim whitespace from search query[39m[32m 25[2mms[22m[39m
+[31m       [31m×[31m should group terms by first letter[39m[32m 16[2mms[22m[39m
+       [32m✓[39m should sort terms alphabetically within groups[32m 18[2mms[22m[39m
+       [32m✓[39m should render alphabet navigation[32m 12[2mms[22m[39m
+       [32m✓[39m should render all 26 letters[32m 9[2mms[22m[39m
+       [32m✓[39m should disable letters with no terms[32m 14[2mms[22m[39m
+       [32m✓[39m should enable letters with terms[32m 16[2mms[22m[39m
+       [32m✓[39m should have href to letter section[32m 10[2mms[22m[39m
+       [32m✓[39m should prevent navigation for disabled letters[32m 13[2mms[22m[39m
+[31m       [31m×[31m should sanitize definition HTML[39m[32m 36[2mms[22m[39m
+       [32m✓[39m should render sanitized HTML with dangerouslySetInnerHTML[32m 32[2mms[22m[39m
+       [32m✓[39m should have aria-label on search input[32m 11[2mms[22m[39m
+       [32m✓[39m should have type="button" on all interactive buttons[32m 26[2mms[22m[39m
+       [32m✓[39m should have aria-hidden on decorative icons[32m 10[2mms[22m[39m
+       [32m✓[39m should have aria-hidden on expand icons[32m 8[2mms[22m[39m
+       [32m✓[39m should have role="list" on terms container[32m 6[2mms[22m[39m
+       [32m✓[39m should have role="listitem" on term elements[32m 8[2mms[22m[39m
+       [32m✓[39m should have id on section letters for navigation[32m 8[2mms[22m[39m
+       [32m✓[39m should handle term without category[32m 7[2mms[22m[39m
+       [32m✓[39m should handle rapid expansion/collapse[32m 66[2mms[22m[39m
+       [32m✓[39m should handle rapid search changes[32m 29[2mms[22m[39m
+[31m       [31m×[31m should handle undefined keyTerms[39m[32m 9[2mms[22m[39m
+       [32m✓[39m should handle terms with special characters[32m 9[2mms[22m[39m
+       [32m✓[39m should handle very long definitions[32m 18[2mms[22m[39m
+       [32m✓[39m should maintain search when expanding terms[32m 24[2mms[22m[39m
+       [32m✓[39m should update alphabet nav when filtering[32m 14[2mms[22m[39m
+       [32m✓[39m should render search icon[32m 6[2mms[22m[39m
+ [32m✓[39m src/utils/validation.test.js [2m([22m[2m39 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+ [32m✓[39m src/utils/storage.test.js [2m([22m[2m36 tests[22m[2m)[22m[32m 20[2mms[22m[39m
+ [31m❯[39m src/hooks/useAnalysisOrchestrator.test.jsx [2m([22m[2m22 tests[22m[2m | [22m[31m16 failed[39m[2m)[22m[33m 14413[2mms[22m[39m
+[31m       [31m×[31m should initialize with analysis context state[39m[32m 49[2mms[22m[39m
+[31m       [31m×[31m should expose all analysis context properties[39m[32m 59[2mms[22m[39m
+[31m       [31m×[31m should successfully analyze URL document[39m[33m 1033[2mms[22m[39m
+[31m       [31m×[31m should set document input at start of analysis[39m[33m 1015[2mms[22m[39m
+       [32m✓[39m should update progress during URL analysis[32m 14[2mms[22m[39m
+       [32m✓[39m should handle extraction errors during URL analysis[32m 16[2mms[22m[39m
+       [32m✓[39m should handle LLM errors during URL analysis[32m 16[2mms[22m[39m
+[31m       [31m×[31m should parse risks from LLM response[39m[33m 1015[2mms[22m[39m
+[31m       [31m×[31m should parse key terms from LLM response[39m[33m 1011[2mms[22m[39m
+[31m       [31m×[31m should successfully analyze PDF document[39m[33m 1015[2mms[22m[39m
+[31m       [31m×[31m should set document input at start of PDF analysis[39m[33m 1012[2mms[22m[39m
+       [32m✓[39m should handle PDF extraction errors[32m 15[2mms[22m[39m
+       [32m✓[39m should handle LLM errors during PDF analysis[32m 16[2mms[22m[39m
+       [32m✓[39m should update progress during PDF analysis[32m 15[2mms[22m[39m
+[31m       [31m×[31m should create three summary types (brief, detailed, full)[39m[33m 1014[2mms[22m[39m
+[31m       [31m×[31m should include timestamp in result[39m[33m 1014[2mms[22m[39m
+[31m       [31m×[31m should include LLM config in result[39m[33m 1010[2mms[22m[39m
+[31m       [31m×[31m should generate unique IDs for each analysis[39m[33m 1002[2mms[22m[39m
+[31m       [31m×[31m should handle multiple URL analyses[39m[33m 1014[2mms[22m[39m
+[31m       [31m×[31m should handle switching between URL and PDF analyses[39m[33m 1012[2mms[22m[39m
+[31m       [31m×[31m should allow retry after extraction error[39m[33m 1013[2mms[22m[39m
+[31m       [31m×[31m should allow retry after LLM error[39m[33m 1030[2mms[22m[39m
+
+[2m Test Files [22m [1m[31m19 failed[39m[22m[2m | [22m[1m[32m15 passed[39m[22m[90m (34)[39m
+[2m      Tests [22m [1m[31m294 failed[39m[22m[2m | [22m[1m[32m921 passed[39m[22m[90m (1215)[39m
+[2m   Start at [22m 17:04:30
+[2m   Duration [22m 20.50s[2m (transform 13.86s, setup 27.24s, import 19.76s, tests 36.72s, environment 98.26s)[22m
+
