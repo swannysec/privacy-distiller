@@ -15,16 +15,18 @@
  * @copyright 2025 John D. Swanson
  */
 
-// Allowed origins - update this with your GitHub Pages URL after deployment
+// Allowed origins for CORS requests
 const ALLOWED_ORIGINS = [
-  'http://localhost:5173',
-  'http://localhost:4173',
-  'http://localhost:8765',
-  'http://localhost:8766',
-  'http://127.0.0.1:5173',
-  'http://127.0.0.1:4173',
-  // Add your GitHub Pages URL here after deployment:
-  // 'https://yourusername.github.io',
+  // Production
+  'https://privacydistiller.com',
+  'https://www.privacydistiller.com',
+  // Development (uncomment as needed for local testing)
+  // 'http://localhost:5173',
+  // 'http://localhost:4173',
+  // 'http://localhost:8765',
+  // 'http://localhost:8766',
+  // 'http://127.0.0.1:5173',
+  // 'http://127.0.0.1:4173',
 ];
 
 // Maximum content size to proxy (10MB)

@@ -235,7 +235,7 @@ function AppContent() {
                   className="hero__demo-link"
                   onClick={() => handleDocumentSelected({
                     type: 'url',
-                    source: 'https://saberwing.github.io/policy-analyzer/privacy-policy.md',
+                    source: 'https://privacydistiller.com/privacy-policy.md',
                     metadata: {
                       inputMode: 'url',
                       timestamp: new Date().toISOString(),
