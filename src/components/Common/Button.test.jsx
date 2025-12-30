@@ -32,19 +32,19 @@ describe('Button', () => {
     it('should apply primary variant by default', () => {
       render(<Button>Primary</Button>);
       const button = screen.getByRole('button');
-      expect(button.className).toContain('button--primary');
+      expect(button.className).toContain('btn--primary');
     });
 
     it('should apply secondary variant', () => {
       render(<Button variant="secondary">Secondary</Button>);
       const button = screen.getByRole('button');
-      expect(button.className).toContain('button--secondary');
+      expect(button.className).toContain('btn--secondary');
     });
 
     it('should apply danger variant', () => {
       render(<Button variant="danger">Danger</Button>);
       const button = screen.getByRole('button');
-      expect(button.className).toContain('button--danger');
+      expect(button.className).toContain('btn--danger');
     });
   });
 
@@ -52,19 +52,22 @@ describe('Button', () => {
     it('should apply medium size by default', () => {
       render(<Button>Medium</Button>);
       const button = screen.getByRole('button');
-      expect(button.className).toContain('button--medium');
+      // Medium is default - no size class is added (only small/large get classes)
+      expect(button.className).toContain('btn');
+      expect(button.className).not.toContain('btn--small');
+      expect(button.className).not.toContain('btn--large');
     });
 
     it('should apply small size', () => {
       render(<Button size="small">Small</Button>);
       const button = screen.getByRole('button');
-      expect(button.className).toContain('button--small');
+      expect(button.className).toContain('btn--small');
     });
 
     it('should apply large size', () => {
       render(<Button size="large">Large</Button>);
       const button = screen.getByRole('button');
-      expect(button.className).toContain('button--large');
+      expect(button.className).toContain('btn--large');
     });
   });
 
@@ -84,7 +87,7 @@ describe('Button', () => {
     it('should apply disabled class when disabled', () => {
       render(<Button disabled>Disabled</Button>);
       const button = screen.getByRole('button');
-      expect(button.className).toContain('button--disabled');
+      expect(button.className).toContain('btn--disabled');
     });
 
     it('should not call onClick when disabled', () => {
@@ -118,12 +121,12 @@ describe('Button', () => {
     it('should apply loading class', () => {
       render(<Button loading>Loading</Button>);
       const button = screen.getByRole('button');
-      expect(button.className).toContain('button--loading');
+      expect(button.className).toContain('btn--loading');
     });
 
     it('should render spinner when loading', () => {
       render(<Button loading>Loading</Button>);
-      const spinner = document.querySelector('.button__spinner');
+      const spinner = document.querySelector('.btn__spinner');
       expect(spinner).toBeInTheDocument();
       expect(spinner).toHaveAttribute('aria-hidden', 'true');
     });
@@ -139,8 +142,8 @@ describe('Button', () => {
     it('should apply both disabled and loading classes', () => {
       render(<Button loading>Loading</Button>);
       const button = screen.getByRole('button');
-      expect(button.className).toContain('button--disabled');
-      expect(button.className).toContain('button--loading');
+      expect(button.className).toContain('btn--disabled');
+      expect(button.className).toContain('btn--loading');
     });
   });
 
@@ -178,8 +181,8 @@ describe('Button', () => {
     it('should preserve base classes with custom className', () => {
       render(<Button className="custom-class">Custom</Button>);
       const button = screen.getByRole('button');
-      expect(button.className).toContain('button');
-      expect(button.className).toContain('button--primary');
+      expect(button.className).toContain('btn');
+      expect(button.className).toContain('btn--primary');
       expect(button.className).toContain('custom-class');
     });
   });
@@ -201,7 +204,7 @@ describe('Button', () => {
   describe('content structure', () => {
     it('should wrap children in button__content span', () => {
       render(<Button>Content</Button>);
-      const content = document.querySelector('.button__content');
+      const content = document.querySelector('.btn__content');
       expect(content).toBeInTheDocument();
       expect(content).toHaveTextContent('Content');
     });
@@ -209,8 +212,8 @@ describe('Button', () => {
     it('should render spinner before content when loading', () => {
       const { container } = render(<Button loading>Content</Button>);
       const button = container.querySelector('button');
-      const spinner = button.querySelector('.button__spinner');
-      const content = button.querySelector('.button__content');
+      const spinner = button.querySelector('.btn__spinner');
+      const content = button.querySelector('.btn__content');
 
       expect(spinner).toBeInTheDocument();
       expect(content).toBeInTheDocument();
@@ -241,8 +244,8 @@ describe('Button', () => {
         </Button>
       );
       const button = screen.getByRole('button');
-      expect(button.className).toContain('button--secondary');
-      expect(button.className).toContain('button--large');
+      expect(button.className).toContain('btn--secondary');
+      expect(button.className).toContain('btn--large');
       expect(button.className).toContain('custom');
     });
 
@@ -253,7 +256,7 @@ describe('Button', () => {
         </Button>
       );
       const button = screen.getByRole('button');
-      expect(button.className).toContain('button--disabled');
+      expect(button.className).toContain('btn--disabled');
       expect(button.className).toContain('custom');
     });
 
@@ -275,10 +278,10 @@ describe('Button', () => {
       );
       const button = screen.getByRole('button', { name: 'Submit form' });
       expect(button).toHaveAttribute('type', 'submit');
-      expect(button.className).toContain('button--danger');
-      expect(button.className).toContain('button--small');
-      expect(button.className).toContain('button--disabled');
-      expect(button.className).toContain('button--loading');
+      expect(button.className).toContain('btn--danger');
+      expect(button.className).toContain('btn--small');
+      expect(button.className).toContain('btn--disabled');
+      expect(button.className).toContain('btn--loading');
       expect(button.className).toContain('custom');
       expect(button).toBeDisabled();
       expect(button).toHaveAttribute('aria-busy', 'true');

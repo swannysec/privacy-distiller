@@ -1,5 +1,5 @@
 {
-  "name": "policy-analyzer",
+  "name": "policy-distiller",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -9,15 +9,19 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:ui": "vitest --ui",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
     "lint": "eslint .",
     "format": "prettier --write \"src/**/*.{js,jsx,css}\"",
     "deploy": "npm run build && gh-pages -d dist"
   },
   "dependencies": {
     "dompurify": "^3.3.1",
+    "jspdf": "^3.0.4",
     "pdfjs-dist": "^5.4.449",
     "react": "^19.2.3",
-    "react-dom": "^19.2.3"
+    "react-dom": "^19.2.3",
+    "react-markdown": "^10.1.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0",

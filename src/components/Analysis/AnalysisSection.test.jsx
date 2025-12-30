@@ -54,15 +54,16 @@ describe("AnalysisSection", () => {
   describe("Completed State", () => {
     beforeEach(() => {
       mockUseAnalysis.mockReturnValue({
-        state: {
-          status: ANALYSIS_STATUS.COMPLETED,
-          result: {
-            id: "result-123",
-            summary: { brief: "Summary" },
-            risks: [],
-            keyTerms: [],
-          },
+        status: ANALYSIS_STATUS.COMPLETED,
+        result: {
+          id: "result-123",
+          summary: { brief: "Summary" },
+          risks: [],
+          keyTerms: [],
         },
+        error: null,
+        progress: 100,
+        currentStep: "Analysis complete",
         resetAnalysis: mockResetAnalysis,
       });
     });
@@ -104,11 +105,11 @@ describe("AnalysisSection", () => {
   describe("Extracting State", () => {
     beforeEach(() => {
       mockUseAnalysis.mockReturnValue({
-        state: {
-          status: ANALYSIS_STATUS.EXTRACTING,
-          progress: 25,
-          currentStep: "Reading PDF pages",
-        },
+        status: ANALYSIS_STATUS.EXTRACTING,
+        result: null,
+        error: null,
+        progress: 25,
+        currentStep: "Reading PDF pages",
         resetAnalysis: mockResetAnalysis,
       });
     });
@@ -148,11 +149,11 @@ describe("AnalysisSection", () => {
   describe("Analyzing State", () => {
     beforeEach(() => {
       mockUseAnalysis.mockReturnValue({
-        state: {
-          status: ANALYSIS_STATUS.ANALYZING,
-          progress: 50,
-          currentStep: "Identifying privacy risks",
-        },
+        status: ANALYSIS_STATUS.ANALYZING,
+        result: null,
+        error: null,
+        progress: 50,
+        currentStep: "Identifying privacy risks",
         resetAnalysis: mockResetAnalysis,
       });
     });
@@ -182,107 +183,36 @@ describe("AnalysisSection", () => {
   });
 
   describe("Failed State", () => {
+    // Note: Error state is now rendered in App.jsx inline near the input for better visibility.
+    // AnalysisSection returns null when failed, as error handling was moved.
     beforeEach(() => {
       mockUseAnalysis.mockReturnValue({
-        state: {
-          status: ANALYSIS_STATUS.FAILED,
-          error: "API key is invalid",
-        },
+        status: ANALYSIS_STATUS.FAILED,
+        result: null,
+        error: "API key is invalid",
+        progress: 0,
+        currentStep: null,
         resetAnalysis: mockResetAnalysis,
       });
     });
 
-    it("should render error card when failed", () => {
-      render(<AnalysisSection onNewAnalysis={mockOnNewAnalysis} />);
+    it("should return null when failed (error shown elsewhere)", () => {
+      const { container } = render(
+        <AnalysisSection onNewAnalysis={mockOnNewAnalysis} />,
+      );
 
-      expect(screen.getByText("Analysis Failed")).toBeInTheDocument();
-    });
-
-    it("should show error message", () => {
-      render(<AnalysisSection onNewAnalysis={mockOnNewAnalysis} />);
-
-      expect(screen.getByText("API key is invalid")).toBeInTheDocument();
-    });
-
-    it("should show default error message if no error provided", () => {
-      mockUseAnalysis.mockReturnValue({
-        state: {
-          status: ANALYSIS_STATUS.FAILED,
-          error: null,
-        },
-        resetAnalysis: mockResetAnalysis,
-      });
-
-      render(<AnalysisSection onNewAnalysis={mockOnNewAnalysis} />);
-
-      expect(
-        screen.getByText(/An unexpected error occurred/i),
-      ).toBeInTheDocument();
-    });
-
-    it("should show error icon", () => {
-      render(<AnalysisSection onNewAnalysis={mockOnNewAnalysis} />);
-
-      expect(screen.getByText("⚠️")).toBeInTheDocument();
-    });
-
-    it("should show common issues help", () => {
-      render(<AnalysisSection onNewAnalysis={mockOnNewAnalysis} />);
-
-      expect(screen.getByText(/Common issues:/i)).toBeInTheDocument();
-      expect(screen.getByText(/API Key:/i)).toBeInTheDocument();
-      expect(screen.getByText(/Local LLM:/i)).toBeInTheDocument();
-      expect(screen.getByText(/Network:/i)).toBeInTheDocument();
-      expect(screen.getByText(/Document:/i)).toBeInTheDocument();
-    });
-
-    it("should render Try Again button", () => {
-      render(<AnalysisSection onNewAnalysis={mockOnNewAnalysis} />);
-
-      expect(
-        screen.getByRole("button", { name: /Retry analysis/i }),
-      ).toBeInTheDocument();
-    });
-
-    it("should render Start Over button", () => {
-      render(<AnalysisSection onNewAnalysis={mockOnNewAnalysis} />);
-
-      expect(
-        screen.getByRole("button", { name: /Start over/i }),
-      ).toBeInTheDocument();
-    });
-
-    it("should handle Try Again click", () => {
-      render(<AnalysisSection onNewAnalysis={mockOnNewAnalysis} />);
-
-      const tryAgainButton = screen.getByRole("button", {
-        name: /Retry analysis/i,
-      });
-      fireEvent.click(tryAgainButton);
-
-      expect(mockResetAnalysis).toHaveBeenCalled();
-      expect(mockOnNewAnalysis).toHaveBeenCalled();
-    });
-
-    it("should handle Start Over click", () => {
-      render(<AnalysisSection onNewAnalysis={mockOnNewAnalysis} />);
-
-      const startOverButton = screen.getByRole("button", {
-        name: /Start over/i,
-      });
-      fireEvent.click(startOverButton);
-
-      expect(mockResetAnalysis).toHaveBeenCalled();
-      expect(mockOnNewAnalysis).not.toHaveBeenCalled();
+      expect(container.firstChild).toBeNull();
     });
   });
 
   describe("Idle State", () => {
     beforeEach(() => {
       mockUseAnalysis.mockReturnValue({
-        state: {
-          status: ANALYSIS_STATUS.IDLE,
-        },
+        status: ANALYSIS_STATUS.IDLE,
+        result: null,
+        error: null,
+        progress: 0,
+        currentStep: null,
         resetAnalysis: mockResetAnalysis,
       });
     });
@@ -299,10 +229,11 @@ describe("AnalysisSection", () => {
   describe("Edge Cases", () => {
     it("should not render ResultsDisplay if no result even when completed", () => {
       mockUseAnalysis.mockReturnValue({
-        state: {
-          status: ANALYSIS_STATUS.COMPLETED,
-          result: null,
-        },
+        status: ANALYSIS_STATUS.COMPLETED,
+        result: null,
+        error: null,
+        progress: 100,
+        currentStep: null,
         resetAnalysis: mockResetAnalysis,
       });
 
@@ -314,31 +245,33 @@ describe("AnalysisSection", () => {
       expect(container.firstChild).toBeNull();
     });
 
-    it("should handle missing onNewAnalysis callback", () => {
+    it("should handle missing onNewAnalysis callback in completed state", () => {
       mockUseAnalysis.mockReturnValue({
-        state: {
-          status: ANALYSIS_STATUS.FAILED,
-          error: "Error",
-        },
+        status: ANALYSIS_STATUS.COMPLETED,
+        result: { id: "result-123", summary: {}, risks: [], keyTerms: [] },
+        error: null,
+        progress: 100,
+        currentStep: null,
         resetAnalysis: mockResetAnalysis,
       });
 
       render(<AnalysisSection onNewAnalysis={undefined} />);
 
-      const tryAgainButton = screen.getByRole("button", {
-        name: /Retry analysis/i,
+      const newAnalysisButton = screen.getByRole("button", {
+        name: /New Analysis/i,
       });
-      fireEvent.click(tryAgainButton);
+      fireEvent.click(newAnalysisButton);
 
       expect(mockResetAnalysis).toHaveBeenCalled();
     });
 
     it("should handle missing onExportResults callback", () => {
       mockUseAnalysis.mockReturnValue({
-        state: {
-          status: ANALYSIS_STATUS.COMPLETED,
-          result: { id: "result-123", summary: {}, risks: [], keyTerms: [] },
-        },
+        status: ANALYSIS_STATUS.COMPLETED,
+        result: { id: "result-123", summary: {}, risks: [], keyTerms: [] },
+        error: null,
+        progress: 100,
+        currentStep: null,
         resetAnalysis: mockResetAnalysis,
       });
 
@@ -356,39 +289,45 @@ describe("AnalysisSection", () => {
   });
 
   describe("Accessibility", () => {
-    it("should have aria-hidden on decorative icons", () => {
+    it("should have proper heading hierarchy in progress state", () => {
       mockUseAnalysis.mockReturnValue({
-        state: {
-          status: ANALYSIS_STATUS.FAILED,
-          error: "Error",
-        },
-        resetAnalysis: mockResetAnalysis,
-      });
-
-      const { container } = render(
-        <AnalysisSection onNewAnalysis={mockOnNewAnalysis} />,
-      );
-
-      const icon = container.querySelector(".analysis-section__error-icon");
-      expect(icon).toHaveAttribute("aria-hidden", "true");
-    });
-
-    it("should have proper button labels", () => {
-      mockUseAnalysis.mockReturnValue({
-        state: {
-          status: ANALYSIS_STATUS.FAILED,
-          error: "Error",
-        },
+        status: ANALYSIS_STATUS.EXTRACTING,
+        result: null,
+        error: null,
+        progress: 25,
+        currentStep: "Reading PDF pages",
         resetAnalysis: mockResetAnalysis,
       });
 
       render(<AnalysisSection onNewAnalysis={mockOnNewAnalysis} />);
 
       expect(
-        screen.getByRole("button", { name: /Retry analysis/i }),
+        screen.getByRole("heading", { name: /What's happening\?/i }),
+      ).toBeInTheDocument();
+    });
+
+    it("should have proper button labels in completed state", () => {
+      mockUseAnalysis.mockReturnValue({
+        status: ANALYSIS_STATUS.COMPLETED,
+        result: { id: "result-123", summary: {}, risks: [], keyTerms: [] },
+        error: null,
+        progress: 100,
+        currentStep: null,
+        resetAnalysis: mockResetAnalysis,
+      });
+
+      render(
+        <AnalysisSection
+          onNewAnalysis={mockOnNewAnalysis}
+          onExportResults={mockOnExportResults}
+        />,
+      );
+
+      expect(
+        screen.getByRole("button", { name: /New Analysis/i }),
       ).toBeInTheDocument();
       expect(
-        screen.getByRole("button", { name: /Start over/i }),
+        screen.getByRole("button", { name: /Export/i }),
       ).toBeInTheDocument();
     });
   });

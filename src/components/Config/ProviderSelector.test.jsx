@@ -39,51 +39,32 @@ describe("ProviderSelector", () => {
       expect(screen.getByText("LLM Provider")).toBeInTheDocument();
     });
 
+    it("should render select dropdown", () => {
+      render(<ProviderSelector value="openrouter" onChange={mockOnChange} />);
+
+      expect(screen.getByRole("combobox", { name: /LLM Provider/i })).toBeInTheDocument();
+    });
+
     it("should render all provider options", () => {
       render(<ProviderSelector value="openrouter" onChange={mockOnChange} />);
 
-      expect(
-        screen.getByRole("radio", { name: /OpenRouter/i }),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole("radio", { name: /Ollama/i }),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole("radio", { name: /LM Studio/i }),
-      ).toBeInTheDocument();
+      expect(screen.getByRole("option", { name: /OpenRouter/i })).toBeInTheDocument();
+      expect(screen.getByRole("option", { name: /Ollama/i })).toBeInTheDocument();
+      expect(screen.getByRole("option", { name: /LM Studio/i })).toBeInTheDocument();
     });
 
-    it("should render radio buttons for each provider", () => {
+    it("should show (Local) suffix for local providers", () => {
       render(<ProviderSelector value="openrouter" onChange={mockOnChange} />);
 
-      const openrouterRadio = screen.getByRole("radio", {
-        name: /OpenRouter/i,
-      });
-      const ollamaRadio = screen.getByRole("radio", { name: /Ollama/i });
-      const lmstudioRadio = screen.getByRole("radio", { name: /LM Studio/i });
-
-      expect(openrouterRadio).toBeInTheDocument();
-      expect(ollamaRadio).toBeInTheDocument();
-      expect(lmstudioRadio).toBeInTheDocument();
+      expect(screen.getByRole("option", { name: "Ollama (Local)" })).toBeInTheDocument();
+      expect(screen.getByRole("option", { name: "LM Studio (Local)" })).toBeInTheDocument();
     });
 
-    it("should check the selected provider", () => {
+    it("should have the correct option selected", () => {
       render(<ProviderSelector value="ollama" onChange={mockOnChange} />);
 
-      const ollamaRadio = screen.getByRole("radio", { name: /Ollama/i });
-      expect(ollamaRadio).toBeChecked();
-    });
-
-    it("should not check other providers", () => {
-      render(<ProviderSelector value="ollama" onChange={mockOnChange} />);
-
-      const openrouterRadio = screen.getByRole("radio", {
-        name: /OpenRouter/i,
-      });
-      const lmstudioRadio = screen.getByRole("radio", { name: /LM Studio/i });
-
-      expect(openrouterRadio).not.toBeChecked();
-      expect(lmstudioRadio).not.toBeChecked();
+      const select = screen.getByRole("combobox", { name: /LLM Provider/i });
+      expect(select).toHaveValue("ollama");
     });
 
     it("should apply custom className", () => {
@@ -95,42 +76,8 @@ describe("ProviderSelector", () => {
         />,
       );
 
-      const selector = container.querySelector(
-        ".provider-selector.custom-class",
-      );
+      const selector = container.querySelector(".input-group.custom-class");
       expect(selector).toBeInTheDocument();
-    });
-  });
-
-  describe("Provider Badges", () => {
-    it('should show "API Key Required" badge for OpenRouter', () => {
-      render(<ProviderSelector value="openrouter" onChange={mockOnChange} />);
-
-      expect(screen.getByText("🔑 API Key Required")).toBeInTheDocument();
-    });
-
-    it('should show "Local" badge for Ollama', () => {
-      render(<ProviderSelector value="ollama" onChange={mockOnChange} />);
-
-      const badges = screen.getAllByText("💻 Local");
-      expect(badges.length).toBeGreaterThan(0);
-    });
-
-    it('should show "Local" badge for LM Studio', () => {
-      render(<ProviderSelector value="lmstudio" onChange={mockOnChange} />);
-
-      const badges = screen.getAllByText("💻 Local");
-      expect(badges.length).toBeGreaterThan(0);
-    });
-
-    it("should display base URLs for all providers", () => {
-      render(<ProviderSelector value="openrouter" onChange={mockOnChange} />);
-
-      expect(
-        screen.getByText("https://openrouter.ai/api/v1"),
-      ).toBeInTheDocument();
-      expect(screen.getByText("http://localhost:11434")).toBeInTheDocument();
-      expect(screen.getByText("http://localhost:1234/v1")).toBeInTheDocument();
     });
   });
 
@@ -138,34 +85,22 @@ describe("ProviderSelector", () => {
     it("should show OpenRouter info when OpenRouter is selected", () => {
       render(<ProviderSelector value="openrouter" onChange={mockOnChange} />);
 
-      expect(
-        screen.getByText(/provides access to multiple commercial LLMs/i),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole("link", { name: /openrouter.ai\/keys/i }),
-      ).toBeInTheDocument();
+      expect(screen.getByText(/Recommended for large documents/i)).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /openrouter.ai\/keys/i })).toBeInTheDocument();
     });
 
     it("should show Ollama info when Ollama is selected", () => {
       render(<ProviderSelector value="ollama" onChange={mockOnChange} />);
 
-      expect(
-        screen.getByText(/runs models locally on your machine/i),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole("link", { name: /ollama.ai/i }),
-      ).toBeInTheDocument();
+      expect(screen.getByText(/Runs models locally/i)).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /ollama.ai/i })).toBeInTheDocument();
     });
 
     it("should show LM Studio info when LM Studio is selected", () => {
       render(<ProviderSelector value="lmstudio" onChange={mockOnChange} />);
 
-      expect(
-        screen.getByText(/provides a desktop app for running local models/i),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole("link", { name: /lmstudio.ai/i }),
-      ).toBeInTheDocument();
+      expect(screen.getByText(/Desktop app for local models/i)).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /lmstudio.ai/i })).toBeInTheDocument();
     });
 
     it('should have links with target="_blank" and rel="noopener noreferrer"', () => {
@@ -175,14 +110,20 @@ describe("ProviderSelector", () => {
       expect(link).toHaveAttribute("target", "_blank");
       expect(link).toHaveAttribute("rel", "noopener noreferrer");
     });
+
+    it("should show context window limitation warning for local providers", () => {
+      render(<ProviderSelector value="ollama" onChange={mockOnChange} />);
+
+      expect(screen.getByText(/Limited context windows/i)).toBeInTheDocument();
+    });
   });
 
   describe("User Interactions", () => {
-    it("should call onChange when provider is clicked", () => {
+    it("should call onChange when provider is changed", () => {
       render(<ProviderSelector value="openrouter" onChange={mockOnChange} />);
 
-      const ollamaRadio = screen.getByRole("radio", { name: /Ollama/i });
-      fireEvent.click(ollamaRadio);
+      const select = screen.getByRole("combobox", { name: /LLM Provider/i });
+      fireEvent.change(select, { target: { value: "ollama" } });
 
       expect(mockOnChange).toHaveBeenCalledWith("ollama");
     });
@@ -190,10 +131,8 @@ describe("ProviderSelector", () => {
     it("should call onChange when different provider is selected", () => {
       render(<ProviderSelector value="ollama" onChange={mockOnChange} />);
 
-      const openrouterRadio = screen.getByRole("radio", {
-        name: /OpenRouter/i,
-      });
-      fireEvent.click(openrouterRadio);
+      const select = screen.getByRole("combobox", { name: /LLM Provider/i });
+      fireEvent.change(select, { target: { value: "openrouter" } });
 
       expect(mockOnChange).toHaveBeenCalledWith("openrouter");
     });
@@ -207,13 +146,13 @@ describe("ProviderSelector", () => {
         />,
       );
 
-      const ollamaRadio = screen.getByRole("radio", { name: /Ollama/i });
-      fireEvent.click(ollamaRadio);
+      const select = screen.getByRole("combobox", { name: /LLM Provider/i });
+      fireEvent.change(select, { target: { value: "ollama" } });
 
       expect(mockOnChange).not.toHaveBeenCalled();
     });
 
-    it("should disable all radio buttons when disabled prop is true", () => {
+    it("should disable select when disabled prop is true", () => {
       render(
         <ProviderSelector
           value="openrouter"
@@ -222,124 +161,35 @@ describe("ProviderSelector", () => {
         />,
       );
 
-      const radios = screen.getAllByRole("radio");
-      radios.forEach((radio) => {
-        expect(radio).toBeDisabled();
-      });
-    });
-
-    // Note: Removed test expecting onChange when clicking already-selected radio.
-    // In HTML, radio buttons don't fire change events when already checked.
-    // This is standard browser behavior, not a component bug.
-  });
-
-  describe("CSS Classes", () => {
-    it("should apply selected class to selected provider option", () => {
-      const { container } = render(
-        <ProviderSelector value="ollama" onChange={mockOnChange} />,
-      );
-
-      const selectedOptions = container.querySelectorAll(
-        ".provider-selector__option--selected",
-      );
-      expect(selectedOptions.length).toBe(1);
-    });
-
-    it("should apply disabled class when disabled", () => {
-      const { container } = render(
-        <ProviderSelector value="ollama" onChange={mockOnChange} disabled />,
-      );
-
-      const disabledOptions = container.querySelectorAll(
-        ".provider-selector__option--disabled",
-      );
-      expect(disabledOptions.length).toBe(3);
-    });
-
-    it("should not apply disabled class when not disabled", () => {
-      const { container } = render(
-        <ProviderSelector value="ollama" onChange={mockOnChange} />,
-      );
-
-      const disabledOptions = container.querySelectorAll(
-        ".provider-selector__option--disabled",
-      );
-      expect(disabledOptions.length).toBe(0);
+      const select = screen.getByRole("combobox", { name: /LLM Provider/i });
+      expect(select).toBeDisabled();
     });
   });
 
   describe("Accessibility", () => {
-    it("should have radiogroup role", () => {
-      render(<ProviderSelector value="openrouter" onChange={mockOnChange} />);
-
-      const radiogroup = screen.getByRole("radiogroup");
-      expect(radiogroup).toBeInTheDocument();
-    });
-
-    it("should have proper aria-labelledby", () => {
-      render(<ProviderSelector value="openrouter" onChange={mockOnChange} />);
-
-      const radiogroup = screen.getByRole("radiogroup");
-      expect(radiogroup).toHaveAttribute(
-        "aria-labelledby",
-        "provider-selector-label",
-      );
-    });
-
     it("should have proper label association", () => {
-      const { container } = render(
-        <ProviderSelector value="openrouter" onChange={mockOnChange} />,
-      );
-
-      const label = container.querySelector("#provider-selector-label");
-      expect(label).toHaveTextContent("LLM Provider");
-    });
-
-    it("should have unique IDs for each radio button", () => {
       render(<ProviderSelector value="openrouter" onChange={mockOnChange} />);
 
-      expect(
-        screen.getByRole("radio", { name: /OpenRouter/i }),
-      ).toHaveAttribute("id", "provider-openrouter");
-      expect(screen.getByRole("radio", { name: /Ollama/i })).toHaveAttribute(
-        "id",
-        "provider-ollama",
-      );
-      expect(screen.getByRole("radio", { name: /LM Studio/i })).toHaveAttribute(
-        "id",
-        "provider-lmstudio",
-      );
+      const select = screen.getByLabelText(/LLM Provider/i);
+      expect(select).toBeInTheDocument();
+      expect(select.tagName).toBe("SELECT");
     });
 
-    it("should have proper name attribute for radio group", () => {
+    it("should have proper id on select", () => {
       render(<ProviderSelector value="openrouter" onChange={mockOnChange} />);
 
-      const radios = screen.getAllByRole("radio");
-      radios.forEach((radio) => {
-        expect(radio).toHaveAttribute("name", "llm-provider");
-      });
-    });
-
-    it("should have labels associated with radio inputs", () => {
-      render(<ProviderSelector value="openrouter" onChange={mockOnChange} />);
-
-      const openrouterRadio = screen.getByRole("radio", {
-        name: /OpenRouter/i,
-      });
-      const openrouterLabel = screen.getByLabelText(/OpenRouter/i);
-
-      expect(openrouterRadio).toBe(openrouterLabel);
+      const select = screen.getByRole("combobox", { name: /LLM Provider/i });
+      expect(select).toHaveAttribute("id", "llm-provider");
     });
   });
 
   describe("Edge Cases", () => {
     it("should handle empty value gracefully", () => {
+      // With empty value, select defaults to first option (openrouter)
       render(<ProviderSelector value="" onChange={mockOnChange} />);
 
-      const radios = screen.getAllByRole("radio");
-      radios.forEach((radio) => {
-        expect(radio).not.toBeChecked();
-      });
+      const select = screen.getByRole("combobox", { name: /LLM Provider/i });
+      expect(select).toBeInTheDocument();
     });
 
     it("should handle invalid value gracefully", () => {
@@ -347,18 +197,16 @@ describe("ProviderSelector", () => {
         <ProviderSelector value="invalid-provider" onChange={mockOnChange} />,
       );
 
-      const radios = screen.getAllByRole("radio");
-      radios.forEach((radio) => {
-        expect(radio).not.toBeChecked();
-      });
+      const select = screen.getByRole("combobox", { name: /LLM Provider/i });
+      // Invalid value will show as the value but won't match any option
+      expect(select).toBeInTheDocument();
     });
 
-    it("should render when onChange is not provided (edge case)", () => {
-      const { container } = render(
-        <ProviderSelector value="openrouter" onChange={undefined} />,
-      );
+    it("should render without onChange (edge case)", () => {
+      render(<ProviderSelector value="openrouter" onChange={undefined} />);
 
-      expect(container.querySelector(".provider-selector")).toBeInTheDocument();
+      const select = screen.getByRole("combobox", { name: /LLM Provider/i });
+      expect(select).toBeInTheDocument();
     });
   });
 });

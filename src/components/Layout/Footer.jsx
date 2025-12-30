@@ -1,68 +1,86 @@
 /**
  * Footer - Application footer with legal info and links
  * @param {Object} props
+ * @param {Function} props.onAboutOpen - Callback to open about modal
  * @param {string} props.className - Additional CSS classes
  * @returns {JSX.Element}
  */
-export function Footer({ className = '' }) {
+export function Footer({ onAboutOpen, className = '' }) {
   const currentYear = new Date().getFullYear();
 
   return (
     <footer className={`footer ${className}`} role="contentinfo">
       <div className="footer__container">
-        {/* Disclaimer */}
-        <div className="footer__section footer__section--disclaimer">
-          <h2 className="footer__heading">Important Disclaimer</h2>
-          <p className="footer__text">
-            This tool uses AI to analyze privacy policies and is provided for informational
-            purposes only. The analysis should not be considered legal advice. Always consult
-            with a qualified attorney for legal concerns about privacy policies or terms of service.
-          </p>
+        {/* Important Disclaimer - Styled as a prominent callout */}
+        <div className="footer__disclaimer-callout">
+          <h2 className="footer__disclaimer-title">
+            <span aria-hidden="true">⚠️</span> Important Disclaimer
+          </h2>
+          <div className="footer__disclaimer-content">
+            <p>
+              This tool uses AI to analyze privacy policies and is provided for informational
+              purposes only. The analysis should not be considered legal advice. Always consult
+              with a qualified attorney for legal concerns about privacy policies.
+            </p>
+            <div className="footer__disclaimer-note">
+              <strong>Note:</strong>
+              <ul className="footer__disclaimer-bullets">
+                <li>
+                  Analysis results may differ from model to model or run to run.{' '}
+                  {onAboutOpen && (
+                    <button
+                      type="button"
+                      className="footer__link-button"
+                      onClick={onAboutOpen}
+                    >
+                      See About for guidance on choosing models.
+                    </button>
+                  )}
+                </li>
+                <li>
+                  Privacy risk is personal—your own risk tolerance and threat model matter.
+                  This tool provides objective analysis but cannot account for your individual privacy needs and concerns.
+                </li>
+              </ul>
+            </div>
+          </div>
         </div>
 
-        {/* Privacy & Security */}
-        <div className="footer__section">
-          <h2 className="footer__heading">Privacy & Security</h2>
+        {/* Footer sections in horizontal layout */}
+        <div className="footer__sections-row">
+          {/* Privacy & Security */}
+          <div className="footer__section">
+            <h2 className="footer__heading">Privacy & Security</h2>
+            <ul className="footer__list">
+              <li>🔒 Documents processed locally</li>
+              <li>🔑 API keys in session storage</li>
+              <li>🚫 No data sent to our servers</li>
+              <li>✅ Open source</li>
+            </ul>
+          </div>
+
+          {/* How it works - Condensed */}
+          <div className="footer__section">
+            <h2 className="footer__heading">How It Works</h2>
+            <p className="footer__text">
+              Upload a policy or URL. An LLM analyzes it locally to identify risks and explain key terms.{' '}
+              {onAboutOpen && (
+                <button
+                  type="button"
+                  className="footer__link-button"
+                  onClick={onAboutOpen}
+                >
+                  See About for more details.
+                </button>
+              )}
+            </p>
+          </div>
+
+          {/* Links */}
+          <div className="footer__section">
+            <h2 className="footer__heading">Resources</h2>
           <ul className="footer__list">
-            <li className="footer__list-item">
-              🔒 Your documents are processed locally in your browser
-            </li>
-            <li className="footer__list-item">
-              🔑 API keys are stored securely in session storage
-            </li>
-            <li className="footer__list-item">
-              🚫 No data is sent to our servers
-            </li>
-            <li className="footer__list-item">
-              ✅ Open source - audit the code yourself
-            </li>
-          </ul>
-        </div>
-
-        {/* How it works */}
-        <div className="footer__section">
-          <h2 className="footer__heading">How It Works</h2>
-          <ol className="footer__list footer__list--ordered">
-            <li className="footer__list-item">
-              Upload a PDF or provide a URL to a privacy policy
-            </li>
-            <li className="footer__list-item">
-              The document text is extracted in your browser
-            </li>
-            <li className="footer__list-item">
-              An LLM analyzes the policy and identifies risks
-            </li>
-            <li className="footer__list-item">
-              Results are displayed in plain language
-            </li>
-          </ol>
-        </div>
-
-        {/* Links */}
-        <div className="footer__section">
-          <h2 className="footer__heading">Resources</h2>
-          <ul className="footer__list">
-            <li className="footer__list-item">
+            <li>
               <a
                 href="https://github.com/swannysec/policy-analyzer"
                 target="_blank"
@@ -72,7 +90,7 @@ export function Footer({ className = '' }) {
                 GitHub Repository
               </a>
             </li>
-            <li className="footer__list-item">
+            <li>
               <a
                 href="https://github.com/swannysec/policy-analyzer/issues"
                 target="_blank"
@@ -82,7 +100,7 @@ export function Footer({ className = '' }) {
                 Report an Issue
               </a>
             </li>
-            <li className="footer__list-item">
+            <li>
               <a
                 href="https://github.com/swannysec/policy-analyzer/blob/main/README.md"
                 target="_blank"
@@ -92,7 +110,7 @@ export function Footer({ className = '' }) {
                 Documentation
               </a>
             </li>
-            <li className="footer__list-item">
+            <li>
               <a
                 href="https://openrouter.ai/"
                 target="_blank"
@@ -102,7 +120,7 @@ export function Footer({ className = '' }) {
                 OpenRouter (LLM Provider)
               </a>
             </li>
-            <li className="footer__list-item">
+            <li>
               <a
                 href="https://ollama.ai/"
                 target="_blank"
@@ -112,13 +130,24 @@ export function Footer({ className = '' }) {
                 Ollama (Local LLM)
               </a>
             </li>
+            <li>
+              <a
+                href="https://lmstudio.ai/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="footer__link"
+              >
+                LM Studio (Local LLM)
+              </a>
+            </li>
           </ul>
+          </div>
         </div>
 
         {/* Copyright */}
         <div className="footer__bottom">
           <p className="footer__copyright">
-            © {currentYear} Privacy Policy Analyzer. Released under MIT License.
+            © {currentYear} Privacy Policy Distiller. Released under MIT License.
           </p>
           <p className="footer__attribution">
             Built with React, Vite, and modern web technologies.

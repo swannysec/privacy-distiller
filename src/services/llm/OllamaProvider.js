@@ -27,6 +27,7 @@ export class OllamaProvider extends BaseLLMProvider {
       options: {
         temperature: options.temperature ?? this.config.temperature,
         num_predict: options.maxTokens ?? this.config.maxTokens,
+        num_ctx: this.config.contextWindow || 8192,
       },
     };
 

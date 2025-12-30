@@ -9,6 +9,51 @@ import { ANALYSIS_CONFIG, ERROR_CODES, ERROR_MESSAGES } from '../utils/constants
 import { retry } from '../utils/helpers.js';
 
 /**
+ * Simple token bucket rate limiter
+ * Prevents API abuse by limiting requests to max 10 per minute
+ */
+class TokenBucket {
+  constructor(capacity, refillRate) {
+    this.capacity = capacity;          // Maximum tokens
+    this.tokens = capacity;            // Current available tokens
+    this.refillRate = refillRate;      // Tokens per millisecond
+    this.lastRefill = Date.now();      // Last refill timestamp
+  }
+
+  refill() {
+    const now = Date.now();
+    const timePassed = now - this.lastRefill;
+    const tokensToAdd = timePassed * this.refillRate;
+
+    this.tokens = Math.min(this.capacity, this.tokens + tokensToAdd);
+    this.lastRefill = now;
+  }
+
+  tryConsume() {
+    this.refill();
+
+    if (this.tokens >= 1) {
+      this.tokens -= 1;
+      return true;
+    }
+
+    return false;
+  }
+}
+
+// Module-level rate limiter: max 10 requests per minute (1 token every 6 seconds)
+const rateLimiter = new TokenBucket(10, 1 / 6000);
+
+/**
+ * Reset rate limiter for testing purposes
+ * @param {number} timestamp - Optional timestamp for lastRefill (useful with fake timers)
+ */
+export function __resetRateLimiter(timestamp = Date.now()) {
+  rateLimiter.tokens = rateLimiter.capacity;
+  rateLimiter.lastRefill = timestamp;
+}
+
+/**
  * Hook for LLM provider interactions
  * @returns {Object} LLM provider utilities
  */
@@ -28,9 +73,15 @@ export function useLLMProvider() {
     setError(null);
 
     try {
+      // Check rate limit
+      if (!rateLimiter.tryConsume()) {
+        throw new Error('Rate limit exceeded. Please wait before making another request.');
+      }
+
       // Validate config
-      if (!validateConfig()) {
-        throw new Error(ERROR_MESSAGES[ERROR_CODES.INVALID_API_KEY]);
+      const validation = validateConfig();
+      if (!validation.isValid) {
+        throw new Error(validation.errors?.[0] || ERROR_MESSAGES[ERROR_CODES.INVALID_API_KEY]);
       }
 
       const requestBody = {
@@ -53,7 +104,31 @@ export function useLLMProvider() {
       if (config.provider === 'openrouter') {
         headers['Authorization'] = `Bearer ${config.apiKey}`;
         headers['HTTP-Referer'] = window.location.origin;
-        headers['X-Title'] = 'Privacy Policy Analyzer';
+        headers['X-Title'] = 'Privacy Policy Distiller';
+      }
+
+      // Determine endpoint and request body based on provider
+      let endpoint;
+      let body;
+
+      if (config.provider === 'ollama') {
+        // Ollama uses /api/chat with different request format
+        endpoint = `${config.baseUrl}/api/chat`;
+        const ollamaBody = {
+          model: config.model,
+          messages: requestBody.messages,
+          stream: false,
+          options: {
+            temperature: requestBody.temperature,
+            num_predict: requestBody.max_tokens,
+            num_ctx: config.contextWindow || 8192, // Use configured context window
+          },
+        };
+        body = JSON.stringify(ollamaBody);
+      } else {
+        // OpenAI-compatible API (OpenRouter, LM Studio)
+        endpoint = `${config.baseUrl}/chat/completions`;
+        body = JSON.stringify(requestBody);
       }
 
       // Make request with retry logic
@@ -66,10 +141,10 @@ export function useLLMProvider() {
           );
 
           try {
-            const res = await fetch(`${config.baseUrl}/chat/completions`, {
+            const res = await fetch(endpoint, {
               method: 'POST',
               headers,
-              body: JSON.stringify(requestBody),
+              body,
               signal: controller.signal,
             });
 
@@ -97,12 +172,22 @@ export function useLLMProvider() {
 
       const data = await response.json();
 
-      // Extract response text
-      if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-        throw new Error(ERROR_MESSAGES[ERROR_CODES.LLM_INVALID_RESPONSE]);
-      }
+      // Extract response text based on provider format
+      let responseText;
 
-      const responseText = data.choices[0].message.content;
+      if (config.provider === 'ollama') {
+        // Ollama format: { message: { content: "..." } }
+        if (!data.message || !data.message.content) {
+          throw new Error(ERROR_MESSAGES[ERROR_CODES.LLM_INVALID_RESPONSE]);
+        }
+        responseText = data.message.content;
+      } else {
+        // OpenAI format: { choices: [{ message: { content: "..." } }] }
+        if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+          throw new Error(ERROR_MESSAGES[ERROR_CODES.LLM_INVALID_RESPONSE]);
+        }
+        responseText = data.choices[0].message.content;
+      }
 
       setIsProcessing(false);
       return responseText;

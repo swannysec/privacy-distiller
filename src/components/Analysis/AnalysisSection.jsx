@@ -91,72 +91,7 @@ export function AnalysisSection({ onNewAnalysis, onExportResults, className = ''
     );
   }
 
-  // Show error state
-  if (status === ANALYSIS_STATUS.FAILED) {
-    return (
-      <div className={`analysis-section ${className}`}>
-        <Card className="analysis-section__error-card">
-          <div className="analysis-section__error">
-            <span className="analysis-section__error-icon" aria-hidden="true">
-              ⚠️
-            </span>
-
-            <h3 className="analysis-section__error-title">
-              Analysis Failed
-            </h3>
-
-            <p className="analysis-section__error-message">
-              {error || 'An unexpected error occurred during analysis.'}
-            </p>
-
-            {/* Common error scenarios */}
-            <div className="analysis-section__error-help">
-              <h4 className="analysis-section__error-help-title">
-                Common issues:
-              </h4>
-              <ul className="analysis-section__error-help-list">
-                <li>
-                  <strong>API Key:</strong> Check that your API key is correct and has
-                  sufficient credits (for OpenRouter)
-                </li>
-                <li>
-                  <strong>Local LLM:</strong> Ensure Ollama or LM Studio is running and
-                  the model is loaded
-                </li>
-                <li>
-                  <strong>Network:</strong> Verify your internet connection for URL
-                  fetching or API calls
-                </li>
-                <li>
-                  <strong>Document:</strong> Make sure the PDF is text-based (not scanned)
-                  and the URL is accessible
-                </li>
-              </ul>
-            </div>
-
-            <div className="analysis-section__error-actions">
-              <Button
-                variant="primary"
-                onClick={handleRetry}
-                ariaLabel="Retry analysis"
-              >
-                Try Again
-              </Button>
-
-              <Button
-                variant="secondary"
-                onClick={resetAnalysis}
-                ariaLabel="Start over"
-              >
-                Start Over
-              </Button>
-            </div>
-          </div>
-        </Card>
-      </div>
-    );
-  }
-
+  // Error state is now shown inline in App.jsx near the input for better visibility
   // Idle state - nothing to show
   return null;
 }

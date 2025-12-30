@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { URLInput } from './URLInput';
 
-// Mock child components
+// Mock Button component
 vi.mock('../Common', () => ({
   Button: ({ children, disabled, loading, type, onClick, ariaLabel }) => (
     <button
@@ -15,25 +15,6 @@ vi.mock('../Common', () => ({
       {children}
     </button>
   ),
-  Input: ({ value, onChange, onKeyDown, disabled, error, label, id, name, ref, ...props }) => {
-    const inputId = id || name || 'test-input';
-    return (
-      <div>
-        {label && <label htmlFor={inputId}>{label}</label>}
-        <input
-          id={inputId}
-          name={name}
-          value={value}
-          onChange={onChange}
-          onKeyDown={onKeyDown}
-          disabled={disabled}
-          data-error={error}
-          {...props}
-        />
-        {error && <div data-testid="input-error">{error}</div>}
-      </div>
-    );
-  },
 }));
 
 describe('URLInput', () => {
@@ -57,14 +38,14 @@ describe('URLInput', () => {
 
     it('should render help text', () => {
       render(<URLInput onSubmit={mockOnSubmit} />);
-      expect(screen.getByText('Enter the URL of any privacy policy or terms of service document')).toBeInTheDocument();
+      expect(screen.getByText('Enter the direct URL to a privacy policy page')).toBeInTheDocument();
     });
 
     it('should render example buttons', () => {
       render(<URLInput onSubmit={mockOnSubmit} />);
-      expect(screen.getByText('Google Privacy Policy')).toBeInTheDocument();
-      expect(screen.getByText('Facebook Privacy Policy')).toBeInTheDocument();
-      expect(screen.getByText('Amazon Privacy Notice')).toBeInTheDocument();
+      expect(screen.getByText('Google')).toBeInTheDocument();
+      expect(screen.getByText('Facebook')).toBeInTheDocument();
+      expect(screen.getByText('Amazon')).toBeInTheDocument();
     });
 
     it('should render with placeholder', () => {
@@ -194,17 +175,17 @@ describe('URLInput', () => {
     it('should populate Google example URL', () => {
       render(<URLInput onSubmit={mockOnSubmit} />);
       const input = screen.getByLabelText('Privacy Policy URL');
-      const googleButton = screen.getByText('Google Privacy Policy');
+      const googleButton = screen.getByText('Google');
 
       fireEvent.click(googleButton);
 
-      expect(input).toHaveValue('https://www.google.com/policies/privacy/');
+      expect(input).toHaveValue('https://policies.google.com/privacy');
     });
 
     it('should populate Facebook example URL', () => {
       render(<URLInput onSubmit={mockOnSubmit} />);
       const input = screen.getByLabelText('Privacy Policy URL');
-      const facebookButton = screen.getByText('Facebook Privacy Policy');
+      const facebookButton = screen.getByText('Facebook');
 
       fireEvent.click(facebookButton);
 
@@ -214,7 +195,7 @@ describe('URLInput', () => {
     it('should populate Amazon example URL', () => {
       render(<URLInput onSubmit={mockOnSubmit} />);
       const input = screen.getByLabelText('Privacy Policy URL');
-      const amazonButton = screen.getByText('Amazon Privacy Notice');
+      const amazonButton = screen.getByText('Amazon');
 
       fireEvent.click(amazonButton);
 
@@ -224,12 +205,12 @@ describe('URLInput', () => {
     it('should overwrite existing URL with example', () => {
       render(<URLInput onSubmit={mockOnSubmit} />);
       const input = screen.getByLabelText('Privacy Policy URL');
-      const googleButton = screen.getByText('Google Privacy Policy');
+      const googleButton = screen.getByText('Google');
 
       fireEvent.change(input, { target: { value: 'https://old-url.com' } });
       fireEvent.click(googleButton);
 
-      expect(input).toHaveValue('https://www.google.com/policies/privacy/');
+      expect(input).toHaveValue('https://policies.google.com/privacy');
     });
   });
 
@@ -248,9 +229,9 @@ describe('URLInput', () => {
 
     it('should disable example buttons when disabled', () => {
       render(<URLInput onSubmit={mockOnSubmit} disabled />);
-      const googleButton = screen.getByText('Google Privacy Policy');
-      const facebookButton = screen.getByText('Facebook Privacy Policy');
-      const amazonButton = screen.getByText('Amazon Privacy Notice');
+      const googleButton = screen.getByText('Google');
+      const facebookButton = screen.getByText('Facebook');
+      const amazonButton = screen.getByText('Amazon');
 
       expect(googleButton).toBeDisabled();
       expect(facebookButton).toBeDisabled();
@@ -271,7 +252,7 @@ describe('URLInput', () => {
     it('should not populate examples when disabled', () => {
       render(<URLInput onSubmit={mockOnSubmit} disabled />);
       const input = screen.getByLabelText('Privacy Policy URL');
-      const googleButton = screen.getByText('Google Privacy Policy');
+      const googleButton = screen.getByText('Google');
 
       fireEvent.click(googleButton);
 
@@ -314,18 +295,18 @@ describe('URLInput', () => {
   describe('error display', () => {
     it('should display error message', () => {
       render(<URLInput onSubmit={mockOnSubmit} error="Invalid URL format" />);
-      expect(screen.getByTestId('input-error')).toHaveTextContent('Invalid URL format');
+      expect(screen.getByRole('alert')).toHaveTextContent('Invalid URL format');
     });
 
     it('should not display error when null', () => {
       render(<URLInput onSubmit={mockOnSubmit} error={null} />);
-      expect(screen.queryByTestId('input-error')).not.toBeInTheDocument();
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     });
 
-    it('should pass error to Input component', () => {
+    it('should have error element with proper id', () => {
       render(<URLInput onSubmit={mockOnSubmit} error="Test error" />);
-      const input = screen.getByLabelText('Privacy Policy URL');
-      expect(input).toHaveAttribute('data-error', 'Test error');
+      const errorElement = screen.getByRole('alert');
+      expect(errorElement).toHaveAttribute('id', 'url-input-error');
     });
   });
 
@@ -361,8 +342,8 @@ describe('URLInput', () => {
 
     it('should have help text with id', () => {
       render(<URLInput onSubmit={mockOnSubmit} />);
-      const helpText = screen.getByText('Enter the URL of any privacy policy or terms of service document');
-      expect(helpText).toHaveAttribute('id', 'url-input-help');
+      const helpText = screen.getByText('Enter the direct URL to a privacy policy page');
+      expect(helpText).toHaveAttribute('id', 'url-input-hint');
     });
 
     it('should have required attribute', () => {

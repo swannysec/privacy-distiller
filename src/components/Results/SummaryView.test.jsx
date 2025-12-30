@@ -2,18 +2,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { SummaryView } from "./SummaryView";
 
-vi.mock("../Common", () => ({
-  Card: ({ children, title, subtitle, className }) => (
-    <div className={className} data-testid="card">
-      <h2>{title}</h2>
-      <p>{subtitle}</p>
-      {children}
-    </div>
-  ),
-}));
-
-vi.mock("../../utils/sanitization", () => ({
-  sanitizeHtml: vi.fn((html) => html),
+// Mock ReactMarkdown
+vi.mock("react-markdown", () => ({
+  default: ({ children }) => <div data-testid="markdown">{children}</div>,
 }));
 
 describe("SummaryView", () => {
@@ -39,38 +30,22 @@ describe("SummaryView", () => {
       ).toBeInTheDocument();
     });
 
-    it("should render three level buttons", () => {
+    it("should render three level tabs", () => {
       render(<SummaryView summary={mockSummary} />);
 
       expect(
-        screen.getByRole("button", { name: /Brief/i }),
+        screen.getByRole("tab", { name: /Brief/i }),
       ).toBeInTheDocument();
       expect(
-        screen.getByRole("button", { name: /Detailed/i }),
+        screen.getByRole("tab", { name: /Detailed/i }),
       ).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /Full/i })).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: /Full Analysis/i })).toBeInTheDocument();
     });
 
     it("should show brief content by default", () => {
       render(<SummaryView summary={mockSummary} />);
 
       expect(screen.getByText(/This is a brief summary/i)).toBeInTheDocument();
-    });
-
-    it("should show level icons", () => {
-      render(<SummaryView summary={mockSummary} />);
-
-      expect(screen.getByText("📋")).toBeInTheDocument();
-      expect(screen.getByText("📄")).toBeInTheDocument();
-      expect(screen.getByText("📚")).toBeInTheDocument();
-    });
-
-    it("should show level descriptions", () => {
-      render(<SummaryView summary={mockSummary} />);
-
-      expect(screen.getByText("Quick overview")).toBeInTheDocument();
-      expect(screen.getByText("Key points expanded")).toBeInTheDocument();
-      expect(screen.getByText("Complete analysis")).toBeInTheDocument();
     });
 
     it("should show reading time estimate", () => {
@@ -100,15 +75,15 @@ describe("SummaryView", () => {
     it("should mark Brief as active by default", () => {
       render(<SummaryView summary={mockSummary} />);
 
-      const briefButton = screen.getByRole("button", { name: /Brief/i });
-      expect(briefButton).toHaveAttribute("aria-pressed", "true");
+      const briefTab = screen.getByRole("tab", { name: /Brief/i });
+      expect(briefTab).toHaveAttribute("aria-selected", "true");
     });
 
     it("should switch to detailed view when Detailed clicked", () => {
       render(<SummaryView summary={mockSummary} />);
 
-      const detailedButton = screen.getByRole("button", { name: /Detailed/i });
-      fireEvent.click(detailedButton);
+      const detailedTab = screen.getByRole("tab", { name: /Detailed/i });
+      fireEvent.click(detailedTab);
 
       expect(
         screen.getByText(/This is a detailed summary/i),
@@ -118,11 +93,11 @@ describe("SummaryView", () => {
       ).not.toBeInTheDocument();
     });
 
-    it("should switch to full view when Full clicked", () => {
+    it("should switch to full view when Full Analysis clicked", () => {
       render(<SummaryView summary={mockSummary} />);
 
-      const fullButton = screen.getByRole("button", { name: /Full/i });
-      fireEvent.click(fullButton);
+      const fullTab = screen.getByRole("tab", { name: /Full Analysis/i });
+      fireEvent.click(fullTab);
 
       expect(
         screen.getByText(/This is a full comprehensive/i),
@@ -135,13 +110,13 @@ describe("SummaryView", () => {
     it("should update active state when switching levels", () => {
       render(<SummaryView summary={mockSummary} />);
 
-      const detailedButton = screen.getByRole("button", { name: /Detailed/i });
-      fireEvent.click(detailedButton);
+      const detailedTab = screen.getByRole("tab", { name: /Detailed/i });
+      fireEvent.click(detailedTab);
 
-      expect(detailedButton).toHaveAttribute("aria-pressed", "true");
+      expect(detailedTab).toHaveAttribute("aria-selected", "true");
 
-      const briefButton = screen.getByRole("button", { name: /Brief/i });
-      expect(briefButton).toHaveAttribute("aria-pressed", "false");
+      const briefTab = screen.getByRole("tab", { name: /Brief/i });
+      expect(briefTab).toHaveAttribute("aria-selected", "false");
     });
 
     it("should update word count when switching levels", () => {
@@ -149,8 +124,8 @@ describe("SummaryView", () => {
 
       expect(screen.getByText("~200 words")).toBeInTheDocument();
 
-      const detailedButton = screen.getByRole("button", { name: /Detailed/i });
-      fireEvent.click(detailedButton);
+      const detailedTab = screen.getByRole("tab", { name: /Detailed/i });
+      fireEvent.click(detailedTab);
 
       expect(screen.getByText("~500 words")).toBeInTheDocument();
       expect(screen.queryByText("~200 words")).not.toBeInTheDocument();
@@ -159,8 +134,8 @@ describe("SummaryView", () => {
     it('should show "~1000+ words" for full level', () => {
       render(<SummaryView summary={mockSummary} />);
 
-      const fullButton = screen.getByRole("button", { name: /Full/i });
-      fireEvent.click(fullButton);
+      const fullTab = screen.getByRole("tab", { name: /Full Analysis/i });
+      fireEvent.click(fullTab);
 
       expect(screen.getByText("~1000+ words")).toBeInTheDocument();
     });
@@ -189,8 +164,8 @@ describe("SummaryView", () => {
 
       render(<SummaryView summary={detailedSummary} />);
 
-      const detailedButton = screen.getByRole("button", { name: /Detailed/i });
-      fireEvent.click(detailedButton);
+      const detailedTab = screen.getByRole("tab", { name: /Detailed/i });
+      fireEvent.click(detailedTab);
 
       // 600 words / 200 words per minute = 3 minutes
       expect(screen.getByText(/3 min read/i)).toBeInTheDocument();
@@ -210,98 +185,70 @@ describe("SummaryView", () => {
     });
   });
 
-  describe("Content Sanitization", () => {
-    // Note: Removed tests that checked if sanitizeHTML function was called.
-    // These test implementation details rather than actual sanitization behavior.
-    // The actual sanitization is verified by the component rendering without XSS issues.
-
-    it("should render sanitized HTML with dangerouslySetInnerHTML", () => {
-      const { container } = render(<SummaryView summary={mockSummary} />);
-
-      const contentDiv = container.querySelector(".summary-view__text");
-      expect(contentDiv).toBeInTheDocument();
-    });
-  });
-
   describe("Accessibility", () => {
-    it('should have role="group" on level selector', () => {
+    it('should have role="tablist" on level selector', () => {
       render(<SummaryView summary={mockSummary} />);
 
-      const group = screen.getByRole("group", {
+      const tablist = screen.getByRole("tablist", {
         name: /Summary detail level/i,
       });
-      expect(group).toBeInTheDocument();
+      expect(tablist).toBeInTheDocument();
     });
 
-    it("should have aria-pressed on level buttons", () => {
+    it("should have aria-selected on level tabs", () => {
       render(<SummaryView summary={mockSummary} />);
 
-      const briefButton = screen.getByRole("button", { name: /Brief/i });
-      const detailedButton = screen.getByRole("button", { name: /Detailed/i });
-      const fullButton = screen.getByRole("button", { name: /Full/i });
+      const briefTab = screen.getByRole("tab", { name: /Brief/i });
+      const detailedTab = screen.getByRole("tab", { name: /Detailed/i });
+      const fullTab = screen.getByRole("tab", { name: /Full Analysis/i });
 
-      expect(briefButton).toHaveAttribute("aria-pressed", "true");
-      expect(detailedButton).toHaveAttribute("aria-pressed", "false");
-      expect(fullButton).toHaveAttribute("aria-pressed", "false");
+      expect(briefTab).toHaveAttribute("aria-selected", "true");
+      expect(detailedTab).toHaveAttribute("aria-selected", "false");
+      expect(fullTab).toHaveAttribute("aria-selected", "false");
     });
 
-    it("should have aria-hidden on decorative icons", () => {
-      const { container } = render(<SummaryView summary={mockSummary} />);
-
-      const icons = container.querySelectorAll(".summary-view__level-icon");
-      icons.forEach((icon) => {
-        expect(icon).toHaveAttribute("aria-hidden", "true");
-      });
-    });
-
-    it('should have type="button" on level buttons', () => {
+    it('should have type="button" on level tabs', () => {
       render(<SummaryView summary={mockSummary} />);
 
-      const buttons = screen.getAllByRole("button");
-      buttons.forEach((button) => {
-        expect(button).toHaveAttribute("type", "button");
+      const tabs = screen.getAllByRole("tab");
+      tabs.forEach((tab) => {
+        expect(tab).toHaveAttribute("type", "button");
       });
     });
   });
 
   describe("CSS Classes", () => {
-    it("should apply active class to selected level button", () => {
+    it("should apply active class to selected level tab", () => {
       const { container } = render(<SummaryView summary={mockSummary} />);
 
-      const activeButton = container.querySelector(
-        ".summary-view__level-button--active",
-      );
-      expect(activeButton).toBeInTheDocument();
-      expect(activeButton).toHaveTextContent("Brief");
+      const activeTab = container.querySelector(".summary-tab--active");
+      expect(activeTab).toBeInTheDocument();
+      expect(activeTab).toHaveTextContent("Brief");
     });
 
     it("should update active class when switching levels", () => {
       const { container } = render(<SummaryView summary={mockSummary} />);
 
-      const detailedButton = screen.getByRole("button", { name: /Detailed/i });
-      fireEvent.click(detailedButton);
+      const detailedTab = screen.getByRole("tab", { name: /Detailed/i });
+      fireEvent.click(detailedTab);
 
-      const activeButton = container.querySelector(
-        ".summary-view__level-button--active",
-      );
-      expect(activeButton).toHaveTextContent("Detailed");
+      const activeTab = container.querySelector(".summary-tab--active");
+      expect(activeTab).toHaveTextContent("Detailed");
     });
 
-    it("should not apply active class to non-selected buttons", () => {
+    it("should not apply active class to non-selected tabs", () => {
       const { container } = render(<SummaryView summary={mockSummary} />);
 
-      const buttons = container.querySelectorAll(".summary-view__level-button");
-      const activeButtons = container.querySelectorAll(
-        ".summary-view__level-button--active",
-      );
+      const tabs = container.querySelectorAll(".summary-tab");
+      const activeTabs = container.querySelectorAll(".summary-tab--active");
 
-      expect(buttons.length).toBe(3);
-      expect(activeButtons.length).toBe(1);
+      expect(tabs.length).toBe(3);
+      expect(activeTabs.length).toBe(1);
     });
   });
 
   describe("Edge Cases", () => {
-    it("should handle empty brief summary", () => {
+    it("should handle empty brief summary with default text", () => {
       const emptySummary = {
         brief: "",
         detailed: "Detailed content",
@@ -310,12 +257,15 @@ describe("SummaryView", () => {
 
       render(<SummaryView summary={emptySummary} />);
 
-      expect(screen.getByText(/1 min read/i)).toBeInTheDocument();
+      // Component provides default text for empty summaries
+      expect(screen.getByText(/No brief summary available/i)).toBeInTheDocument();
     });
 
-    // Note: Removed edge case tests for undefined properties and null summary.
-    // These tests expect the component to not crash, but may not match actual behavior.
-    // The component's TypeScript props should enforce correct types at compile time.
+    it("should handle undefined summary with defaults", () => {
+      render(<SummaryView />);
+
+      expect(screen.getByText(/No brief summary available/i)).toBeInTheDocument();
+    });
 
     it("should handle very long content", () => {
       const longSummary = {
@@ -333,17 +283,17 @@ describe("SummaryView", () => {
     it("should handle rapid level switching", () => {
       render(<SummaryView summary={mockSummary} />);
 
-      const buttons = screen.getAllByRole("button");
+      const tabs = screen.getAllByRole("tab");
 
       // Rapidly switch between levels
       for (let i = 0; i < 10; i++) {
-        buttons.forEach((button) => {
-          fireEvent.click(button);
+        tabs.forEach((tab) => {
+          fireEvent.click(tab);
         });
       }
 
       // Should remain functional
-      expect(screen.getByRole("group")).toBeInTheDocument();
+      expect(screen.getByRole("tablist")).toBeInTheDocument();
     });
 
     it("should handle summary with only whitespace", () => {
@@ -358,33 +308,21 @@ describe("SummaryView", () => {
       // Should calculate reading time as ~0 words, ceil to 1 minute
       expect(screen.getByText(/1 min read/i)).toBeInTheDocument();
     });
-
-    it("should handle HTML entities in summary", () => {
-      const htmlSummary = {
-        brief: "Summary with &lt;tags&gt; and &amp; entities",
-        detailed: "",
-        full: "",
-      };
-
-      render(<SummaryView summary={htmlSummary} />);
-
-      // Content should be sanitized and rendered
-      expect(screen.getByText(/Summary with/i)).toBeInTheDocument();
-    });
   });
 
   describe("Meta Information", () => {
-    it("should render reading time icon", () => {
+    it("should render reading time with icon", () => {
       render(<SummaryView summary={mockSummary} />);
 
-      // Icon is within the reading time text, so check for the full text
+      // Icon is within the reading time text
       expect(screen.getByText(/min read/i)).toBeInTheDocument();
+      expect(screen.getByText("📖")).toBeInTheDocument();
     });
 
     it("should have proper structure for meta items", () => {
       const { container } = render(<SummaryView summary={mockSummary} />);
 
-      const metaItems = container.querySelectorAll(".summary-view__meta-item");
+      const metaItems = container.querySelectorAll(".summary-meta__item");
       expect(metaItems.length).toBe(2); // reading time and word count
     });
   });

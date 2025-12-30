@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Build a simple web application hosted on GitHub Pages that uses LLMs (local or OpenRouter) to analyze, break down, and summarize privacy policies and terms of service documents via URL or PDF upload for laypeople, including highlighting significant privacy risks.
+Build a simple web application hosted on GitHub Pages that uses LLMs (local or OpenRouter) to analyze, break down, and summarize privacy policies via URL or PDF upload for laypeople, including highlighting significant privacy risks.
 
 ## Development Environment
 
@@ -380,6 +380,8 @@ Use Serena memories to document:
 - ❌ DO NOT skip the `pdf` skill for document processing
 - ❌ DO NOT create helper functions or abstractions for one-time operations
 - ❌ DO NOT add error handling for scenarios that can't happen
+- ❌ DO NOT run `npm run dev` or `npm run preview` - user runs preview server manually
+- ❌ DO NOT start any vite server - only run `npm run build` and `npm test`
 
 ## Agent Invocation Reminders
 

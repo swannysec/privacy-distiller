@@ -1,330 +1,482 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { ModelSelector } from './ModelSelector';
+import { LLMConfigProvider } from '../../contexts/LLMConfigContext';
+
+// Wrapper component for tests
+const renderWithProvider = (ui, options) => {
+  return render(
+    <LLMConfigProvider>{ui}</LLMConfigProvider>,
+    options
+  );
+};
+
+// Mock fetch for Ollama API
+const mockOllamaModels = {
+  models: [
+    { name: 'llama3', size: 4000000000, details: { parameter_size: '8B' } },
+    { name: 'mistral', size: 4000000000, details: { parameter_size: '7B' } },
+    { name: 'mixtral', size: 26000000000, details: { parameter_size: '8x7B' } },
+  ]
+};
+
+// Mock fetch for LM Studio API
+const mockLMStudioModels = {
+  data: [
+    { id: 'local-model-1' },
+    { id: 'local-model-2' },
+  ]
+};
 
 describe('ModelSelector', () => {
   const mockOnChange = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Mock fetch for Ollama tests
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(mockOllamaModels),
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   describe('Rendering', () => {
-    it('should render label', () => {
-      render(<ModelSelector provider="openrouter" value="anthropic/claude-3.5-sonnet" onChange={mockOnChange} />);
+    it('should render label for OpenRouter', () => {
+      renderWithProvider(<ModelSelector provider="openrouter" value="anthropic/claude-haiku-4.5" onChange={mockOnChange} />);
 
       expect(screen.getByLabelText('Model')).toBeInTheDocument();
     });
 
-    it('should render select dropdown', () => {
-      render(<ModelSelector provider="openrouter" value="anthropic/claude-3.5-sonnet" onChange={mockOnChange} />);
+    it('should render text input for OpenRouter (combobox)', () => {
+      renderWithProvider(<ModelSelector provider="openrouter" value="anthropic/claude-haiku-4.5" onChange={mockOnChange} />);
 
-      const select = screen.getByRole('combobox');
-      expect(select).toBeInTheDocument();
+      const input = screen.getByRole('textbox', { name: /model/i });
+      expect(input).toBeInTheDocument();
+      expect(input).toHaveAttribute('placeholder', 'Select or type a model ID...');
     });
 
-    it('should render dropdown icon', () => {
-      const { container } = render(
-        <ModelSelector provider="openrouter" value="anthropic/claude-3.5-sonnet" onChange={mockOnChange} />
-      );
+    it('should render select dropdown for Ollama', async () => {
+      renderWithProvider(<ModelSelector provider="ollama" value="llama3" onChange={mockOnChange} />);
 
-      const icon = container.querySelector('.model-selector__icon');
-      expect(icon).toBeInTheDocument();
-      expect(icon).toHaveTextContent('▼');
+      // Wait for models to load
+      await waitFor(() => {
+        expect(screen.getByRole('combobox')).toBeInTheDocument();
+      });
     });
 
     it('should apply custom className', () => {
-      const { container } = render(
-        <ModelSelector provider="openrouter" value="anthropic/claude-3.5-sonnet" onChange={mockOnChange} className="custom-class" />
+      const { container } = renderWithProvider(
+        <ModelSelector provider="openrouter" value="anthropic/claude-haiku-4.5" onChange={mockOnChange} className="custom-class" />
       );
 
-      expect(container.querySelector('.model-selector.custom-class')).toBeInTheDocument();
+      expect(container.querySelector('.model-combobox.custom-class')).toBeInTheDocument();
     });
   });
 
   describe('OpenRouter Provider', () => {
-    it('should render all OpenRouter models', () => {
-      render(<ModelSelector provider="openrouter" value="anthropic/claude-3.5-sonnet" onChange={mockOnChange} />);
+    it('should show dropdown with recommended models on focus', async () => {
+      renderWithProvider(<ModelSelector provider="openrouter" value="" onChange={mockOnChange} />);
 
-      expect(screen.getByRole('option', { name: /Claude 3.5 Sonnet/i })).toBeInTheDocument();
-      expect(screen.getByRole('option', { name: /GPT-4 Turbo/i })).toBeInTheDocument();
-      expect(screen.getByRole('option', { name: /^GPT-4$/i })).toBeInTheDocument();
-      expect(screen.getByRole('option', { name: /Gemini Pro/i })).toBeInTheDocument();
-      expect(screen.getByRole('option', { name: /Llama 3 70B/i })).toBeInTheDocument();
+      const input = screen.getByRole('textbox');
+      fireEvent.focus(input);
+
+      await waitFor(() => {
+        // Should show dropdown with recommended models
+        expect(screen.getByRole('listbox')).toBeInTheDocument();
+      });
     });
 
-    it('should display description for selected model', () => {
-      render(<ModelSelector provider="openrouter" value="anthropic/claude-3.5-sonnet" onChange={mockOnChange} />);
+    it('should display recommended models in dropdown', async () => {
+      renderWithProvider(<ModelSelector provider="openrouter" value="" onChange={mockOnChange} />);
 
-      expect(screen.getByText('Best for analysis and reasoning')).toBeInTheDocument();
+      const input = screen.getByRole('textbox');
+      fireEvent.focus(input);
+
+      await waitFor(() => {
+        const listbox = screen.getByRole('listbox');
+        const options = within(listbox).getAllByRole('option');
+        expect(options.length).toBeGreaterThan(0);
+      });
     });
 
-    it('should show OpenRouter pricing note', () => {
-      render(<ModelSelector provider="openrouter" value="anthropic/claude-3.5-sonnet" onChange={mockOnChange} />);
+    it('should allow typing custom model ID', () => {
+      renderWithProvider(<ModelSelector provider="openrouter" value="" onChange={mockOnChange} />);
 
-      expect(screen.getByText(/Different models have different pricing/i)).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: /OpenRouter's pricing/i })).toBeInTheDocument();
+      const input = screen.getByRole('textbox');
+      fireEvent.change(input, { target: { value: 'custom/model-id' } });
+
+      expect(mockOnChange).toHaveBeenCalledWith('custom/model-id');
     });
 
-    it('should have link with correct href', () => {
-      render(<ModelSelector provider="openrouter" value="anthropic/claude-3.5-sonnet" onChange={mockOnChange} />);
+    it('should show hint text when input is empty', () => {
+      renderWithProvider(<ModelSelector provider="openrouter" value="" onChange={mockOnChange} />);
 
-      const link = screen.getByRole('link', { name: /OpenRouter's pricing/i });
-      expect(link).toHaveAttribute('href', 'https://openrouter.ai/docs#models');
+      expect(screen.getByText(/Select a recommended model or enter any OpenRouter model ID/i)).toBeInTheDocument();
+    });
+
+    it('should have aria-haspopup attribute', () => {
+      renderWithProvider(<ModelSelector provider="openrouter" value="" onChange={mockOnChange} />);
+
+      const input = screen.getByRole('textbox');
+      expect(input).toHaveAttribute('aria-haspopup', 'listbox');
     });
   });
 
   describe('Ollama Provider', () => {
-    it('should render all Ollama models', () => {
-      render(<ModelSelector provider="ollama" value="llama3" onChange={mockOnChange} />);
+    it('should render fetched Ollama models', async () => {
+      renderWithProvider(<ModelSelector provider="ollama" value="llama3" onChange={mockOnChange} />);
 
-      expect(screen.getByRole('option', { name: /Llama 3/i })).toBeInTheDocument();
-      expect(screen.getByRole('option', { name: /Mistral/i })).toBeInTheDocument();
-      expect(screen.getByRole('option', { name: /Mixtral 8x7B/i })).toBeInTheDocument();
-      expect(screen.getByRole('option', { name: /Phi-3/i })).toBeInTheDocument();
-      expect(screen.getByRole('option', { name: /Gemma/i })).toBeInTheDocument();
+      // Wait for models to load from API
+      await waitFor(() => {
+        expect(screen.getByRole('option', { name: /llama3/i })).toBeInTheDocument();
+      });
+      expect(screen.getByRole('option', { name: /mistral/i })).toBeInTheDocument();
+      expect(screen.getByRole('option', { name: /mixtral/i })).toBeInTheDocument();
     });
 
-    it('should display description for selected Ollama model', () => {
-      render(<ModelSelector provider="ollama" value="llama3" onChange={mockOnChange} />);
+    it('should show loading state while fetching models', () => {
+      // Mock a delayed fetch
+      global.fetch = vi.fn().mockImplementation(() => new Promise(() => {}));
 
-      expect(screen.getByText("Meta's latest open model")).toBeInTheDocument();
+      renderWithProvider(<ModelSelector provider="ollama" value="llama3" onChange={mockOnChange} />);
+
+      expect(screen.getByText(/Connecting to Ollama/i)).toBeInTheDocument();
     });
 
-    it('should show Ollama pull command note', () => {
-      render(<ModelSelector provider="ollama" value="llama3" onChange={mockOnChange} />);
+    it('should show loading spinner', () => {
+      global.fetch = vi.fn().mockImplementation(() => new Promise(() => {}));
 
-      expect(screen.getByText(/Make sure the selected model is downloaded/i)).toBeInTheDocument();
-      expect(screen.getByText(/ollama pull llama3/i)).toBeInTheDocument();
+      const { container } = renderWithProvider(<ModelSelector provider="ollama" value="llama3" onChange={mockOnChange} />);
+
+      expect(container.querySelector('.model-loading__spinner')).toBeInTheDocument();
     });
 
-    it('should show pull command for currently selected model', () => {
-      render(<ModelSelector provider="ollama" value="mistral" onChange={mockOnChange} />);
+    it('should display model size info', async () => {
+      renderWithProvider(<ModelSelector provider="ollama" value="llama3" onChange={mockOnChange} />);
 
-      expect(screen.getByText(/ollama pull mistral/i)).toBeInTheDocument();
+      await waitFor(() => {
+        // Model options include size info
+        const llama3Option = screen.getByRole('option', { name: /llama3.*4\.0GB/i });
+        expect(llama3Option).toBeInTheDocument();
+      });
+    });
+
+    it('should show error when Ollama is not running', async () => {
+      global.fetch = vi.fn().mockRejectedValue(new Error('Connection refused'));
+
+      renderWithProvider(<ModelSelector provider="ollama" value="llama3" onChange={mockOnChange} />);
+
+      await waitFor(() => {
+        expect(screen.getByText(/Unable to connect to Ollama/i)).toBeInTheDocument();
+      });
+    });
+
+    it('should show error icon when fetch fails', async () => {
+      global.fetch = vi.fn().mockRejectedValue(new Error('Connection refused'));
+
+      const { container } = renderWithProvider(<ModelSelector provider="ollama" value="llama3" onChange={mockOnChange} />);
+
+      await waitFor(() => {
+        expect(container.querySelector('.model-error__icon')).toBeInTheDocument();
+      });
+    });
+
+    it('should show count of available models', async () => {
+      renderWithProvider(<ModelSelector provider="ollama" value="llama3" onChange={mockOnChange} />);
+
+      await waitFor(() => {
+        expect(screen.getByText(/3 models available/i)).toBeInTheDocument();
+      });
     });
   });
 
   describe('LM Studio Provider', () => {
-    it('should render LM Studio model option', () => {
-      render(<ModelSelector provider="lmstudio" value="local-model" onChange={mockOnChange} />);
-
-      expect(screen.getByRole('option', { name: /Local Model/i })).toBeInTheDocument();
+    beforeEach(() => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockLMStudioModels),
+      });
     });
 
-    it('should display description for LM Studio model', () => {
-      render(<ModelSelector provider="lmstudio" value="local-model" onChange={mockOnChange} />);
+    it('should render fetched LM Studio models', async () => {
+      renderWithProvider(<ModelSelector provider="lmstudio" value="local-model-1" onChange={mockOnChange} />);
 
-      expect(screen.getByText('Currently loaded model')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByRole('option', { name: /local-model-1/i })).toBeInTheDocument();
+      });
+      expect(screen.getByRole('option', { name: /local-model-2/i })).toBeInTheDocument();
     });
 
-    it('should show LM Studio note', () => {
-      render(<ModelSelector provider="lmstudio" value="local-model" onChange={mockOnChange} />);
+    it('should show loading state while connecting', () => {
+      global.fetch = vi.fn().mockImplementation(() => new Promise(() => {}));
 
-      expect(screen.getByText(/whichever model is currently loaded in LM Studio/i)).toBeInTheDocument();
+      renderWithProvider(<ModelSelector provider="lmstudio" value="local-model" onChange={mockOnChange} />);
+
+      expect(screen.getByText(/Connecting to LM Studio/i)).toBeInTheDocument();
+    });
+
+    it('should show error when LM Studio is not running', async () => {
+      global.fetch = vi.fn().mockRejectedValue(new Error('Connection refused'));
+
+      renderWithProvider(<ModelSelector provider="lmstudio" value="local-model" onChange={mockOnChange} />);
+
+      await waitFor(() => {
+        expect(screen.getByText(/Unable to connect to LM Studio/i)).toBeInTheDocument();
+      });
+    });
+
+    it('should show empty state when no models loaded', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ data: [] }),
+      });
+
+      renderWithProvider(<ModelSelector provider="lmstudio" value="" onChange={mockOnChange} />);
+
+      await waitFor(() => {
+        expect(screen.getByText(/No models loaded/i)).toBeInTheDocument();
+      });
     });
   });
 
   describe('User Interactions', () => {
-    it('should call onChange when model is selected', () => {
-      render(<ModelSelector provider="openrouter" value="anthropic/claude-3.5-sonnet" onChange={mockOnChange} />);
+    it('should call onChange when model is selected from dropdown (OpenRouter)', async () => {
+      renderWithProvider(<ModelSelector provider="openrouter" value="" onChange={mockOnChange} />);
+
+      const input = screen.getByRole('textbox');
+      fireEvent.focus(input);
+
+      await waitFor(() => {
+        expect(screen.getByRole('listbox')).toBeInTheDocument();
+      });
+
+      // Click on first option
+      const options = screen.getAllByRole('option');
+      fireEvent.click(options[0]);
+
+      expect(mockOnChange).toHaveBeenCalled();
+    });
+
+    it('should call onChange when model is selected (Ollama)', async () => {
+      renderWithProvider(<ModelSelector provider="ollama" value="llama3" onChange={mockOnChange} />);
+
+      await waitFor(() => {
+        expect(screen.getByRole('combobox')).toBeInTheDocument();
+      });
 
       const select = screen.getByRole('combobox');
-      fireEvent.change(select, { target: { value: 'openai/gpt-4-turbo' } });
+      fireEvent.change(select, { target: { value: 'mistral' } });
 
-      expect(mockOnChange).toHaveBeenCalledWith('openai/gpt-4-turbo');
+      expect(mockOnChange).toHaveBeenCalledWith('mistral');
     });
 
-    it('should update selected value in dropdown', () => {
-      render(<ModelSelector provider="openrouter" value="anthropic/claude-3.5-sonnet" onChange={mockOnChange} />);
+    it('should call onChange when typing in input (OpenRouter)', () => {
+      renderWithProvider(<ModelSelector provider="openrouter" value="" onChange={mockOnChange} />);
 
-      const select = screen.getByRole('combobox');
-      expect(select).toHaveValue('anthropic/claude-3.5-sonnet');
+      const input = screen.getByRole('textbox');
+      fireEvent.change(input, { target: { value: 'test/model' } });
 
-      fireEvent.change(select, { target: { value: 'openai/gpt-4' } });
-
-      expect(mockOnChange).toHaveBeenCalledWith('openai/gpt-4');
+      expect(mockOnChange).toHaveBeenCalledWith('test/model');
     });
-
-    it('should update description when model changes', () => {
-      const { rerender } = render(
-        <ModelSelector provider="openrouter" value="anthropic/claude-3.5-sonnet" onChange={mockOnChange} />
-      );
-
-      expect(screen.getByText('Best for analysis and reasoning')).toBeInTheDocument();
-
-      rerender(<ModelSelector provider="openrouter" value="openai/gpt-4-turbo" onChange={mockOnChange} />);
-
-      expect(screen.getByText('Fast and capable')).toBeInTheDocument();
-      expect(screen.queryByText('Best for analysis and reasoning')).not.toBeInTheDocument();
-    });
-
-    // Note: HTML select elements fire change events even when disabled.
-    // The disabled attribute prevents user interaction, not programmatic changes in tests.
   });
 
   describe('Disabled State', () => {
-    it('should disable select when disabled prop is true', () => {
-      render(<ModelSelector provider="openrouter" value="anthropic/claude-3.5-sonnet" onChange={mockOnChange} disabled />);
+    it('should disable input when disabled prop is true (OpenRouter)', () => {
+      renderWithProvider(<ModelSelector provider="openrouter" value="anthropic/claude-haiku-4.5" onChange={mockOnChange} disabled />);
 
-      const select = screen.getByRole('combobox');
-      expect(select).toBeDisabled();
+      const input = screen.getByRole('textbox');
+      expect(input).toBeDisabled();
     });
 
-    it('should still render models when disabled', () => {
-      render(<ModelSelector provider="openrouter" value="anthropic/claude-3.5-sonnet" onChange={mockOnChange} disabled />);
+    it('should disable select when disabled prop is true (Ollama)', async () => {
+      renderWithProvider(<ModelSelector provider="ollama" value="llama3" onChange={mockOnChange} disabled />);
 
-      expect(screen.getByRole('option', { name: /Claude 3.5 Sonnet/i })).toBeInTheDocument();
-      expect(screen.getByRole('option', { name: /^GPT-4$/i })).toBeInTheDocument();
+      await waitFor(() => {
+        const select = screen.getByRole('combobox');
+        expect(select).toBeDisabled();
+      });
     });
   });
 
   describe('Provider Switching', () => {
-    it('should update available models when provider changes', () => {
-      const { rerender } = render(
-        <ModelSelector provider="openrouter" value="anthropic/claude-3.5-sonnet" onChange={mockOnChange} />
+    it('should update UI when provider changes from OpenRouter to Ollama', async () => {
+      const { rerender } = renderWithProvider(
+        <ModelSelector provider="openrouter" value="" onChange={mockOnChange} />
       );
 
-      expect(screen.getByRole('option', { name: /Claude 3.5 Sonnet/i })).toBeInTheDocument();
+      // OpenRouter shows text input
+      expect(screen.getByRole('textbox')).toBeInTheDocument();
 
-      rerender(<ModelSelector provider="ollama" value="llama3" onChange={mockOnChange} />);
-
-      expect(screen.queryByRole('option', { name: /Claude 3.5 Sonnet/i })).not.toBeInTheDocument();
-      expect(screen.getByRole('option', { name: /Llama 3/i })).toBeInTheDocument();
-    });
-
-    it('should update provider-specific notes when provider changes', () => {
-      const { rerender } = render(
-        <ModelSelector provider="openrouter" value="anthropic/claude-3.5-sonnet" onChange={mockOnChange} />
+      rerender(
+        <LLMConfigProvider>
+          <ModelSelector provider="ollama" value="llama3" onChange={mockOnChange} />
+        </LLMConfigProvider>
       );
 
-      expect(screen.getByText(/Different models have different pricing/i)).toBeInTheDocument();
-
-      rerender(<ModelSelector provider="ollama" value="llama3" onChange={mockOnChange} />);
-
-      expect(screen.queryByText(/Different models have different pricing/i)).not.toBeInTheDocument();
-      expect(screen.getByText(/Make sure the selected model is downloaded/i)).toBeInTheDocument();
-    });
-  });
-
-  describe('Empty Models', () => {
-    it('should show "No models available" for unknown provider', () => {
-      render(<ModelSelector provider="unknown-provider" value="" onChange={mockOnChange} />);
-
-      expect(screen.getByRole('option', { name: /No models available/i })).toBeInTheDocument();
-    });
-
-    it('should not show description when no models available', () => {
-      const { container } = render(
-        <ModelSelector provider="unknown-provider" value="" onChange={mockOnChange} />
-      );
-
-      const description = container.querySelector('#model-description');
-      expect(description).not.toBeInTheDocument();
+      // Ollama shows select dropdown after loading
+      await waitFor(() => {
+        expect(screen.getByRole('combobox')).toBeInTheDocument();
+      });
+      expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
     });
   });
 
   describe('Accessibility', () => {
-    it('should have proper id on select element', () => {
-      render(<ModelSelector provider="openrouter" value="anthropic/claude-3.5-sonnet" onChange={mockOnChange} />);
+    it('should have proper id on input element (OpenRouter)', () => {
+      renderWithProvider(<ModelSelector provider="openrouter" value="" onChange={mockOnChange} />);
 
-      const select = screen.getByRole('combobox');
-      expect(select).toHaveAttribute('id', 'model-select');
+      const input = screen.getByRole('textbox');
+      expect(input).toHaveAttribute('id', 'model-input');
     });
 
-    it('should have label associated with select', () => {
-      render(<ModelSelector provider="openrouter" value="anthropic/claude-3.5-sonnet" onChange={mockOnChange} />);
+    it('should have label associated with input (OpenRouter)', () => {
+      renderWithProvider(<ModelSelector provider="openrouter" value="" onChange={mockOnChange} />);
 
       const label = screen.getByText('Model');
-      expect(label).toHaveAttribute('for', 'model-select');
+      expect(label).toHaveAttribute('for', 'model-input');
     });
 
-    it('should have aria-describedby for description', () => {
-      render(<ModelSelector provider="openrouter" value="anthropic/claude-3.5-sonnet" onChange={mockOnChange} />);
+    it('should have aria-describedby for status (OpenRouter)', () => {
+      renderWithProvider(<ModelSelector provider="openrouter" value="" onChange={mockOnChange} />);
 
-      const select = screen.getByRole('combobox');
-      expect(select).toHaveAttribute('aria-describedby', 'model-description');
+      const input = screen.getByRole('textbox');
+      expect(input).toHaveAttribute('aria-describedby', 'model-status');
     });
 
-    it('should have description with matching id', () => {
-      render(<ModelSelector provider="openrouter" value="anthropic/claude-3.5-sonnet" onChange={mockOnChange} />);
+    it('should have aria-expanded attribute (OpenRouter)', () => {
+      renderWithProvider(<ModelSelector provider="openrouter" value="" onChange={mockOnChange} />);
 
-      const description = screen.getByText('Best for analysis and reasoning');
-      expect(description).toHaveAttribute('id', 'model-description');
+      const input = screen.getByRole('textbox');
+      expect(input).toHaveAttribute('aria-expanded', 'false');
     });
 
-    it('should have aria-hidden on dropdown icon', () => {
-      const { container } = render(
-        <ModelSelector provider="openrouter" value="anthropic/claude-3.5-sonnet" onChange={mockOnChange} />
-      );
+    it('should set aria-expanded to true when dropdown is open', async () => {
+      renderWithProvider(<ModelSelector provider="openrouter" value="" onChange={mockOnChange} />);
 
-      const icon = container.querySelector('.model-selector__icon');
-      expect(icon).toHaveAttribute('aria-hidden', 'true');
+      const input = screen.getByRole('textbox');
+      fireEvent.focus(input);
+
+      await waitFor(() => {
+        expect(input).toHaveAttribute('aria-expanded', 'true');
+      });
     });
 
-    it('should have target="_blank" and rel="noopener noreferrer" on external links', () => {
-      render(<ModelSelector provider="openrouter" value="anthropic/claude-3.5-sonnet" onChange={mockOnChange} />);
+    it('should have proper id on select element (Ollama)', async () => {
+      renderWithProvider(<ModelSelector provider="ollama" value="llama3" onChange={mockOnChange} />);
 
-      const link = screen.getByRole('link', { name: /OpenRouter's pricing/i });
-      expect(link).toHaveAttribute('target', '_blank');
-      expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+      await waitFor(() => {
+        const select = screen.getByRole('combobox');
+        expect(select).toHaveAttribute('id', 'model-select');
+      });
+    });
+
+    it('should have label associated with select (Ollama)', async () => {
+      renderWithProvider(<ModelSelector provider="ollama" value="llama3" onChange={mockOnChange} />);
+
+      await waitFor(() => {
+        const label = screen.getByText('Model');
+        expect(label).toHaveAttribute('for', 'model-select');
+      });
     });
   });
 
   describe('Model Options', () => {
-    it('should have correct value attributes for OpenRouter models', () => {
-      render(<ModelSelector provider="openrouter" value="anthropic/claude-3.5-sonnet" onChange={mockOnChange} />);
+    it('should have correct value attributes for Ollama models', async () => {
+      renderWithProvider(<ModelSelector provider="ollama" value="llama3" onChange={mockOnChange} />);
 
-      expect(screen.getByRole('option', { name: /Claude 3.5 Sonnet/i })).toHaveValue('anthropic/claude-3.5-sonnet');
-      expect(screen.getByRole('option', { name: /GPT-4 Turbo/i })).toHaveValue('openai/gpt-4-turbo');
-      expect(screen.getByRole('option', { name: /Gemini Pro/i })).toHaveValue('google/gemini-pro');
+      await waitFor(() => {
+        expect(screen.getByRole('option', { name: /llama3/i })).toHaveValue('llama3');
+        expect(screen.getByRole('option', { name: /mistral/i })).toHaveValue('mistral');
+        expect(screen.getByRole('option', { name: /mixtral/i })).toHaveValue('mixtral');
+      });
     });
 
-    it('should have correct value attributes for Ollama models', () => {
-      render(<ModelSelector provider="ollama" value="llama3" onChange={mockOnChange} />);
+    it('should have correct value attributes for LM Studio models', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockLMStudioModels),
+      });
 
-      expect(screen.getByRole('option', { name: /Llama 3/i })).toHaveValue('llama3');
-      expect(screen.getByRole('option', { name: /Mistral/i })).toHaveValue('mistral');
-      expect(screen.getByRole('option', { name: /Mixtral 8x7B/i })).toHaveValue('mixtral');
+      renderWithProvider(<ModelSelector provider="lmstudio" value="local-model-1" onChange={mockOnChange} />);
+
+      await waitFor(() => {
+        expect(screen.getByRole('option', { name: /local-model-1/i })).toHaveValue('local-model-1');
+        expect(screen.getByRole('option', { name: /local-model-2/i })).toHaveValue('local-model-2');
+      });
+    });
+  });
+
+  describe('Empty States', () => {
+    it('should show empty state for Ollama with no models', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ models: [] }),
+      });
+
+      renderWithProvider(<ModelSelector provider="ollama" value="" onChange={mockOnChange} />);
+
+      await waitFor(() => {
+        expect(screen.getByText(/No models installed/i)).toBeInTheDocument();
+      });
     });
 
-    it('should have correct value attribute for LM Studio model', () => {
-      render(<ModelSelector provider="lmstudio" value="local-model" onChange={mockOnChange} />);
+    it('should suggest ollama pull command when no models', async () => {
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ models: [] }),
+      });
 
-      expect(screen.getByRole('option', { name: /Local Model/i })).toHaveValue('local-model');
+      renderWithProvider(<ModelSelector provider="ollama" value="" onChange={mockOnChange} />);
+
+      await waitFor(() => {
+        expect(screen.getByText(/ollama pull/i)).toBeInTheDocument();
+      });
     });
   });
 
   describe('Edge Cases', () => {
     it('should handle undefined value gracefully', () => {
-      render(<ModelSelector provider="openrouter" value={undefined} onChange={mockOnChange} />);
+      renderWithProvider(<ModelSelector provider="openrouter" value={undefined} onChange={mockOnChange} />);
 
-      const select = screen.getByRole('combobox');
-      expect(select).toBeInTheDocument();
+      const input = screen.getByRole('textbox');
+      expect(input).toBeInTheDocument();
+      expect(input.value).toBe('');
     });
 
-    // Note: Empty string and invalid values default to first option in HTML select.
-    // This is standard HTML behavior, not a component bug.
+    it('should handle empty string value', () => {
+      renderWithProvider(<ModelSelector provider="openrouter" value="" onChange={mockOnChange} />);
 
-    it('should not show description for invalid model', () => {
-      const { container } = render(
-        <ModelSelector provider="openrouter" value="invalid-model" onChange={mockOnChange} />
-      );
-
-      const description = container.querySelector('#model-description');
-      expect(description).not.toBeInTheDocument();
+      const input = screen.getByRole('textbox');
+      expect(input.value).toBe('');
     });
 
-    it('should handle rapid provider switches', () => {
-      const { rerender } = render(
-        <ModelSelector provider="openrouter" value="anthropic/claude-3.5-sonnet" onChange={mockOnChange} />
+    it('should handle rapid provider switches', async () => {
+      const { rerender } = renderWithProvider(
+        <ModelSelector provider="openrouter" value="" onChange={mockOnChange} />
       );
 
-      rerender(<ModelSelector provider="ollama" value="llama3" onChange={mockOnChange} />);
-      rerender(<ModelSelector provider="lmstudio" value="local-model" onChange={mockOnChange} />);
-      rerender(<ModelSelector provider="openrouter" value="anthropic/claude-3.5-sonnet" onChange={mockOnChange} />);
+      rerender(
+        <LLMConfigProvider>
+          <ModelSelector provider="ollama" value="llama3" onChange={mockOnChange} />
+        </LLMConfigProvider>
+      );
+      rerender(
+        <LLMConfigProvider>
+          <ModelSelector provider="lmstudio" value="local-model" onChange={mockOnChange} />
+        </LLMConfigProvider>
+      );
+      rerender(
+        <LLMConfigProvider>
+          <ModelSelector provider="openrouter" value="" onChange={mockOnChange} />
+        </LLMConfigProvider>
+      );
 
-      expect(screen.getByRole('option', { name: /Claude 3.5 Sonnet/i })).toBeInTheDocument();
+      // Should end up showing OpenRouter combobox
+      expect(screen.getByRole('textbox')).toBeInTheDocument();
     });
   });
 });
