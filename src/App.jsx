@@ -29,7 +29,16 @@ import "./globals.css";
  */
 function AppContent() {
   const { config, validateConfig } = useLLMConfig();
-  const { status, result, error, progress, currentStep, resetAnalysis, clearError, document } = useAnalysis();
+  const {
+    status,
+    result,
+    error,
+    progress,
+    currentStep,
+    resetAnalysis,
+    clearError,
+    document,
+  } = useAnalysis();
   const { startAnalysis } = useAnalysisOrchestrator();
 
   const [showConfig, setShowConfig] = useState(false);
@@ -38,6 +47,20 @@ function AppContent() {
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
   const [showTermsOfService, setShowTermsOfService] = useState(false);
   const [configError, setConfigError] = useState(null);
+
+  // Track if user has seen the config banner (stored in localStorage)
+  const [showConfigBanner, setShowConfigBanner] = useState(() => {
+    const hasSeenBanner = localStorage.getItem("hasSeenConfigBanner");
+    return !hasSeenBanner;
+  });
+
+  /**
+   * Dismiss the configuration banner
+   */
+  const dismissConfigBanner = useCallback(() => {
+    localStorage.setItem("hasSeenConfigBanner", "true");
+    setShowConfigBanner(false);
+  }, []);
 
   /**
    * Handle document selection and start analysis
@@ -49,7 +72,10 @@ function AppContent() {
       // Validate LLM configuration before starting
       const validation = validateConfig();
       if (!validation.isValid) {
-        setConfigError(validation.errors.join(", "));
+        // Instead of showing error, auto-open config modal with helpful message
+        setConfigError(
+          "Let's configure your LLM provider first to get started!",
+        );
         setShowConfig(true);
         return;
       }
@@ -112,6 +138,38 @@ function AppContent() {
         onTipsOpen={() => setShowTips(true)}
       />
 
+      {/* Configuration Banner - First-time visitors only */}
+      {showConfigBanner && showInput && (
+        <div className="config-banner" role="alert">
+          <div className="config-banner__content">
+            <span className="config-banner__icon" aria-hidden="true">
+              ⚙️
+            </span>
+            <span className="config-banner__text">
+              First time here? Configure your LLM provider to get started.
+            </span>
+            <button
+              type="button"
+              className="config-banner__button"
+              onClick={() => {
+                setShowConfig(true);
+                dismissConfigBanner();
+              }}
+            >
+              Configure Now
+            </button>
+            <button
+              type="button"
+              className="config-banner__dismiss"
+              onClick={dismissConfigBanner}
+              aria-label="Dismiss configuration banner"
+            >
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       <Main>
         {/* Configuration Modal */}
         {showConfig && (
@@ -161,27 +219,50 @@ function AppContent() {
 
                   <h3>7-Category Privacy Scorecard</h3>
                   <p>
-                    Policies are evaluated across seven weighted categories based on
-                    EFF, NIST, FTC, and GDPR privacy frameworks:
+                    Policies are evaluated across seven weighted categories
+                    based on EFF, NIST, FTC, and GDPR privacy frameworks:
                   </p>
                   <ul>
-                    <li><strong>Third-Party Sharing (20%)</strong> - Who receives user data and why</li>
-                    <li><strong>User Rights & Control (18%)</strong> - What control users have over their data</li>
-                    <li><strong>Data Collection (18%)</strong> - What data is collected and necessity</li>
-                    <li><strong>Data Retention (14%)</strong> - How long data is kept</li>
-                    <li><strong>Purpose Clarity (12%)</strong> - How clearly data uses are explained</li>
-                    <li><strong>Security Measures (10%)</strong> - How data is protected</li>
-                    <li><strong>Policy Transparency (8%)</strong> - Policy readability and accessibility</li>
+                    <li>
+                      <strong>Third-Party Sharing (20%)</strong> - Who receives
+                      user data and why
+                    </li>
+                    <li>
+                      <strong>User Rights & Control (18%)</strong> - What
+                      control users have over their data
+                    </li>
+                    <li>
+                      <strong>Data Collection (18%)</strong> - What data is
+                      collected and necessity
+                    </li>
+                    <li>
+                      <strong>Data Retention (14%)</strong> - How long data is
+                      kept
+                    </li>
+                    <li>
+                      <strong>Purpose Clarity (12%)</strong> - How clearly data
+                      uses are explained
+                    </li>
+                    <li>
+                      <strong>Security Measures (10%)</strong> - How data is
+                      protected
+                    </li>
+                    <li>
+                      <strong>Policy Transparency (8%)</strong> - Policy
+                      readability and accessibility
+                    </li>
                   </ul>
                   <p>
-                    Each category is scored 1-10, producing an overall score (0-100)
-                    and traditional letter grade (A+ through F).
+                    Each category is scored 1-10, producing an overall score
+                    (0-100) and traditional letter grade (A+ through F).
                   </p>
 
                   <h3>Features</h3>
                   <ul>
                     <li>Analyze policies from URLs or PDF uploads</li>
-                    <li>Multiple LLM providers: OpenRouter, Ollama, LM Studio</li>
+                    <li>
+                      Multiple LLM providers: OpenRouter, Ollama, LM Studio
+                    </li>
                     <li>Recommended: Google Gemini 3 Flash (via OpenRouter)</li>
                     <li>Layered summaries (brief, detailed, full analysis)</li>
                     <li>Privacy risk identification with severity levels</li>
@@ -207,10 +288,7 @@ function AppContent() {
               </div>
 
               <div className="modal__footer">
-                <Button
-                  variant="primary"
-                  onClick={() => setShowAbout(false)}
-                >
+                <Button variant="primary" onClick={() => setShowAbout(false)}>
                   Got It
                 </Button>
               </div>
@@ -223,7 +301,9 @@ function AppContent() {
           <>
             <section className="hero">
               <h1 className="hero__title">
-                Understand Privacy Policies<br />in Plain Language
+                Understand Privacy Policies
+                <br />
+                in Plain Language
               </h1>
               <p className="hero__subtitle">
                 AI-powered analysis that breaks down complex legal jargon,
@@ -233,14 +313,16 @@ function AppContent() {
                 <button
                   type="button"
                   className="hero__demo-link"
-                  onClick={() => handleDocumentSelected({
-                    type: 'url',
-                    source: 'https://privacydistiller.com/privacy-policy.md',
-                    metadata: {
-                      inputMode: 'url',
-                      timestamp: new Date().toISOString(),
-                    }
-                  })}
+                  onClick={() =>
+                    handleDocumentSelected({
+                      type: "url",
+                      source: "https://privacydistiller.com/privacy-policy.md",
+                      metadata: {
+                        inputMode: "url",
+                        timestamp: new Date().toISOString(),
+                      },
+                    })
+                  }
                 >
                   Try it: Analyze our own Privacy Policy
                 </button>
@@ -248,9 +330,9 @@ function AppContent() {
             </section>
 
             {configError && (
-              <Card className="error-card">
-                <p className="error-text">
-                  <strong>⚠️ Configuration Required:</strong> {configError}
+              <Card className="config-prompt-card">
+                <p className="config-prompt-text">
+                  <strong>⚙️ Quick Setup:</strong> {configError}
                 </p>
                 <Button variant="primary" onClick={() => setShowConfig(true)}>
                   Configure LLM Provider
