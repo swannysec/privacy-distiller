@@ -1,0 +1,17 @@
+{
+  "name": "privacy-policy-cors-proxy",
+  "version": "1.0.0",
+  "description": "Privacy-focused CORS proxy for the Privacy Policy Analyzer",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  },
+  "license": "SEE LICENSE IN ../LICENSE",
+  "private": true
+}

@@ -4,7 +4,7 @@
  */
 
 import { validateUrl, validateDocumentText } from '../../utils/validation.js';
-import { CORS_PROXIES, ERROR_CODES, ERROR_MESSAGES } from '../../utils/constants.js';
+import { CORS_PROXIES, CLOUDFLARE_WORKER_URL, ERROR_CODES, ERROR_MESSAGES } from '../../utils/constants.js';
 
 /**
  * Known CORS-blocked domains that should skip direct fetch
@@ -141,12 +141,13 @@ export class URLFetcher {
       fetchPromises.push(directFetchPromise);
     }
 
-    // Add proxy fetch promises
+    // Add proxy fetch promises (Cloudflare Worker only - no third-party proxies)
     for (const proxy of CORS_PROXIES) {
       if (!proxy) continue; // Skip empty proxy (direct fetch already handled)
 
       const proxyPromise = (async () => {
         try {
+          // Cloudflare Worker uses ?url= parameter format
           const fetchUrl = `${proxy}${encodeURIComponent(url)}`;
           const response = await fetch(fetchUrl, {
             method: 'GET',
@@ -157,11 +158,17 @@ export class URLFetcher {
           });
 
           if (!response.ok) {
+            // Parse error response from Worker
+            const contentType = response.headers.get('Content-Type') || '';
+            if (contentType.includes('application/json')) {
+              const errorData = await response.json();
+              throw new Error(errorData.error || `HTTP ${response.status}`);
+            }
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
           }
 
           const html = await response.text();
-          return { html, source: proxy };
+          return { html, source: 'cloudflare-worker' };
         } catch (err) {
           throw err;
         }
