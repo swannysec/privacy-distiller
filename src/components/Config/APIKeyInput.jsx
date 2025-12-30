@@ -1,5 +1,4 @@
 import { useState, useCallback } from 'react';
-import { Input, Button } from '../Common';
 import { validateApiKey } from '../../utils/validation';
 
 /**
@@ -45,94 +44,45 @@ export function APIKeyInput({ value, onChange, provider, disabled = false, class
     setIsVisible(prev => !prev);
   }, []);
 
-  /**
-   * Clear API key
-   */
-  const handleClear = useCallback(() => {
-    onChange('');
-    setError(null);
-  }, [onChange]);
-
   const hasValue = value && value.length > 0;
 
   return (
-    <div className={`api-key-input ${className}`}>
-      <div className="api-key-input__container">
-        <Input
+    <div className={`input-group ${className}`}>
+      <label htmlFor="api-key" className="input-label">
+        API Key
+      </label>
+
+      <div className="input-with-button">
+        <input
           type={isVisible ? 'text' : 'password'}
-          name="api-key"
-          label="API Key"
+          id="api-key"
+          className={`input-field ${error ? 'input-field--error' : ''}`}
           value={value}
           onChange={handleChange}
           onBlur={handleBlur}
-          placeholder="Enter your API key"
+          placeholder="sk-or-v1-..."
           disabled={disabled}
-          error={error}
-          required
           autoComplete="off"
           spellCheck={false}
-          className="api-key-input__field"
-          aria-describedby="api-key-help"
         />
-
-        <div className="api-key-input__actions">
-          <Button
-            type="button"
-            variant="secondary"
-            size="small"
-            onClick={toggleVisibility}
-            disabled={disabled || !hasValue}
-            ariaLabel={isVisible ? 'Hide API key' : 'Show API key'}
-            className="api-key-input__toggle"
-          >
-            {isVisible ? '🙈' : '👁️'}
-          </Button>
-
-          {hasValue && (
-            <Button
-              type="button"
-              variant="secondary"
-              size="small"
-              onClick={handleClear}
-              disabled={disabled}
-              ariaLabel="Clear API key"
-              className="api-key-input__clear"
-            >
-              Clear
-            </Button>
-          )}
-        </div>
+        <button
+          type="button"
+          className="btn btn--ghost btn--sm input-toggle-btn"
+          onClick={toggleVisibility}
+          disabled={disabled || !hasValue}
+          aria-label={isVisible ? 'Hide API key' : 'Show API key'}
+        >
+          {isVisible ? '🙈' : '👁️'}
+        </button>
       </div>
 
-      {/* Help text */}
-      <div className="api-key-input__help" id="api-key-help">
-        <p className="api-key-input__help-text">
-          Your API key is stored securely in your browser's session storage and is only
-          sent to {provider === 'openrouter' ? 'OpenRouter' : 'your chosen provider'}.
+      {error ? (
+        <p className="input-error">{error}</p>
+      ) : (
+        <p className="input-hint">
+          Your API key is stored only in your browser's session storage
         </p>
-
-        {provider === 'openrouter' && (
-          <p className="api-key-input__help-text">
-            Get your OpenRouter API key from{' '}
-            <a
-              href="https://openrouter.ai/keys"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="api-key-input__link"
-            >
-              openrouter.ai/keys
-            </a>
-          </p>
-        )}
-      </div>
-
-      {/* Security notice */}
-      <div className="api-key-input__security-notice">
-        <span className="api-key-input__security-icon" aria-hidden="true">🔒</span>
-        <span className="api-key-input__security-text">
-          Your API key never leaves your browser and is not stored on any server
-        </span>
-      </div>
+      )}
     </div>
   );
 }

@@ -1,15 +1,19 @@
 import { useState } from 'react';
+import { useTheme } from '../../contexts/ThemeContext';
+import logo from '../../assets/logo.png';
 
 /**
- * Header - Application header with branding and navigation
+ * Header - Application header with branding, navigation, and theme toggle
  * @param {Object} props
  * @param {Function} props.onConfigOpen - Callback to open configuration panel
  * @param {Function} props.onAboutOpen - Callback to open about modal
+ * @param {Function} props.onTipsOpen - Callback to open tips modal
  * @param {string} props.className - Additional CSS classes
  * @returns {JSX.Element}
  */
-export function Header({ onConfigOpen, onAboutOpen, className = '' }) {
+export function Header({ onConfigOpen, onAboutOpen, onTipsOpen, className = '' }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { isDarkTheme, toggleTheme } = useTheme();
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(prev => !prev);
@@ -20,13 +24,12 @@ export function Header({ onConfigOpen, onAboutOpen, className = '' }) {
       <div className="header__container">
         {/* Logo and title */}
         <div className="header__brand">
-          <h1 className="header__title">
-            <span className="header__icon" aria-hidden="true">🔍</span>
-            <span className="header__title-text">Privacy Policy Analyzer</span>
-          </h1>
-          <p className="header__tagline">
-            Understand privacy policies in plain language
-          </p>
+          <img 
+            src={logo} 
+            alt="Privacy Policy Distiller logo" 
+            className="header__logo-img"
+          />
+          <span className="header__title">Privacy Policy Distiller</span>
         </div>
 
         {/* Desktop navigation */}
@@ -38,7 +41,17 @@ export function Header({ onConfigOpen, onAboutOpen, className = '' }) {
             aria-label="Open LLM configuration"
           >
             <span aria-hidden="true">⚙️</span>
-            <span className="header__nav-label">Configure</span>
+            Configure
+          </button>
+
+          <button
+            type="button"
+            className="header__nav-button"
+            onClick={onTipsOpen}
+            aria-label="View usage tips"
+          >
+            <span aria-hidden="true">💡</span>
+            Tips
           </button>
 
           <button
@@ -48,19 +61,18 @@ export function Header({ onConfigOpen, onAboutOpen, className = '' }) {
             aria-label="About this application"
           >
             <span aria-hidden="true">ℹ️</span>
-            <span className="header__nav-label">About</span>
+            About
           </button>
 
-          <a
-            href="https://github.com/swannysec/policy-analyzer"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="header__nav-button"
-            aria-label="View source code on GitHub"
+          <button
+            type="button"
+            className="theme-toggle"
+            onClick={toggleTheme}
+            aria-label="Toggle dark/light theme"
+            title="Toggle theme"
           >
-            <span aria-hidden="true">💻</span>
-            <span className="header__nav-label">GitHub</span>
-          </a>
+            {isDarkTheme ? '🌙' : '☀️'}
+          </button>
         </nav>
 
         {/* Mobile menu toggle */}
@@ -71,9 +83,7 @@ export function Header({ onConfigOpen, onAboutOpen, className = '' }) {
           aria-expanded={mobileMenuOpen}
           aria-label="Toggle mobile menu"
         >
-          <span className="header__mobile-toggle-icon">
-            {mobileMenuOpen ? '✕' : '☰'}
-          </span>
+          {mobileMenuOpen ? '✕' : '☰'}
         </button>
       </div>
 
@@ -96,6 +106,18 @@ export function Header({ onConfigOpen, onAboutOpen, className = '' }) {
             type="button"
             className="header__mobile-menu-item"
             onClick={() => {
+              onTipsOpen();
+              setMobileMenuOpen(false);
+            }}
+          >
+            <span aria-hidden="true">💡</span>
+            Tips
+          </button>
+
+          <button
+            type="button"
+            className="header__mobile-menu-item"
+            onClick={() => {
               onAboutOpen();
               setMobileMenuOpen(false);
             }}
@@ -104,16 +126,17 @@ export function Header({ onConfigOpen, onAboutOpen, className = '' }) {
             About
           </button>
 
-          <a
-            href="https://github.com/swannysec/policy-analyzer"
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
             className="header__mobile-menu-item"
-            onClick={() => setMobileMenuOpen(false)}
+            onClick={() => {
+              toggleTheme();
+              setMobileMenuOpen(false);
+            }}
           >
-            <span aria-hidden="true">💻</span>
-            GitHub
-          </a>
+            <span aria-hidden="true">{isDarkTheme ? '🌙' : '☀️'}</span>
+            {isDarkTheme ? 'Dark Mode' : 'Light Mode'}
+          </button>
         </div>
       )}
     </header>

@@ -69,10 +69,22 @@ export function validateUrl(url) {
   }
 
   const hostname = urlObject.hostname.toLowerCase();
+
+  // Check blocked domains (localhost, etc.)
   if (URL_CONSTRAINTS.BLOCKED_DOMAINS.some((domain) => hostname.includes(domain))) {
     errors.push({
       field: 'url',
       message: 'Cannot fetch from local or internal URLs',
+      code: ERROR_CODES.INVALID_URL,
+    });
+    return { valid: false, errors };
+  }
+
+  // Check private IP ranges for SSRF protection
+  if (URL_CONSTRAINTS.PRIVATE_IP_PATTERNS?.some((pattern) => pattern.test(hostname))) {
+    errors.push({
+      field: 'url',
+      message: 'Cannot fetch from private or internal network addresses',
       code: ERROR_CODES.INVALID_URL,
     });
     return { valid: false, errors };
@@ -210,10 +222,10 @@ export function validateLLMConfig(config) {
     });
   }
 
-  if (typeof config.temperature !== 'number' || config.temperature < 0 || config.temperature > 1) {
+  if (typeof config.temperature !== 'number' || config.temperature < 0 || config.temperature > 2) {
     errors.push({
       field: 'temperature',
-      message: 'Temperature must be between 0 and 1',
+      message: 'Temperature must be between 0 and 2',
       code: ERROR_CODES.INVALID_API_KEY,
     });
   }

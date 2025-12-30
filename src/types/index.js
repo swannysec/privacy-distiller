@@ -1,5 +1,5 @@
 /**
- * @file Type definitions for Privacy Policy Analyzer
+ * @file Type definitions for Privacy Policy Distiller
  * @description JSDoc type definitions for type safety without TypeScript
  */
 

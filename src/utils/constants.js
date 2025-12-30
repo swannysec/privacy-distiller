@@ -35,10 +35,24 @@ export const LLM_PROVIDERS = {
 export const DEFAULT_LLM_CONFIG = {
   provider: 'openrouter',
   apiKey: '',
-  model: 'anthropic/claude-3.5-sonnet',
+  model: 'google/gemini-3-flash-preview',
   baseUrl: LLM_PROVIDERS.OPENROUTER.baseUrl,
-  temperature: 0.7,
-  maxTokens: 4096,
+  temperature: 0.7, // Recommended default for balanced output
+  maxTokens: 32000, // OpenRouter models support large responses
+  contextWindow: null, // null = auto-detect for OpenRouter, use default for local
+};;
+
+// Default context windows for local providers (conservative defaults)
+export const DEFAULT_CONTEXT_WINDOWS = {
+  ollama: 8192,
+  lmstudio: 8192,
+};
+
+// Default max response tokens for local providers
+export const DEFAULT_MAX_TOKENS = {
+  ollama: 4096,
+  lmstudio: 4096,
+  openrouter: 32000,
 };
 
 // File upload constraints
@@ -53,12 +67,24 @@ export const FILE_CONSTRAINTS = {
 export const URL_CONSTRAINTS = {
   MAX_LENGTH: 2048,
   ALLOWED_PROTOCOLS: ['http:', 'https:'],
-  BLOCKED_DOMAINS: ['localhost', '127.0.0.1', '0.0.0.0'],
+  BLOCKED_DOMAINS: ['localhost', '127.0.0.1', '0.0.0.0', '[::1]', '[::]'],
+  // Private IP patterns for SSRF protection
+  PRIVATE_IP_PATTERNS: [
+    /^127\./,                           // 127.0.0.0/8 loopback
+    /^10\./,                            // 10.0.0.0/8 private
+    /^192\.168\./,                      // 192.168.0.0/16 private
+    /^172\.(1[6-9]|2[0-9]|3[01])\./,   // 172.16.0.0/12 private
+    /^169\.254\./,                      // 169.254.0.0/16 link-local
+    /^0\./,                             // 0.0.0.0/8 current network
+    /^\[fe80:/i,                        // IPv6 link-local
+    /^\[fc00:/i,                        // IPv6 unique local
+    /^\[fd/i,                           // IPv6 unique local
+  ],
 };
 
 // Text processing
 export const TEXT_PROCESSING = {
-  MAX_DOCUMENT_LENGTH: 50000, // characters
+  MAX_DOCUMENT_LENGTH: 2000000, // characters - ~500k tokens for large context windows
   MIN_DOCUMENT_LENGTH: 100,
   CHUNK_SIZE: 4000, // characters per chunk for LLM processing
   CHUNK_OVERLAP: 200, // overlap between chunks
@@ -66,7 +92,7 @@ export const TEXT_PROCESSING = {
 
 // Analysis configuration
 export const ANALYSIS_CONFIG = {
-  TIMEOUT_MS: 120000, // 2 minutes
+  TIMEOUT_MS: 600000, // 10 minutes - local models may need longer for large documents
   RETRY_ATTEMPTS: 3,
   RETRY_DELAY_MS: 1000,
 };
@@ -85,9 +111,9 @@ export const RISK_LEVELS = {
     color: '#f59e0b',
     priority: 2,
   },
-  HIGH: {
+  HIGHER: {
     value: 'high',
-    label: 'High',
+    label: 'Higher',
     color: '#ef4444',
     priority: 3,
   },
@@ -97,7 +123,7 @@ export const RISK_LEVELS = {
     color: '#dc2626',
     priority: 4,
   },
-};
+};;
 
 // Analysis statuses
 export const ANALYSIS_STATUS = {
@@ -106,6 +132,7 @@ export const ANALYSIS_STATUS = {
   ANALYZING: 'analyzing',
   COMPLETED: 'completed',
   ERROR: 'error',
+  FAILED: 'failed',
 };
 
 // Summary types
@@ -177,12 +204,16 @@ export const ERROR_MESSAGES = {
   [ERROR_CODES.UNKNOWN_ERROR]: 'An unexpected error occurred. Please try again.',
 };
 
+// CORS proxy configuration
+// Cloudflare Worker proxies requests to bypass CORS restrictions
+export const CLOUDFLARE_WORKER_URL = 'https://proxy.privacydistiller.com';
+
 // CORS proxy fallback chain
-export const CORS_PROXIES = [
-  '', // Try direct fetch first
-  'https://api.allorigins.win/raw?url=',
-  'https://corsproxy.io/?',
-];
+// When CLOUDFLARE_WORKER_URL is set, it will be used exclusively
+// When empty, falls back to direct fetch only (no third-party proxies)
+export const CORS_PROXIES = CLOUDFLARE_WORKER_URL
+  ? ['', `${CLOUDFLARE_WORKER_URL}/?url=`]  // Direct + Cloudflare Worker
+  : [''];  // Direct fetch only (no third-party proxies)
 
 // Accessibility
 export const A11Y = {
