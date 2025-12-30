@@ -8,7 +8,7 @@ import {
   TEXT_PROCESSING,
   ERROR_CODES,
   ERROR_MESSAGES,
-} from './constants.js';
+} from "./constants.js";
 
 /**
  * Validates a URL input
@@ -18,10 +18,10 @@ import {
 export function validateUrl(url) {
   const errors = [];
 
-  if (!url || typeof url !== 'string') {
+  if (!url || typeof url !== "string") {
     errors.push({
-      field: 'url',
-      message: 'URL is required',
+      field: "url",
+      message: "URL is required",
       code: ERROR_CODES.INVALID_URL,
     });
     return { valid: false, errors };
@@ -31,8 +31,8 @@ export function validateUrl(url) {
 
   if (trimmedUrl.length === 0) {
     errors.push({
-      field: 'url',
-      message: 'URL cannot be empty',
+      field: "url",
+      message: "URL cannot be empty",
       code: ERROR_CODES.INVALID_URL,
     });
     return { valid: false, errors };
@@ -40,7 +40,7 @@ export function validateUrl(url) {
 
   if (trimmedUrl.length > URL_CONSTRAINTS.MAX_LENGTH) {
     errors.push({
-      field: 'url',
+      field: "url",
       message: `URL is too long (max ${URL_CONSTRAINTS.MAX_LENGTH} characters)`,
       code: ERROR_CODES.INVALID_URL,
     });
@@ -52,7 +52,7 @@ export function validateUrl(url) {
     urlObject = new URL(trimmedUrl);
   } catch {
     errors.push({
-      field: 'url',
+      field: "url",
       message: ERROR_MESSAGES[ERROR_CODES.INVALID_URL],
       code: ERROR_CODES.INVALID_URL,
     });
@@ -61,7 +61,7 @@ export function validateUrl(url) {
 
   if (!URL_CONSTRAINTS.ALLOWED_PROTOCOLS.includes(urlObject.protocol)) {
     errors.push({
-      field: 'url',
+      field: "url",
       message: ERROR_MESSAGES[ERROR_CODES.INVALID_URL],
       code: ERROR_CODES.INVALID_URL,
     });
@@ -71,20 +71,26 @@ export function validateUrl(url) {
   const hostname = urlObject.hostname.toLowerCase();
 
   // Check blocked domains (localhost, etc.)
-  if (URL_CONSTRAINTS.BLOCKED_DOMAINS.some((domain) => hostname.includes(domain))) {
+  if (
+    URL_CONSTRAINTS.BLOCKED_DOMAINS.some((domain) => hostname.includes(domain))
+  ) {
     errors.push({
-      field: 'url',
-      message: 'Cannot fetch from local or internal URLs',
+      field: "url",
+      message: "Cannot fetch from local or internal URLs",
       code: ERROR_CODES.INVALID_URL,
     });
     return { valid: false, errors };
   }
 
   // Check private IP ranges for SSRF protection
-  if (URL_CONSTRAINTS.PRIVATE_IP_PATTERNS?.some((pattern) => pattern.test(hostname))) {
+  if (
+    URL_CONSTRAINTS.PRIVATE_IP_PATTERNS?.some((pattern) =>
+      pattern.test(hostname),
+    )
+  ) {
     errors.push({
-      field: 'url',
-      message: 'Cannot fetch from private or internal network addresses',
+      field: "url",
+      message: "Cannot fetch from private or internal network addresses",
       code: ERROR_CODES.INVALID_URL,
     });
     return { valid: false, errors };
@@ -103,8 +109,8 @@ export function validateFile(file) {
 
   if (!file) {
     errors.push({
-      field: 'file',
-      message: 'File is required',
+      field: "file",
+      message: "File is required",
       code: ERROR_CODES.INVALID_FILE_TYPE,
     });
     return { valid: false, errors };
@@ -112,7 +118,7 @@ export function validateFile(file) {
 
   if (file.size > FILE_CONSTRAINTS.MAX_SIZE_BYTES) {
     errors.push({
-      field: 'file',
+      field: "file",
       message: ERROR_MESSAGES[ERROR_CODES.FILE_TOO_LARGE],
       code: ERROR_CODES.FILE_TOO_LARGE,
     });
@@ -120,16 +126,64 @@ export function validateFile(file) {
 
   if (!FILE_CONSTRAINTS.ALLOWED_TYPES.includes(file.type)) {
     const hasValidExtension = FILE_CONSTRAINTS.ALLOWED_EXTENSIONS.some((ext) =>
-      file.name.toLowerCase().endsWith(ext)
+      file.name.toLowerCase().endsWith(ext),
     );
 
     if (!hasValidExtension) {
       errors.push({
-        field: 'file',
+        field: "file",
         message: ERROR_MESSAGES[ERROR_CODES.INVALID_FILE_TYPE],
         code: ERROR_CODES.INVALID_FILE_TYPE,
       });
     }
+  }
+
+  return { valid: errors.length === 0, errors };
+}
+
+/**
+ * Validates PDF file magic bytes (file signature)
+ * This is an async function that reads the first bytes of the file
+ * to verify it's actually a PDF, not just a renamed file
+ * @param {File} file - File to validate
+ * @returns {Promise<import('../types').ValidationResult>}
+ */
+export async function validatePdfMagicBytes(file) {
+  const errors = [];
+
+  if (!file) {
+    errors.push({
+      field: "file",
+      message: "File is required",
+      code: ERROR_CODES.INVALID_FILE_TYPE,
+    });
+    return { valid: false, errors };
+  }
+
+  try {
+    // Read the first 5 bytes of the file
+    const headerBytes = await file.slice(0, 5).arrayBuffer();
+    const header = new Uint8Array(headerBytes);
+
+    // Check for PDF magic bytes: %PDF-
+    const isPdf = FILE_CONSTRAINTS.PDF_MAGIC_BYTES.every(
+      (byte, index) => header[index] === byte,
+    );
+
+    if (!isPdf) {
+      errors.push({
+        field: "file",
+        message:
+          "File does not appear to be a valid PDF (invalid file signature)",
+        code: ERROR_CODES.INVALID_FILE_TYPE,
+      });
+    }
+  } catch {
+    errors.push({
+      field: "file",
+      message: "Unable to read file contents",
+      code: ERROR_CODES.INVALID_FILE_TYPE,
+    });
   }
 
   return { valid: errors.length === 0, errors };
@@ -143,10 +197,10 @@ export function validateFile(file) {
 export function validateDocumentText(text) {
   const errors = [];
 
-  if (!text || typeof text !== 'string') {
+  if (!text || typeof text !== "string") {
     errors.push({
-      field: 'text',
-      message: 'Document text is required',
+      field: "text",
+      message: "Document text is required",
       code: ERROR_CODES.DOCUMENT_TOO_SHORT,
     });
     return { valid: false, errors };
@@ -156,7 +210,7 @@ export function validateDocumentText(text) {
 
   if (trimmedText.length < TEXT_PROCESSING.MIN_DOCUMENT_LENGTH) {
     errors.push({
-      field: 'text',
+      field: "text",
       message: ERROR_MESSAGES[ERROR_CODES.DOCUMENT_TOO_SHORT],
       code: ERROR_CODES.DOCUMENT_TOO_SHORT,
     });
@@ -164,7 +218,7 @@ export function validateDocumentText(text) {
 
   if (trimmedText.length > TEXT_PROCESSING.MAX_DOCUMENT_LENGTH) {
     errors.push({
-      field: 'text',
+      field: "text",
       message: ERROR_MESSAGES[ERROR_CODES.DOCUMENT_TOO_LONG],
       code: ERROR_CODES.DOCUMENT_TOO_LONG,
     });
@@ -183,8 +237,8 @@ export function validateLLMConfig(config) {
 
   if (!config) {
     errors.push({
-      field: 'config',
-      message: 'LLM configuration is required',
+      field: "config",
+      message: "LLM configuration is required",
       code: ERROR_CODES.INVALID_API_KEY,
     });
     return { valid: false, errors };
@@ -192,23 +246,23 @@ export function validateLLMConfig(config) {
 
   if (!config.provider) {
     errors.push({
-      field: 'provider',
-      message: 'LLM provider is required',
+      field: "provider",
+      message: "LLM provider is required",
       code: ERROR_CODES.INVALID_API_KEY,
     });
   }
 
   if (!config.model) {
     errors.push({
-      field: 'model',
-      message: 'Model selection is required',
+      field: "model",
+      message: "Model selection is required",
       code: ERROR_CODES.INVALID_API_KEY,
     });
   }
 
-  if (config.provider === 'openrouter' && !config.apiKey) {
+  if (config.provider === "openrouter" && !config.apiKey) {
     errors.push({
-      field: 'apiKey',
+      field: "apiKey",
       message: ERROR_MESSAGES[ERROR_CODES.INVALID_API_KEY],
       code: ERROR_CODES.INVALID_API_KEY,
     });
@@ -216,24 +270,28 @@ export function validateLLMConfig(config) {
 
   if (!config.baseUrl) {
     errors.push({
-      field: 'baseUrl',
-      message: 'Base URL is required',
+      field: "baseUrl",
+      message: "Base URL is required",
       code: ERROR_CODES.INVALID_API_KEY,
     });
   }
 
-  if (typeof config.temperature !== 'number' || config.temperature < 0 || config.temperature > 2) {
+  if (
+    typeof config.temperature !== "number" ||
+    config.temperature < 0 ||
+    config.temperature > 2
+  ) {
     errors.push({
-      field: 'temperature',
-      message: 'Temperature must be between 0 and 2',
+      field: "temperature",
+      message: "Temperature must be between 0 and 2",
       code: ERROR_CODES.INVALID_API_KEY,
     });
   }
 
-  if (typeof config.maxTokens !== 'number' || config.maxTokens < 1) {
+  if (typeof config.maxTokens !== "number" || config.maxTokens < 1) {
     errors.push({
-      field: 'maxTokens',
-      message: 'Max tokens must be greater than 0',
+      field: "maxTokens",
+      message: "Max tokens must be greater than 0",
       code: ERROR_CODES.INVALID_API_KEY,
     });
   }
@@ -249,9 +307,9 @@ export function validateLLMConfig(config) {
 export function validateApiKey(apiKey) {
   const errors = [];
 
-  if (!apiKey || typeof apiKey !== 'string') {
+  if (!apiKey || typeof apiKey !== "string") {
     errors.push({
-      field: 'apiKey',
+      field: "apiKey",
       message: ERROR_MESSAGES[ERROR_CODES.INVALID_API_KEY],
       code: ERROR_CODES.INVALID_API_KEY,
     });
@@ -262,7 +320,7 @@ export function validateApiKey(apiKey) {
 
   if (trimmedKey.length === 0) {
     errors.push({
-      field: 'apiKey',
+      field: "apiKey",
       message: ERROR_MESSAGES[ERROR_CODES.INVALID_API_KEY],
       code: ERROR_CODES.INVALID_API_KEY,
     });
@@ -271,8 +329,8 @@ export function validateApiKey(apiKey) {
 
   if (trimmedKey.length < 10) {
     errors.push({
-      field: 'apiKey',
-      message: 'API key appears to be too short',
+      field: "apiKey",
+      message: "API key appears to be too short",
       code: ERROR_CODES.INVALID_API_KEY,
     });
   }

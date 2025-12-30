@@ -3,7 +3,7 @@
  * @description Uses sessionStorage for sensitive data (API keys) and localStorage for preferences
  */
 
-import { STORAGE_KEYS } from './constants.js';
+import { STORAGE_KEYS, API_KEY_TIMEOUT_MS } from "./constants.js";
 
 /**
  * Saves data to sessionStorage
@@ -17,7 +17,7 @@ export function saveToSession(key, value) {
     sessionStorage.setItem(key, serialized);
     return true;
   } catch (error) {
-    console.error('Failed to save to sessionStorage:', error);
+    console.error("Failed to save to sessionStorage:", error);
     return false;
   }
 }
@@ -36,7 +36,7 @@ export function getFromSession(key, defaultValue = null) {
     }
     return JSON.parse(item);
   } catch (error) {
-    console.error('Failed to read from sessionStorage:', error);
+    console.error("Failed to read from sessionStorage:", error);
     return defaultValue;
   }
 }
@@ -51,7 +51,7 @@ export function removeFromSession(key) {
     sessionStorage.removeItem(key);
     return true;
   } catch (error) {
-    console.error('Failed to remove from sessionStorage:', error);
+    console.error("Failed to remove from sessionStorage:", error);
     return false;
   }
 }
@@ -68,7 +68,7 @@ export function saveToLocal(key, value) {
     localStorage.setItem(key, serialized);
     return true;
   } catch (error) {
-    console.error('Failed to save to localStorage:', error);
+    console.error("Failed to save to localStorage:", error);
     return false;
   }
 }
@@ -87,7 +87,7 @@ export function getFromLocal(key, defaultValue = null) {
     }
     return JSON.parse(item);
   } catch (error) {
-    console.error('Failed to read from localStorage:', error);
+    console.error("Failed to read from localStorage:", error);
     return defaultValue;
   }
 }
@@ -102,7 +102,7 @@ export function removeFromLocal(key) {
     localStorage.removeItem(key);
     return true;
   } catch (error) {
-    console.error('Failed to remove from localStorage:', error);
+    console.error("Failed to remove from localStorage:", error);
     return false;
   }
 }
@@ -116,7 +116,7 @@ export function clearSession() {
     sessionStorage.clear();
     return true;
   } catch (error) {
-    console.error('Failed to clear sessionStorage:', error);
+    console.error("Failed to clear sessionStorage:", error);
     return false;
   }
 }
@@ -130,26 +130,69 @@ export function clearLocal() {
     localStorage.clear();
     return true;
   } catch (error) {
-    console.error('Failed to clear localStorage:', error);
+    console.error("Failed to clear localStorage:", error);
     return false;
   }
 }
 
 /**
  * Saves LLM configuration to sessionStorage (includes API keys)
+ * Also updates the activity timestamp for timeout tracking
  * @param {import('../types').LLMConfig} config - LLM configuration
  * @returns {boolean} Success status
  */
 export function saveLLMConfig(config) {
-  return saveToSession(STORAGE_KEYS.LLM_CONFIG, config);
+  const configSaved = saveToSession(STORAGE_KEYS.LLM_CONFIG, config);
+  if (configSaved) {
+    // Update activity timestamp whenever config is saved
+    saveToSession(STORAGE_KEYS.LLM_CONFIG_TIMESTAMP, Date.now());
+  }
+  return configSaved;
 }
 
 /**
  * Retrieves LLM configuration from sessionStorage
+ * Returns null if config has expired (60 minutes of inactivity)
  * @returns {import('../types').LLMConfig | null} LLM configuration or null
  */
 export function getLLMConfig() {
+  const timestamp = getFromSession(STORAGE_KEYS.LLM_CONFIG_TIMESTAMP);
+
+  // Check if config has expired due to inactivity
+  if (timestamp && Date.now() - timestamp > API_KEY_TIMEOUT_MS) {
+    // Config expired - clear it and return null
+    removeLLMConfig();
+    return null;
+  }
+
   return getFromSession(STORAGE_KEYS.LLM_CONFIG);
+}
+
+/**
+ * Updates the LLM config activity timestamp
+ * Call this when making LLM API requests to extend the session
+ * @returns {boolean} Success status
+ */
+export function refreshLLMConfigTimestamp() {
+  const config = getFromSession(STORAGE_KEYS.LLM_CONFIG);
+  if (config) {
+    return saveToSession(STORAGE_KEYS.LLM_CONFIG_TIMESTAMP, Date.now());
+  }
+  return false;
+}
+
+/**
+ * Checks if LLM config has expired without clearing it
+ * @returns {boolean} True if expired or no config exists
+ */
+export function isLLMConfigExpired() {
+  const timestamp = getFromSession(STORAGE_KEYS.LLM_CONFIG_TIMESTAMP);
+  const config = getFromSession(STORAGE_KEYS.LLM_CONFIG);
+
+  if (!config) return true;
+  if (!timestamp) return false; // Config exists but no timestamp (legacy) - don't expire
+
+  return Date.now() - timestamp > API_KEY_TIMEOUT_MS;
 }
 
 /**
@@ -157,6 +200,7 @@ export function getLLMConfig() {
  * @returns {boolean} Success status
  */
 export function removeLLMConfig() {
+  removeFromSession(STORAGE_KEYS.LLM_CONFIG_TIMESTAMP);
   return removeFromSession(STORAGE_KEYS.LLM_CONFIG);
 }
 
@@ -174,7 +218,7 @@ export function saveAnalysisToHistory(result) {
 
     return saveToLocal(STORAGE_KEYS.ANALYSIS_HISTORY, newHistory);
   } catch (error) {
-    console.error('Failed to save analysis to history:', error);
+    console.error("Failed to save analysis to history:", error);
     return false;
   }
 }
@@ -219,8 +263,8 @@ export function getUserPreferences() {
  */
 export function isStorageAvailable(storage) {
   try {
-    const testKey = '__storage_test__';
-    storage.setItem(testKey, 'test');
+    const testKey = "__storage_test__";
+    storage.setItem(testKey, "test");
     storage.removeItem(testKey);
     return true;
   } catch {

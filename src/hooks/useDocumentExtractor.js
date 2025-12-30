@@ -4,7 +4,11 @@
  */
 
 import { useState, useCallback } from "react";
-import { validateFile, validateDocumentText } from "../utils/validation.js";
+import {
+  validateFile,
+  validateDocumentText,
+  validatePdfMagicBytes,
+} from "../utils/validation.js";
 
 /**
  * Hook for document extraction
@@ -47,18 +51,27 @@ export function useDocumentExtractor() {
     setError(null);
 
     try {
-      // Validate file
+      // Validate file (type, size, extension)
       const validation = validateFile(file);
       if (!validation.valid) {
         throw new Error(validation.errors[0].message);
+      }
+
+      // Validate PDF magic bytes (file signature)
+      const magicBytesValidation = await validatePdfMagicBytes(file);
+      if (!magicBytesValidation.valid) {
+        throw new Error(magicBytesValidation.errors[0].message);
       }
 
       // Dynamic import of PDF.js and worker
       const pdfjsLib = await import("pdfjs-dist");
 
       // Import worker as raw text and create blob URL
-      const workerCode = await import("pdfjs-dist/build/pdf.worker.min.mjs?raw");
-      const workerBlob = new Blob([workerCode.default], { type: "application/javascript" });
+      const workerCode =
+        await import("pdfjs-dist/build/pdf.worker.min.mjs?raw");
+      const workerBlob = new Blob([workerCode.default], {
+        type: "application/javascript",
+      });
       pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(workerBlob);
 
       // Read file as array buffer

@@ -3,10 +3,15 @@
  * @description Hook for interacting with LLM providers
  */
 
-import { useState, useCallback } from 'react';
-import { useLLMConfig } from '../contexts/LLMConfigContext.jsx';
-import { ANALYSIS_CONFIG, ERROR_CODES, ERROR_MESSAGES } from '../utils/constants.js';
-import { retry } from '../utils/helpers.js';
+import { useState, useCallback } from "react";
+import { useLLMConfig } from "../contexts/LLMConfigContext.jsx";
+import {
+  ANALYSIS_CONFIG,
+  ERROR_CODES,
+  ERROR_MESSAGES,
+} from "../utils/constants.js";
+import { retry } from "../utils/helpers.js";
+import { refreshLLMConfigTimestamp } from "../utils/storage.js";
 
 /**
  * Simple token bucket rate limiter
@@ -14,10 +19,10 @@ import { retry } from '../utils/helpers.js';
  */
 class TokenBucket {
   constructor(capacity, refillRate) {
-    this.capacity = capacity;          // Maximum tokens
-    this.tokens = capacity;            // Current available tokens
-    this.refillRate = refillRate;      // Tokens per millisecond
-    this.lastRefill = Date.now();      // Last refill timestamp
+    this.capacity = capacity; // Maximum tokens
+    this.tokens = capacity; // Current available tokens
+    this.refillRate = refillRate; // Tokens per millisecond
+    this.lastRefill = Date.now(); // Last refill timestamp
   }
 
   refill() {
@@ -68,137 +73,148 @@ export function useLLMProvider() {
    * @param {Object} options - Additional options
    * @returns {Promise<string>} LLM response
    */
-  const complete = useCallback(async (prompt, options = {}) => {
-    setIsProcessing(true);
-    setError(null);
+  const complete = useCallback(
+    async (prompt, options = {}) => {
+      setIsProcessing(true);
+      setError(null);
 
-    try {
-      // Check rate limit
-      if (!rateLimiter.tryConsume()) {
-        throw new Error('Rate limit exceeded. Please wait before making another request.');
-      }
-
-      // Validate config
-      const validation = validateConfig();
-      if (!validation.isValid) {
-        throw new Error(validation.errors?.[0] || ERROR_MESSAGES[ERROR_CODES.INVALID_API_KEY]);
-      }
-
-      const requestBody = {
-        model: config.model,
-        messages: [
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-        temperature: options.temperature ?? config.temperature,
-        max_tokens: options.maxTokens ?? config.maxTokens,
-      };
-
-      // Add API key for OpenRouter
-      const headers = {
-        'Content-Type': 'application/json',
-      };
-
-      if (config.provider === 'openrouter') {
-        headers['Authorization'] = `Bearer ${config.apiKey}`;
-        headers['HTTP-Referer'] = window.location.origin;
-        headers['X-Title'] = 'Privacy Policy Distiller';
-      }
-
-      // Determine endpoint and request body based on provider
-      let endpoint;
-      let body;
-
-      if (config.provider === 'ollama') {
-        // Ollama uses /api/chat with different request format
-        endpoint = `${config.baseUrl}/api/chat`;
-        const ollamaBody = {
-          model: config.model,
-          messages: requestBody.messages,
-          stream: false,
-          options: {
-            temperature: requestBody.temperature,
-            num_predict: requestBody.max_tokens,
-            num_ctx: config.contextWindow || 8192, // Use configured context window
-          },
-        };
-        body = JSON.stringify(ollamaBody);
-      } else {
-        // OpenAI-compatible API (OpenRouter, LM Studio)
-        endpoint = `${config.baseUrl}/chat/completions`;
-        body = JSON.stringify(requestBody);
-      }
-
-      // Make request with retry logic
-      const response = await retry(
-        async () => {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(
-            () => controller.abort(),
-            ANALYSIS_CONFIG.TIMEOUT_MS
+      try {
+        // Check rate limit
+        if (!rateLimiter.tryConsume()) {
+          throw new Error(
+            "Rate limit exceeded. Please wait before making another request.",
           );
+        }
 
-          try {
-            const res = await fetch(endpoint, {
-              method: 'POST',
-              headers,
-              body,
-              signal: controller.signal,
-            });
+        // Refresh API key timeout on successful API usage
+        refreshLLMConfigTimestamp();
 
-            clearTimeout(timeoutId);
+        // Validate config
+        const validation = validateConfig();
+        if (!validation.isValid) {
+          throw new Error(
+            validation.errors?.[0] ||
+              ERROR_MESSAGES[ERROR_CODES.INVALID_API_KEY],
+          );
+        }
 
-            if (!res.ok) {
-              if (res.status === 429) {
-                throw new Error(ERROR_MESSAGES[ERROR_CODES.LLM_RATE_LIMITED]);
+        const requestBody = {
+          model: config.model,
+          messages: [
+            {
+              role: "user",
+              content: prompt,
+            },
+          ],
+          temperature: options.temperature ?? config.temperature,
+          max_tokens: options.maxTokens ?? config.maxTokens,
+        };
+
+        // Add API key for OpenRouter
+        const headers = {
+          "Content-Type": "application/json",
+        };
+
+        if (config.provider === "openrouter") {
+          headers["Authorization"] = `Bearer ${config.apiKey}`;
+          headers["HTTP-Referer"] = window.location.origin;
+          headers["X-Title"] = "Privacy Policy Distiller";
+        }
+
+        // Determine endpoint and request body based on provider
+        let endpoint;
+        let body;
+
+        if (config.provider === "ollama") {
+          // Ollama uses /api/chat with different request format
+          endpoint = `${config.baseUrl}/api/chat`;
+          const ollamaBody = {
+            model: config.model,
+            messages: requestBody.messages,
+            stream: false,
+            options: {
+              temperature: requestBody.temperature,
+              num_predict: requestBody.max_tokens,
+              num_ctx: config.contextWindow || 8192, // Use configured context window
+            },
+          };
+          body = JSON.stringify(ollamaBody);
+        } else {
+          // OpenAI-compatible API (OpenRouter, LM Studio)
+          endpoint = `${config.baseUrl}/chat/completions`;
+          body = JSON.stringify(requestBody);
+        }
+
+        // Make request with retry logic
+        const response = await retry(
+          async () => {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(
+              () => controller.abort(),
+              ANALYSIS_CONFIG.TIMEOUT_MS,
+            );
+
+            try {
+              const res = await fetch(endpoint, {
+                method: "POST",
+                headers,
+                body,
+                signal: controller.signal,
+              });
+
+              clearTimeout(timeoutId);
+
+              if (!res.ok) {
+                if (res.status === 429) {
+                  throw new Error(ERROR_MESSAGES[ERROR_CODES.LLM_RATE_LIMITED]);
+                }
+                throw new Error(`HTTP ${res.status}: ${res.statusText}`);
               }
-              throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-            }
 
-            return res;
-          } catch (err) {
-            clearTimeout(timeoutId);
-            if (err.name === 'AbortError') {
-              throw new Error(ERROR_MESSAGES[ERROR_CODES.LLM_TIMEOUT]);
+              return res;
+            } catch (err) {
+              clearTimeout(timeoutId);
+              if (err.name === "AbortError") {
+                throw new Error(ERROR_MESSAGES[ERROR_CODES.LLM_TIMEOUT]);
+              }
+              throw err;
             }
-            throw err;
+          },
+          ANALYSIS_CONFIG.RETRY_ATTEMPTS,
+          ANALYSIS_CONFIG.RETRY_DELAY_MS,
+        );
+
+        const data = await response.json();
+
+        // Extract response text based on provider format
+        let responseText;
+
+        if (config.provider === "ollama") {
+          // Ollama format: { message: { content: "..." } }
+          if (!data.message || !data.message.content) {
+            throw new Error(ERROR_MESSAGES[ERROR_CODES.LLM_INVALID_RESPONSE]);
           }
-        },
-        ANALYSIS_CONFIG.RETRY_ATTEMPTS,
-        ANALYSIS_CONFIG.RETRY_DELAY_MS
-      );
-
-      const data = await response.json();
-
-      // Extract response text based on provider format
-      let responseText;
-
-      if (config.provider === 'ollama') {
-        // Ollama format: { message: { content: "..." } }
-        if (!data.message || !data.message.content) {
-          throw new Error(ERROR_MESSAGES[ERROR_CODES.LLM_INVALID_RESPONSE]);
+          responseText = data.message.content;
+        } else {
+          // OpenAI format: { choices: [{ message: { content: "..." } }] }
+          if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+            throw new Error(ERROR_MESSAGES[ERROR_CODES.LLM_INVALID_RESPONSE]);
+          }
+          responseText = data.choices[0].message.content;
         }
-        responseText = data.message.content;
-      } else {
-        // OpenAI format: { choices: [{ message: { content: "..." } }] }
-        if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-          throw new Error(ERROR_MESSAGES[ERROR_CODES.LLM_INVALID_RESPONSE]);
-        }
-        responseText = data.choices[0].message.content;
+
+        setIsProcessing(false);
+        return responseText;
+      } catch (err) {
+        const errorMessage =
+          err.message || ERROR_MESSAGES[ERROR_CODES.LLM_REQUEST_FAILED];
+        setError(errorMessage);
+        setIsProcessing(false);
+        throw new Error(errorMessage);
       }
-
-      setIsProcessing(false);
-      return responseText;
-
-    } catch (err) {
-      const errorMessage = err.message || ERROR_MESSAGES[ERROR_CODES.LLM_REQUEST_FAILED];
-      setError(errorMessage);
-      setIsProcessing(false);
-      throw new Error(errorMessage);
-    }
-  }, [config, validateConfig]);
+    },
+    [config, validateConfig],
+  );
 
   /**
    * Clears error state
