@@ -204,12 +204,17 @@ export const ERROR_MESSAGES = {
   [ERROR_CODES.UNKNOWN_ERROR]: 'An unexpected error occurred. Please try again.',
 };
 
+// CORS proxy configuration
+// Set CLOUDFLARE_WORKER_URL to your deployed Worker URL after deployment
+// Example: 'https://privacy-policy-cors-proxy.your-subdomain.workers.dev'
+export const CLOUDFLARE_WORKER_URL = '';
+
 // CORS proxy fallback chain
-export const CORS_PROXIES = [
-  '', // Try direct fetch first
-  'https://api.allorigins.win/raw?url=',
-  'https://corsproxy.io/?',
-];
+// When CLOUDFLARE_WORKER_URL is set, it will be used exclusively
+// When empty, falls back to direct fetch only (no third-party proxies)
+export const CORS_PROXIES = CLOUDFLARE_WORKER_URL
+  ? ['', `${CLOUDFLARE_WORKER_URL}/?url=`]  // Direct + Cloudflare Worker
+  : [''];  // Direct fetch only (no third-party proxies)
 
 // Accessibility
 export const A11Y = {
