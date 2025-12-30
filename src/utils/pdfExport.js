@@ -1,4 +1,4 @@
-import { jsPDF } from 'jspdf';
+// jsPDF is dynamically imported in exportToPDF to reduce initial bundle size
 
 /**
  * Category configuration for scorecard (matches PrivacyScorecard component)
@@ -199,7 +199,10 @@ function parseMarkdownToBlocks(markdown) {
  * @param {Object} result - Analysis result object
  * @returns {void} Downloads the PDF
  */
-export function exportToPDF(result) {
+export async function exportToPDF(result) {
+  // Dynamic import jsPDF to reduce initial bundle size
+  const { jsPDF } = await import('jspdf');
+  
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',

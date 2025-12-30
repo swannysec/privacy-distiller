@@ -1,5 +1,15 @@
 import { useMemo, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
+
+/** Custom sanitization schema - blocks javascript: links */
+const sanitizeSchema = {
+  ...defaultSchema,
+  protocols: {
+    ...defaultSchema.protocols,
+    href: ['http', 'https', 'mailto'],
+  },
+};
 
 /**
  * Severity configuration with colors matching mockup
@@ -25,7 +35,7 @@ const SEVERITY_CONFIG = {
     bgColor: 'var(--risk-low-bg)',
     label: 'Low Risk'
   }
-};;
+};
 
 /**
  * RiskHighlights - Component for displaying privacy risks with severity levels
@@ -139,7 +149,7 @@ export function RiskHighlights({ risks = [], className = '' }) {
                 <div className="risk-item__details">
                   <h4 className="risk-item__details-title">Why this matters:</h4>
                   <div className="risk-item__details-content">
-                    <ReactMarkdown>{risk.explanation}</ReactMarkdown>
+                    <ReactMarkdown rehypePlugins={[[rehypeSanitize, sanitizeSchema]]}>{risk.explanation}</ReactMarkdown>
                   </div>
 
                   {risk.affectedSections && risk.affectedSections.length > 0 && (

@@ -76,7 +76,7 @@ describe('ErrorBoundary', () => {
       );
 
       expect(
-        screen.getByText('We encountered an unexpected error. Please refresh the page and try again.')
+        screen.getByText('We encountered an unexpected error. You can try again or refresh the page.')
       ).toBeInTheDocument();
     });
 
@@ -136,7 +136,7 @@ describe('ErrorBoundary', () => {
         </ErrorBoundary>
       );
 
-      const summary = screen.getByText('Error details');
+      const summary = screen.getByText('Error details (dev only)');
       expect(summary.tagName).toBe('SUMMARY');
     });
 
@@ -264,7 +264,8 @@ describe('ErrorBoundary', () => {
 
       expect(children[0].className).toContain('error-boundary__title');
       expect(children[1].className).toContain('error-boundary__message');
-      expect(children[2].className).toContain('error-boundary__details');
+      expect(children[2].className).toContain('error-boundary__actions');
+      // Note: details only shown in DEV mode, which may not be set in tests
     });
   });
 

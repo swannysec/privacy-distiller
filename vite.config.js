@@ -9,14 +9,25 @@ export default defineConfig({
   build: {
     outDir: "dist",
     sourcemap: true,
+    // Enable module preloading for dynamic imports
+    modulePreload: {
+      polyfill: true,
+    },
     rollupOptions: {
       output: {
         manualChunks: {
           "pdf-worker": ["pdfjs-dist"],
           "react-vendor": ["react", "react-dom"],
+          "pdf-export": ["jspdf"],
+          "ui-vendor": ["dompurify", "react-markdown"],
         },
       },
     },
+    // Strip console.log and debugger in production builds
+    minify: "esbuild",
+  },
+  esbuild: {
+    drop: ["console", "debugger"],
   },
   test: {
     globals: true,
