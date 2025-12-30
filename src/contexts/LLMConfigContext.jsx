@@ -9,6 +9,7 @@ import React, {
   useState,
   useEffect,
   useCallback,
+  useMemo,
 } from "react";
 import { DEFAULT_LLM_CONFIG } from "../utils/constants.js";
 import { validateLLMConfig } from "../utils/validation.js";
@@ -112,34 +113,36 @@ export function LLMConfigProvider({ children }) {
     }));
   }, []);
 
-  // Grouped context value structure for better organization
-  const stateValues = {
-    config,
-    validationErrors,
-  };
+  // Memoize context value to prevent unnecessary re-renders
+  const value = useMemo(() => {
+    const stateValues = {
+      config,
+      validationErrors,
+    };
 
-  const actions = {
-    updateConfig,
-    setProvider,
-    validateConfig,
-    resetConfig,
-  };
+    const actions = {
+      updateConfig,
+      setProvider,
+      validateConfig,
+      resetConfig,
+    };
 
-  const computed = {
-    isValid: validationErrors.length === 0,
-  };
+    const computed = {
+      isValid: validationErrors.length === 0,
+    };
 
-  const value = {
-    // Grouped structure (preferred)
-    state: stateValues,
-    actions,
-    computed,
+    return {
+      // Grouped structure (preferred)
+      state: stateValues,
+      actions,
+      computed,
 
-    // Flat structure (backward compatibility)
-    ...stateValues,
-    ...actions,
-    ...computed,
-  };
+      // Flat structure (backward compatibility)
+      ...stateValues,
+      ...actions,
+      ...computed,
+    };
+  }, [config, validationErrors, updateConfig, setProvider, validateConfig, resetConfig]);
 
   return (
     <LLMConfigContext.Provider value={value}>

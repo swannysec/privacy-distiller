@@ -91,8 +91,8 @@ function AppContent() {
   /**
    * Handle export results - generates a PDF formatted like the full report
    */
-  const handleExportResults = useCallback((result) => {
-    exportToPDF(result);
+  const handleExportResults = useCallback(async (result) => {
+    await exportToPDF(result);
   }, []);
 
   const isAnalyzing =

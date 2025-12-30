@@ -1,5 +1,18 @@
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
+
+/** Average reading speed in words per minute */
+const WORDS_PER_MINUTE = 200;
+
+/** Custom sanitization schema - blocks javascript: links and other dangerous patterns */
+const sanitizeSchema = {
+  ...defaultSchema,
+  protocols: {
+    ...defaultSchema.protocols,
+    href: ['http', 'https', 'mailto'], // Block javascript: protocol
+  },
+};
 
 /**
  * @typedef {'brief' | 'detailed' | 'full'} SummaryLevel
@@ -44,7 +57,7 @@ export function SummaryView({ summary = {}, className = '' }) {
   /**
    * Estimate reading time in minutes
    */
-  const readingTime = Math.max(1, Math.ceil(content.split(/\s+/).length / 200));
+  const readingTime = Math.max(1, Math.ceil(content.split(/\s+/).length / WORDS_PER_MINUTE));
   const wordEstimate = level === 'brief' ? '~200 words' : level === 'detailed' ? '~500 words' : '~1000+ words';
 
   return (
@@ -85,9 +98,11 @@ export function SummaryView({ summary = {}, className = '' }) {
         </button>
       </div>
 
-      {/* Content */}
+      {/* Content - sanitized to prevent XSS from LLM output */}
       <div className="summary-content">
-        <ReactMarkdown>{content}</ReactMarkdown>
+        <ReactMarkdown rehypePlugins={[[rehypeSanitize, sanitizeSchema]]}>
+          {content}
+        </ReactMarkdown>
       </div>
 
       {/* Reading time estimate */}

@@ -3,7 +3,13 @@
  * @description Manages document analysis state and results
  */
 
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useMemo,
+} from "react";
 import { ANALYSIS_STATUS } from "../utils/constants.js";
 import { generateId } from "../utils/helpers.js";
 import { saveAnalysisToHistory } from "../utils/storage.js";
@@ -158,17 +164,52 @@ export function AnalysisProvider({ children }) {
     }));
   }, []);
 
-  // Grouped context value structure for better organization
-  const stateValues = {
-    status: state.status,
-    result: state.result,
-    error: state.error,
-    progress: state.progress,
-    currentStep: state.currentStep,
-    document,
-  };
+  // Memoized context value to prevent unnecessary re-renders
+  const value = useMemo(() => {
+    const stateValues = {
+      status: state.status,
+      result: state.result,
+      error: state.error,
+      progress: state.progress,
+      currentStep: state.currentStep,
+      document,
+    };
 
-  const actions = {
+    const actions = {
+      setDocumentInput,
+      startAnalysis,
+      updateProgress,
+      setAnalyzing,
+      completeAnalysis,
+      setError,
+      resetAnalysis,
+      clearResults,
+      clearError,
+    };
+
+    const computed = {
+      isIdle: state.status === ANALYSIS_STATUS.IDLE,
+      isExtracting: state.status === ANALYSIS_STATUS.EXTRACTING,
+      isAnalyzing: state.status === ANALYSIS_STATUS.ANALYZING,
+      isCompleted: state.status === ANALYSIS_STATUS.COMPLETED,
+      isError: state.status === ANALYSIS_STATUS.ERROR,
+      hasResult: state.result !== null,
+    };
+
+    return {
+      // Grouped structure (preferred)
+      state: stateValues,
+      actions,
+      computed,
+
+      // Flat structure (backward compatibility)
+      ...stateValues,
+      ...actions,
+      ...computed,
+    };
+  }, [
+    state,
+    document,
     setDocumentInput,
     startAnalysis,
     updateProgress,
@@ -178,28 +219,7 @@ export function AnalysisProvider({ children }) {
     resetAnalysis,
     clearResults,
     clearError,
-  };
-
-  const computed = {
-    isIdle: state.status === ANALYSIS_STATUS.IDLE,
-    isExtracting: state.status === ANALYSIS_STATUS.EXTRACTING,
-    isAnalyzing: state.status === ANALYSIS_STATUS.ANALYZING,
-    isCompleted: state.status === ANALYSIS_STATUS.COMPLETED,
-    isError: state.status === ANALYSIS_STATUS.ERROR,
-    hasResult: state.result !== null,
-  };
-
-  const value = {
-    // Grouped structure (preferred)
-    state: stateValues,
-    actions,
-    computed,
-
-    // Flat structure (backward compatibility)
-    ...stateValues,
-    ...actions,
-    ...computed,
-  };
+  ]);
 
   return (
     <AnalysisContext.Provider value={value}>

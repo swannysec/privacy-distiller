@@ -16,7 +16,7 @@ import { LLM_PROVIDERS, DEFAULT_CONTEXT_WINDOWS } from '../../utils/constants';
  * @returns {JSX.Element}
  */
 export function LLMConfigPanel({ disabled = false, onSave, onClose, className = '' }) {
-  const { config, updateConfig, setProvider, validateConfig, resetConfig } = useLLMConfig();
+  const { config, updateConfig, setProvider, validateConfig } = useLLMConfig();
   const [hasChanges, setHasChanges] = useState(false);
   const [validationError, setValidationError] = useState(null);
   const [testStatus, setTestStatus] = useState(null); // 'testing', 'success', 'error'
@@ -77,14 +77,6 @@ export function LLMConfigPanel({ disabled = false, onSave, onClose, className = 
       onSave(config);
     }
   }, [config, validateConfig, onSave]);
-
-  const handleReset = useCallback(() => {
-    resetConfig();
-    setHasChanges(false);
-    setValidationError(null);
-    setTestStatus(null);
-    setTestMessage('');
-  }, [resetConfig]);
 
   const handleTestConnection = useCallback(async () => {
     const validation = validateConfig();
@@ -301,8 +293,8 @@ export function LLMConfigPanel({ disabled = false, onSave, onClose, className = 
             <div>
               <strong>Local Model Limitations</strong>
               <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.875rem' }}>
-                <strong>For large documents, we recommend using OpenRouter</strong> with cloud models 
-                (Claude, GPT-4, Gemini) that support 100K+ token contexts and 32K+ response lengths. 
+                <strong>For large documents, we recommend using OpenRouter</strong> with cloud models
+                (Claude, GPT-4, Gemini) that support 100K+ token contexts and 32K+ response lengths.
                 Local models typically have limited capacity.
               </p>
               <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.875rem' }}>
