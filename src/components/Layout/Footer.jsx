@@ -2,10 +2,12 @@
  * Footer - Application footer with legal info and links
  * @param {Object} props
  * @param {Function} props.onAboutOpen - Callback to open about modal
+ * @param {Function} props.onPrivacyPolicyOpen - Callback to open privacy policy modal
+ * @param {Function} props.onTermsOfServiceOpen - Callback to open terms of service modal
  * @param {string} props.className - Additional CSS classes
  * @returns {JSX.Element}
  */
-export function Footer({ onAboutOpen, className = '' }) {
+export function Footer({ onAboutOpen, onPrivacyPolicyOpen, onTermsOfServiceOpen, className = '' }) {
   const currentYear = new Date().getFullYear();
 
   return (
@@ -80,6 +82,42 @@ export function Footer({ onAboutOpen, className = '' }) {
           <div className="footer__section">
             <h2 className="footer__heading">Resources</h2>
           <ul className="footer__list">
+            <li>
+              {onPrivacyPolicyOpen ? (
+                <button
+                  type="button"
+                  className="footer__link-button"
+                  onClick={onPrivacyPolicyOpen}
+                >
+                  Privacy Policy
+                </button>
+              ) : (
+                <a
+                  href={`${import.meta.env.BASE_URL}privacy-policy.md`}
+                  className="footer__link"
+                >
+                  Privacy Policy
+                </a>
+              )}
+            </li>
+            <li>
+              {onTermsOfServiceOpen ? (
+                <button
+                  type="button"
+                  className="footer__link-button"
+                  onClick={onTermsOfServiceOpen}
+                >
+                  Terms of Service
+                </button>
+              ) : (
+                <a
+                  href={`${import.meta.env.BASE_URL}terms-of-service.md`}
+                  className="footer__link"
+                >
+                  Terms of Service
+                </a>
+              )}
+            </li>
             <li>
               <a
                 href="https://github.com/swannysec/policy-analyzer"

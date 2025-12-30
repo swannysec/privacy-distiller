@@ -15,10 +15,11 @@ Privacy Policy Distiller is a free, open-source web application that helps users
 - Identifies potential privacy risks and concerns
 - Extracts key terms and definitions
 - Runs entirely in your web browser (client-side application)
+- Stores all data (settings, preferences, temporary analysis data) exclusively on your own device — we operate no servers that store user data
 
 ## 3. No Account Required
 
-The Service does not require user registration or account creation. You can use the Service without providing any personal information.
+The Service does not require user registration or account creation. You can use the Service without providing any personal information. Any preferences or settings you configure are stored only on your own device and are not transmitted to us.
 
 ## 4. User Responsibilities
 
@@ -35,7 +36,7 @@ If you choose to use OpenRouter or other third-party LLM providers:
 - You are responsible for obtaining and managing your own API keys
 - You are responsible for any costs associated with your API usage
 - You must comply with the terms of service of your chosen LLM provider
-- API keys are stored only in your browser's session storage and are never transmitted to our servers
+- API keys are stored only on your own device (in your browser's session storage) and are never transmitted to our servers — we have no access to them
 
 ## 5. Disclaimer of Warranties
 

@@ -19,6 +19,7 @@ import {
   Card,
   Button,
   TipsModal,
+  LegalDocumentModal,
 } from "./components";
 import { ANALYSIS_STATUS } from "./utils/constants";
 import "./globals.css";
@@ -34,6 +35,8 @@ function AppContent() {
   const [showConfig, setShowConfig] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
   const [showTips, setShowTips] = useState(false);
+  const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
+  const [showTermsOfService, setShowTermsOfService] = useState(false);
   const [configError, setConfigError] = useState(null);
 
   /**
@@ -226,6 +229,22 @@ function AppContent() {
                 AI-powered analysis that breaks down complex legal jargon,
                 highlights privacy risks, and explains what really matters.
               </p>
+              <p className="hero__demo">
+                <button
+                  type="button"
+                  className="hero__demo-link"
+                  onClick={() => handleDocumentSelected({
+                    type: 'url',
+                    source: 'https://saberwing.github.io/policy-analyzer/privacy-policy.md',
+                    metadata: {
+                      inputMode: 'url',
+                      timestamp: new Date().toISOString(),
+                    }
+                  })}
+                >
+                  Try it: Analyze our own Privacy Policy
+                </button>
+              </p>
             </section>
 
             {configError && (
@@ -256,7 +275,29 @@ function AppContent() {
         />
       </Main>
 
-      <Footer onAboutOpen={() => setShowAbout(true)} />
+      <Footer
+        onAboutOpen={() => setShowAbout(true)}
+        onPrivacyPolicyOpen={() => setShowPrivacyPolicy(true)}
+        onTermsOfServiceOpen={() => setShowTermsOfService(true)}
+      />
+
+      {/* Privacy Policy Modal */}
+      {showPrivacyPolicy && (
+        <LegalDocumentModal
+          documentPath="privacy-policy.md"
+          title="Privacy Policy"
+          onClose={() => setShowPrivacyPolicy(false)}
+        />
+      )}
+
+      {/* Terms of Service Modal */}
+      {showTermsOfService && (
+        <LegalDocumentModal
+          documentPath="terms-of-service.md"
+          title="Terms of Service"
+          onClose={() => setShowTermsOfService(false)}
+        />
+      )}
     </div>
   );
 }

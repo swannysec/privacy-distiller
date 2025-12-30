@@ -25,22 +25,24 @@ Privacy Policy Analyzer ("the Application," "we," "our") is a client-side web ap
 - Device fingerprints for tracking purposes
 - Cookies for advertising or tracking
 
-### Browser Storage (Local Only)
+### Browser Storage (Your Device Only)
 
-The Application uses your browser's built-in storage mechanisms to enhance your experience. This data remains entirely on your device and is never transmitted to our servers.
+The Application uses your web browser's built-in storage mechanisms to enhance your experience. **This data is stored exclusively on your own device** — in your browser's internal database — and is never transmitted to our servers or any third party. We have no ability to access, read, or recover this data.
 
-**Session Storage** (automatically cleared when you close your browser tab):
+**Session Storage** (temporary, stored on your device, automatically cleared when you close your browser tab):
 - API keys for LLM providers (OpenRouter, Ollama, LM Studio)
 - Temporary analysis session data
 
-**Local Storage** (persists until you clear it):
+**Your Browser's Local Storage** (stored on your device, persists until you clear it):
 - Theme preference (light/dark mode)
 - Recently analyzed documents (metadata only, not full content)
 - Application settings and preferences
 
+**Important:** "Local storage" and "session storage" are technical terms for storage areas within your web browser that exist only on your computer, phone, or tablet. This data never leaves your device unless you explicitly share it.
+
 **How to Clear This Data:**
 - Session storage: Close your browser tab or window
-- Local storage: Use your browser's "Clear site data" feature, or use the application's settings to clear preferences
+- Your browser's local storage: Use your browser's "Clear site data" feature, or use the application's settings to clear preferences
 
 ## Third-Party Services
 
@@ -115,11 +117,12 @@ PDF documents are processed entirely in your browser using PDF.js (Mozilla's ope
 
 ### Data Control
 
-Since all data is stored locally in your browser, you have complete control:
+Since all data is stored on your own device (in your browser's storage), you have complete control:
 
 - **Access:** View your stored preferences in your browser's developer tools
 - **Deletion:** Clear site data through your browser settings at any time
 - **Portability:** Your analysis history can be exported (when this feature is available)
+- **No Remote Access:** We cannot access, retrieve, or delete your locally-stored data — only you can
 
 ### Opt-Out Options
 
@@ -167,10 +170,10 @@ For privacy-related questions or concerns:
 |-----------|------------|---------------|--------------|
 | Personal Info | No | N/A | N/A |
 | Account Data | No | N/A | N/A |
-| Document Content | Temporarily | Browser memory | LLM provider (your choice) |
-| API Keys | Yes (user-provided) | Session storage | LLM provider only |
-| Preferences | Yes | Local storage | No one |
-| URLs Analyzed | Temporarily | Browser memory | CORS proxy (if used) |
+| Document Content | Temporarily | Your device (browser memory) | LLM provider (your choice) |
+| API Keys | Yes (user-provided) | Your device (session storage) | LLM provider only |
+| Preferences | Yes | Your device (browser local storage) | No one |
+| URLs Analyzed | Temporarily | Your device (browser memory) | CORS proxy (if used) |
 
 ---
 

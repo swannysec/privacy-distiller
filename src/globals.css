@@ -420,6 +420,33 @@ li {
   line-height: 1.6;
 }
 
+.hero__demo {
+  margin-top: var(--spacing-lg);
+}
+
+.hero__demo-link {
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  padding: 0;
+  transition: color 0.2s ease;
+}
+
+.hero__demo-link:hover {
+  color: var(--color-primary-hover);
+}
+
+.hero__demo-link:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 /* ===========================
    Card Component
    =========================== */
@@ -950,6 +977,120 @@ li {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+}
+
+/* Legal Document Modal */
+.modal--legal {
+  max-width: 800px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal__body--scrollable {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-xl);
+  max-height: calc(90vh - 140px);
+}
+
+.legal-document__loading,
+.legal-document__error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-2xl);
+  text-align: center;
+  gap: var(--spacing-lg);
+}
+
+.legal-document__error {
+  color: var(--color-error);
+}
+
+.legal-document__content {
+  color: var(--text-primary);
+  line-height: 1.7;
+}
+
+.legal-document__content h1 {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 var(--spacing-lg) 0;
+  padding-bottom: var(--spacing-md);
+  border-bottom: 2px solid var(--border-color);
+}
+
+.legal-document__content h2 {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: var(--spacing-xl) 0 var(--spacing-md) 0;
+}
+
+.legal-document__content h3 {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: var(--spacing-lg) 0 var(--spacing-sm) 0;
+}
+
+.legal-document__content p {
+  margin: 0 0 var(--spacing-md) 0;
+}
+
+.legal-document__content ul,
+.legal-document__content ol {
+  margin: 0 0 var(--spacing-md) 0;
+  padding-left: var(--spacing-xl);
+}
+
+.legal-document__content li {
+  margin-bottom: var(--spacing-xs);
+}
+
+.legal-document__content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--spacing-md) 0 var(--spacing-lg) 0;
+  font-size: 0.9rem;
+}
+
+.legal-document__content th,
+.legal-document__content td {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--border-color);
+  text-align: left;
+}
+
+.legal-document__content th {
+  background-color: var(--bg-secondary);
+  font-weight: 600;
+}
+
+.legal-document__content a {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+.legal-document__content a:hover {
+  color: var(--color-primary-hover);
+}
+
+.legal-document__content strong {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.legal-document__content hr {
+  border: none;
+  border-top: 1px solid var(--border-color);
+  margin: var(--spacing-xl) 0;
 }
 
 @keyframes fadeIn {
