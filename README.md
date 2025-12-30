@@ -2,15 +2,14 @@
   <img src="./src/assets/privacy_policy_distiller.png" alt="Privacy Policy Distiller" width="400">
 </p>
 
-A web application that uses LLMs to distill, break down, and summarize privacy policies in plain language for everyday users.
-
+A web application that uses LLMs to distill, break down, and summarize privacy policies in plain language for everyday people.  [Try it now!](https://privacydistiller.com)
 ## Features
 
 - **Multi-Source Input**: Analyze policies via URL or PDF upload
 - **LLM Integration**: Support for OpenRouter, Ollama, and LM Studio
 - **Privacy Risk Detection**: Identify and highlight significant privacy concerns
 - **Plain Language Summaries**: Multiple detail levels (brief, detailed, full)
-- **Security-First**: Session-only API key storage, XSS prevention
+- **Security-First**: Session-only local API key storage, XSS prevention
 - **Accessible**: WCAG 2.1 AA compliant
 
 ## Tech Stack
@@ -19,6 +18,10 @@ A web application that uses LLMs to distill, break down, and summarize privacy p
 - **PDF Processing**: pdf.js (client-side)
 - **Security**: DOMPurify for XSS prevention
 - **Hosting**: GitHub Pages
+
+## Screenshot
+<img width="1358" height="967" alt="image" src="https://github.com/user-attachments/assets/e2793d88-aa17-490b-962a-7295a516442e" />
+
 
 ## Getting Started
 
@@ -81,7 +84,7 @@ npm run preview
 ### Ollama (Local)
 1. Install [Ollama](https://ollama.ai)
 2. Run `ollama serve`
-3. Pull a model: `ollama pull llama3.1:70b`
+3. Pull a model: `ollama pull gpt-oss:20b`
 4. Select Ollama in app settings
 
 ### LM Studio (Local)
@@ -96,4 +99,4 @@ See [CLAUDE.md](./CLAUDE.md) for detailed architecture and development guidance.
 
 ## License
 
-MIT
+MIT License with Commercial Product Restriction
