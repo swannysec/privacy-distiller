@@ -7,7 +7,9 @@
    CSS Reset & Base Styles
    =========================== */
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -55,9 +57,13 @@
   --radius-xl: 12px;
 
   /* Typography */
-  --font-display: 'Inclusive Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-body: 'Inclusive Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-mono: 'Consolas', 'Monaco', 'Courier New', monospace;
+  --font-display:
+    "Inclusive Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  --font-body:
+    "Inclusive Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  --font-mono: "Consolas", "Monaco", "Courier New", monospace;
 
   /* Shadows */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
@@ -125,7 +131,9 @@ body {
   color: var(--text-primary);
   line-height: 1.7;
   min-height: 100vh;
-  transition: background-color var(--transition-base), color var(--transition-base);
+  transition:
+    background-color var(--transition-base),
+    color var(--transition-base);
 }
 
 #root {
@@ -204,14 +212,31 @@ body {
    =========================== */
 
 /* Tighter letter-spacing for emphasis text */
-.font-bold, h1, h2, h3, h4, h5, h6,
-.card__title, .hero__title, .header__title,
-.risk-item__title, .term-item__word, .modal__title,
-.footer__section-title, .form-section__title, .footer__disclaimer-title {
+.font-bold,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.card__title,
+.hero__title,
+.header__title,
+.risk-item__title,
+.term-item__word,
+.modal__title,
+.footer__section-title,
+.form-section__title,
+.footer__disclaimer-title {
   letter-spacing: -0.02em;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-display);
   font-weight: 700;
   line-height: 1.2;
@@ -219,12 +244,25 @@ h1, h2, h3, h4, h5, h6 {
   margin-bottom: var(--spacing-md);
 }
 
-h1 { font-size: 2.75rem; letter-spacing: -0.03em; }
-h2 { font-size: 1.75rem; }
-h3 { font-size: 1.4rem; }
-h4 { font-size: 1.25rem; }
-h5 { font-size: 1.125rem; }
-h6 { font-size: 1rem; }
+h1 {
+  font-size: 2.75rem;
+  letter-spacing: -0.03em;
+}
+h2 {
+  font-size: 1.75rem;
+}
+h3 {
+  font-size: 1.4rem;
+}
+h4 {
+  font-size: 1.25rem;
+}
+h5 {
+  font-size: 1.125rem;
+}
+h6 {
+  font-size: 1rem;
+}
 
 p {
   margin-bottom: var(--spacing-md);
@@ -250,7 +288,8 @@ code {
   border: 1px solid var(--border-color);
 }
 
-ul, ol {
+ul,
+ol {
   margin-left: var(--spacing-lg);
   margin-bottom: var(--spacing-md);
 }
@@ -487,6 +526,134 @@ li {
 }
 
 /* ===========================
+   Configuration Banner
+   =========================== */
+
+.config-banner {
+  background: linear-gradient(
+    135deg,
+    rgba(14, 116, 144, 0.15) 0%,
+    rgba(8, 145, 178, 0.1) 100%
+  );
+  border: 2px solid var(--accent-primary);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  margin: var(--spacing-lg) auto;
+  max-width: var(--container-lg);
+  box-shadow: 0 4px 12px rgba(8, 145, 178, 0.2);
+}
+
+.config-banner__content {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.config-banner__icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.config-banner__text {
+  flex: 1;
+  min-width: 200px;
+  font-size: 1rem;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.config-banner__button {
+  background: var(--accent-primary);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  white-space: nowrap;
+}
+
+.config-banner__button:hover {
+  background: var(--accent-primary-hover);
+  box-shadow: 0 0 12px var(--accent-primary-glow);
+  transform: translateY(-1px);
+}
+
+.config-banner__button:active {
+  transform: translateY(0);
+}
+
+.config-banner__dismiss {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 8px;
+  margin-left: auto;
+  transition: color var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.config-banner__dismiss:hover {
+  color: var(--text-primary);
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .config-banner__content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+
+  .config-banner__button {
+    width: 100%;
+  }
+
+  .config-banner__dismiss {
+    position: absolute;
+    top: var(--spacing-sm);
+    right: var(--spacing-sm);
+    margin: 0;
+  }
+
+  .config-banner {
+    position: relative;
+    padding-right: var(--spacing-3xl);
+  }
+}
+
+/* ===========================
+   Config Prompt Card (shown when config needed)
+   =========================== */
+
+.config-prompt-card {
+  background: linear-gradient(
+    135deg,
+    rgba(14, 116, 144, 0.1) 0%,
+    rgba(8, 145, 178, 0.05) 100%
+  );
+  border: 2px solid var(--accent-primary);
+  text-align: center;
+  padding: var(--spacing-2xl);
+}
+
+.config-prompt-text {
+  color: var(--text-primary);
+  font-size: 1.05rem;
+  margin-bottom: var(--spacing-lg);
+}
+
+.config-prompt-text strong {
+  color: var(--accent-primary);
+}
+
+/* ===========================
    Button Component
    =========================== */
 
@@ -575,7 +742,9 @@ li {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ===========================
@@ -698,7 +867,7 @@ li {
 }
 
 .summary-tab--active::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: -1px;
   left: 0;
@@ -1094,8 +1263,12 @@ li {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
@@ -1177,7 +1350,7 @@ li {
 }
 
 .toggle::after {
-  content: '';
+  content: "";
   position: absolute;
   width: 18px;
   height: 18px;
@@ -1363,7 +1536,8 @@ li {
 
 /* Risk pulse animation */
 @keyframes risk-pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
     transform: scale(1);
   }
@@ -2101,7 +2275,11 @@ li {
 }
 
 .welcome-card {
-  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--bg-secondary) 0%,
+    var(--bg-tertiary) 100%
+  );
   border: 1px solid var(--border-color);
 }
 
@@ -2289,7 +2467,9 @@ li {
   background-color: var(--bg-secondary);
   border-radius: var(--radius-md);
   border-left: 4px solid var(--accent-primary);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .tip-item:hover {
@@ -2367,12 +2547,24 @@ li {
   color: var(--text-primary);
 }
 
-.markdown-content h1 { font-size: 1.75rem; }
-.markdown-content h2 { font-size: 1.5rem; }
-.markdown-content h3 { font-size: 1.25rem; }
-.markdown-content h4 { font-size: 1.125rem; }
-.markdown-content h5 { font-size: 1rem; }
-.markdown-content h6 { font-size: 0.875rem; }
+.markdown-content h1 {
+  font-size: 1.75rem;
+}
+.markdown-content h2 {
+  font-size: 1.5rem;
+}
+.markdown-content h3 {
+  font-size: 1.25rem;
+}
+.markdown-content h4 {
+  font-size: 1.125rem;
+}
+.markdown-content h5 {
+  font-size: 1rem;
+}
+.markdown-content h6 {
+  font-size: 0.875rem;
+}
 
 .markdown-content p {
   margin-bottom: var(--spacing-md);
@@ -2552,9 +2744,15 @@ li {
     grid-template-columns: 1fr;
   }
 
-  h1 { font-size: 2rem; }
-  h2 { font-size: 1.5rem; }
-  h3 { font-size: 1.25rem; }
+  h1 {
+    font-size: 2rem;
+  }
+  h2 {
+    font-size: 1.5rem;
+  }
+  h3 {
+    font-size: 1.25rem;
+  }
 }
 
 /* Mobile menu */
@@ -2791,7 +2989,9 @@ li {
   color: var(--text-primary);
   font-family: var(--font-mono);
   font-size: 0.95rem;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
 }
 
 .model-combobox__input:focus {
@@ -2842,7 +3042,9 @@ li {
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-sm);
-  transition: background var(--transition-fast), color var(--transition-fast);
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast);
 }
 
 .model-combobox__toggle:hover {
@@ -2955,7 +3157,9 @@ li {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Model Error State */
@@ -3096,7 +3300,7 @@ li {
 }
 
 .progress-indicator__bar--shimmer::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -3189,7 +3393,8 @@ li {
 
 /* Progress indicator animations */
 @keyframes icon-pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
     transform: scale(1);
   }
@@ -3200,7 +3405,8 @@ li {
 }
 
 @keyframes step-pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
@@ -3287,31 +3493,51 @@ li {
 }
 
 .scorecard__grade--excellent {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05));
+  background: linear-gradient(
+    135deg,
+    rgba(16, 185, 129, 0.15),
+    rgba(16, 185, 129, 0.05)
+  );
   color: var(--color-success);
   border: 2px solid var(--color-success);
 }
 
 .scorecard__grade--good {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.05));
+  background: linear-gradient(
+    135deg,
+    rgba(59, 130, 246, 0.15),
+    rgba(59, 130, 246, 0.05)
+  );
   color: var(--accent-primary);
   border: 2px solid var(--accent-primary);
 }
 
 .scorecard__grade--fair {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05));
+  background: linear-gradient(
+    135deg,
+    rgba(245, 158, 11, 0.15),
+    rgba(245, 158, 11, 0.05)
+  );
   color: var(--color-warning);
   border: 2px solid var(--color-warning);
 }
 
 .scorecard__grade--poor {
-  background: linear-gradient(135deg, rgba(249, 115, 22, 0.15), rgba(249, 115, 22, 0.05));
+  background: linear-gradient(
+    135deg,
+    rgba(249, 115, 22, 0.15),
+    rgba(249, 115, 22, 0.05)
+  );
   color: #f97316;
   border: 2px solid #f97316;
 }
 
 .scorecard__grade--critical {
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.05));
+  background: linear-gradient(
+    135deg,
+    rgba(239, 68, 68, 0.15),
+    rgba(239, 68, 68, 0.05)
+  );
   color: var(--color-error);
   border: 2px solid var(--color-error);
 }
