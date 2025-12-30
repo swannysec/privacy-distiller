@@ -1,11 +1,10 @@
-import { useState, useMemo } from 'react';
-import { SummaryView } from './SummaryView';
-import { RiskHighlights } from './RiskHighlights';
-import { KeyTermsGlossary } from './KeyTermsGlossary';
-import { PrivacyScorecard } from './PrivacyScorecard';
-import { Button } from '../Common';
-import { formatDate } from '../../utils/formatting';
-import { sanitizeText } from '../../utils/sanitization';
+import { useState, useMemo } from "react";
+import { SummaryView } from "./SummaryView";
+import { RiskHighlights } from "./RiskHighlights";
+import { KeyTermsGlossary } from "./KeyTermsGlossary";
+import { PrivacyScorecard } from "./PrivacyScorecard";
+import { Button } from "../Common";
+import { formatDate } from "../../utils/formatting";
 
 /**
  * Calculate overall risk level from risks array
@@ -14,16 +13,19 @@ import { sanitizeText } from '../../utils/sanitization';
  */
 function calculateRiskLevel(risks) {
   if (!risks || risks.length === 0) {
-    return { level: 'none', counts: { critical: 0, high: 0, medium: 0, low: 0 } };
+    return {
+      level: "none",
+      counts: { critical: 0, high: 0, medium: 0, low: 0 },
+    };
   }
 
   const counts = { critical: 0, high: 0, medium: 0, low: 0 };
 
-  risks.forEach(risk => {
-    const severity = (risk.severity || 'low').toLowerCase();
-    if (severity === 'critical' || severity === 'high') {
+  risks.forEach((risk) => {
+    const severity = (risk.severity || "low").toLowerCase();
+    if (severity === "critical" || severity === "high") {
       counts.high++;
-    } else if (severity === 'medium') {
+    } else if (severity === "medium") {
       counts.medium++;
     } else {
       counts.low++;
@@ -32,14 +34,14 @@ function calculateRiskLevel(risks) {
 
   // Determine overall level based on highest severity present
   if (counts.high > 0) {
-    return { level: 'high', counts };
+    return { level: "high", counts };
   } else if (counts.medium > 0) {
-    return { level: 'medium', counts };
+    return { level: "medium", counts };
   } else if (counts.low > 0) {
-    return { level: 'low', counts };
+    return { level: "low", counts };
   }
 
-  return { level: 'none', counts };
+  return { level: "none", counts };
 }
 
 /**
@@ -56,8 +58,13 @@ function calculateRiskLevel(risks) {
  * @param {string} props.className - Additional CSS classes
  * @returns {JSX.Element}
  */
-export function ResultsDisplay({ result, onNewAnalysis, onExport, className = '' }) {
-  const [viewMode, setViewMode] = useState(/** @type {ViewMode} */ ('summary'));
+export function ResultsDisplay({
+  result,
+  onNewAnalysis,
+  onExport,
+  className = "",
+}) {
+  const [viewMode, setViewMode] = useState(/** @type {ViewMode} */ ("summary"));
 
   // Guard against missing or incomplete result data
   if (!result || !result.documentMetadata) {
@@ -77,7 +84,11 @@ export function ResultsDisplay({ result, onNewAnalysis, onExport, className = ''
    * Estimate word count from summary
    */
   const wordCount = useMemo(() => {
-    const text = result.summary?.full || result.summary?.detailed || result.summary?.brief || '';
+    const text =
+      result.summary?.full ||
+      result.summary?.detailed ||
+      result.summary?.brief ||
+      "";
     return `~${Math.round(text.split(/\s+/).length / 100) * 100 || 500} words`;
   }, [result.summary]);
 
@@ -85,27 +96,27 @@ export function ResultsDisplay({ result, onNewAnalysis, onExport, className = ''
    * Get document title from source
    */
   const documentTitle = useMemo(() => {
-    const source = result.documentMetadata.source || '';
+    const source = result.documentMetadata.source || "";
     // Extract domain or filename
-    if (source.startsWith('http')) {
+    if (source.startsWith("http")) {
       try {
         const url = new URL(source);
-        const host = url.hostname.replace('www.', '');
-        const company = host.split('.')[0];
+        const host = url.hostname.replace("www.", "");
+        const company = host.split(".")[0];
         return `${company.charAt(0).toUpperCase() + company.slice(1)} Privacy Policy Analysis`;
       } catch {
-        return 'Privacy Policy Analysis';
+        return "Privacy Policy Analysis";
       }
     }
-    return source.replace('.pdf', '') + ' Analysis';
+    return source.replace(".pdf", "") + " Analysis";
   }, [result.documentMetadata.source]);
 
   /**
    * Format source for display
    */
   const sourceDisplay = useMemo(() => {
-    const source = result.documentMetadata.source || '';
-    if (source.startsWith('http')) {
+    const source = result.documentMetadata.source || "";
+    if (source.startsWith("http")) {
       try {
         const url = new URL(source);
         return url.hostname + url.pathname;
@@ -131,19 +142,19 @@ export function ResultsDisplay({ result, onNewAnalysis, onExport, className = ''
 ${documentTitle}
 
 Summary:
-${result.summary?.brief || 'No summary available'}
+${result.summary?.brief || "No summary available"}
 
 Privacy Risks:
-${result.risks?.map(r => `- [${r.severity.toUpperCase()}] ${r.title}: ${r.description}`).join('\n') || 'No risks identified'}
+${result.risks?.map((r) => `- [${r.severity.toUpperCase()}] ${r.title}: ${r.description}`).join("\n") || "No risks identified"}
 
 Key Terms:
-${result.keyTerms?.map(t => `- ${t.term}: ${t.definition}`).join('\n') || 'No terms extracted'}
+${result.keyTerms?.map((t) => `- ${t.term}: ${t.definition}`).join("\n") || "No terms extracted"}
     `.trim();
 
     try {
       await navigator.clipboard.writeText(text);
     } catch (err) {
-      console.error('Failed to copy:', err);
+      console.error("Failed to copy:", err);
     }
   };
 
@@ -158,7 +169,8 @@ ${result.keyTerms?.map(t => `- ${t.term}: ${t.definition}`).join('\n') || 'No te
               <span aria-hidden="true">📄</span> {sourceDisplay}
             </span>
             <span className="results-meta__item">
-              <span aria-hidden="true">🕐</span> Analyzed {formatDate(result.timestamp)}
+              <span aria-hidden="true">🕐</span> Analyzed{" "}
+              {formatDate(result.timestamp)}
             </span>
             <span className="results-meta__item">
               <span aria-hidden="true">📊</span> {wordCount}
@@ -182,42 +194,51 @@ ${result.keyTerms?.map(t => `- ${t.term}: ${t.definition}`).join('\n') || 'No te
       </div>
 
       {/* Privacy Scorecard - prominently displayed */}
-      {result.scorecard && (
-        <PrivacyScorecard scorecard={result.scorecard} />
-      )}
+      {result.scorecard && <PrivacyScorecard scorecard={result.scorecard} />}
 
       {/* View Mode Tabs - only shown when not in "all" mode */}
-      <div className="results-tabs tabs" role="tablist" aria-label="Results view mode">
+      <div
+        className="results-tabs tabs"
+        role="tablist"
+        aria-label="Results view mode"
+      >
         <button
           type="button"
           role="tab"
-          aria-selected={viewMode === 'summary'}
-          className={`tab ${viewMode === 'summary' ? 'tab--active' : ''}`}
-          onClick={() => setViewMode('summary')}
+          aria-selected={viewMode === "summary"}
+          className={`tab ${viewMode === "summary" ? "tab--active" : ""}`}
+          onClick={() => setViewMode("summary")}
         >
           Summary
         </button>
         <button
           type="button"
           role="tab"
-          aria-selected={viewMode === 'risks'}
-          className={`tab ${viewMode === 'risks' ? 'tab--active' : ''} ${riskLevel.level !== 'none' ? `tab--risk-${riskLevel.level}` : ''}`}
-          onClick={() => setViewMode('risks')}
+          aria-selected={viewMode === "risks"}
+          className={`tab ${viewMode === "risks" ? "tab--active" : ""} ${riskLevel.level !== "none" ? `tab--risk-${riskLevel.level}` : ""}`}
+          onClick={() => setViewMode("risks")}
         >
-          {riskLevel.level !== 'none' && (
-            <span className={`tab__risk-indicator tab__risk-indicator--${riskLevel.level}`} aria-hidden="true" />
+          {riskLevel.level !== "none" && (
+            <span
+              className={`tab__risk-indicator tab__risk-indicator--${riskLevel.level}`}
+              aria-hidden="true"
+            />
           )}
           Privacy Risks
           {result.risks?.length > 0 && (
-            <span className={`tab__count ${riskLevel.level !== 'none' ? `tab__count--${riskLevel.level}` : ''}`}>{result.risks.length}</span>
+            <span
+              className={`tab__count ${riskLevel.level !== "none" ? `tab__count--${riskLevel.level}` : ""}`}
+            >
+              {result.risks.length}
+            </span>
           )}
         </button>
         <button
           type="button"
           role="tab"
-          aria-selected={viewMode === 'terms'}
-          className={`tab ${viewMode === 'terms' ? 'tab--active' : ''}`}
-          onClick={() => setViewMode('terms')}
+          aria-selected={viewMode === "terms"}
+          className={`tab ${viewMode === "terms" ? "tab--active" : ""}`}
+          onClick={() => setViewMode("terms")}
         >
           Key Terms
           {result.keyTerms?.length > 0 && (
@@ -227,9 +248,9 @@ ${result.keyTerms?.map(t => `- ${t.term}: ${t.definition}`).join('\n') || 'No te
         <button
           type="button"
           role="tab"
-          aria-selected={viewMode === 'all'}
-          className={`tab ${viewMode === 'all' ? 'tab--active' : ''}`}
-          onClick={() => setViewMode('all')}
+          aria-selected={viewMode === "all"}
+          className={`tab ${viewMode === "all" ? "tab--active" : ""}`}
+          onClick={() => setViewMode("all")}
         >
           Full Report
         </button>
@@ -237,19 +258,18 @@ ${result.keyTerms?.map(t => `- ${t.term}: ${t.definition}`).join('\n') || 'No te
 
       {/* Content panels */}
       <div className="results-display__content">
-        {(viewMode === 'summary' || viewMode === 'all') && (
+        {(viewMode === "summary" || viewMode === "all") && (
           <SummaryView summary={result.summary} />
         )}
 
-        {(viewMode === 'risks' || viewMode === 'all') && (
+        {(viewMode === "risks" || viewMode === "all") && (
           <RiskHighlights risks={result.risks} />
         )}
 
-        {(viewMode === 'terms' || viewMode === 'all') && (
+        {(viewMode === "terms" || viewMode === "all") && (
           <KeyTermsGlossary keyTerms={result.keyTerms} />
         )}
       </div>
-
     </div>
   );
 }
