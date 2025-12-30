@@ -53,12 +53,12 @@ export function useDocumentExtractor() {
         throw new Error(validation.errors[0].message);
       }
 
-      // Dynamic import of PDF.js and worker
+      // Dynamic import of PDF.js
       const pdfjsLib = await import("pdfjs-dist");
-      const pdfjsWorker = await import("pdfjs-dist/build/pdf.worker.min.mjs");
 
-      // Set worker source from npm package (not CDN - version mismatch issues)
-      pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+      // Use worker from public folder (copied from node_modules/pdfjs-dist/build/)
+      // This avoids CDN version mismatch issues
+      pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
 
       // Read file as array buffer
       const arrayBuffer = await file.arrayBuffer();
