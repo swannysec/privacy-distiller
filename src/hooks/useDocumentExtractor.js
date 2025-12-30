@@ -57,7 +57,7 @@ export function useDocumentExtractor() {
       const pdfjsLib = await import("pdfjs-dist");
 
       // Set worker source
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
       // Read file as array buffer
       const arrayBuffer = await file.arrayBuffer();
