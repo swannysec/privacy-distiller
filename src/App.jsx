@@ -50,15 +50,24 @@ function AppContent() {
 
   // Track if user has seen the config banner (stored in localStorage)
   const [showConfigBanner, setShowConfigBanner] = useState(() => {
-    const hasSeenBanner = localStorage.getItem("hasSeenConfigBanner");
-    return !hasSeenBanner;
+    try {
+      const hasSeenBanner = localStorage.getItem("hasSeenConfigBanner");
+      return !hasSeenBanner;
+    } catch {
+      // Storage unavailable (e.g., private browsing mode)
+      return true; // Show banner if storage fails
+    }
   });
 
   /**
    * Dismiss the configuration banner
    */
   const dismissConfigBanner = useCallback(() => {
-    localStorage.setItem("hasSeenConfigBanner", "true");
+    try {
+      localStorage.setItem("hasSeenConfigBanner", "true");
+    } catch {
+      // Storage unavailable, continue silently
+    }
     setShowConfigBanner(false);
   }, []);
 

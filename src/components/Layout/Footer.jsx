@@ -193,7 +193,7 @@ export function Footer({
         {/* Copyright */}
         <div className="footer__bottom">
           <p className="footer__copyright">
-            © 2025-2026 John D. Swanson. Released under MIT License with
+            © {currentYear} John D. Swanson. Released under MIT License with
             Commercial Product Restriction.
           </p>
           <p className="footer__attribution">

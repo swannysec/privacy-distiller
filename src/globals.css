@@ -466,7 +466,7 @@ li {
 .hero__demo-link {
   background: none;
   border: none;
-  color: var(--color-primary);
+  color: var(--accent-primary);
   font-family: var(--font-body);
   font-size: 1rem;
   cursor: pointer;
@@ -477,11 +477,11 @@ li {
 }
 
 .hero__demo-link:hover {
-  color: var(--color-primary-hover);
+  color: var(--accent-primary-hover);
 }
 
 .hero__demo-link:focus {
-  outline: 2px solid var(--color-primary);
+  outline: 2px solid var(--accent-primary);
   outline-offset: 2px;
   border-radius: 2px;
 }
@@ -1243,12 +1243,12 @@ li {
 }
 
 .legal-document__content a {
-  color: var(--color-primary);
+  color: var(--accent-primary);
   text-decoration: underline;
 }
 
 .legal-document__content a:hover {
-  color: var(--color-primary-hover);
+  color: var(--accent-primary-hover);
 }
 
 .legal-document__content strong {
