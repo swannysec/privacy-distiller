@@ -53,12 +53,12 @@ export function useDocumentExtractor() {
         throw new Error(validation.errors[0].message);
       }
 
-      // Dynamic import of PDF.js
-      const pdfjsLib = await import("pdfjs-dist");
+      // Dynamic import of PDF.js (legacy build for broader compatibility)
+      const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
 
-      // Use worker from public folder (copied from node_modules/pdfjs-dist/build/)
-      // This avoids CDN version mismatch issues
-      pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
+      // Disable worker - runs in main thread (simpler, avoids ES module worker issues)
+      // For most privacy policy PDFs this is fast enough
+      pdfjsLib.GlobalWorkerOptions.workerSrc = "";
 
       // Read file as array buffer
       const arrayBuffer = await file.arrayBuffer();
