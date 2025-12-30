@@ -2,7 +2,7 @@
  * @file Content sanitization utilities
  */
 
-import DOMPurify from 'dompurify';
+import DOMPurify from "dompurify";
 
 /**
  * Sanitizes HTML content to prevent XSS attacks
@@ -11,16 +11,34 @@ import DOMPurify from 'dompurify';
  * @returns {string} Sanitized HTML
  */
 export function sanitizeHtml(html, options = {}) {
-  if (!html || typeof html !== 'string') {
-    return '';
+  if (!html || typeof html !== "string") {
+    return "";
   }
 
   const defaultOptions = {
     ALLOWED_TAGS: [
-      'p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-      'ul', 'ol', 'li', 'a', 'span', 'div', 'blockquote', 'code', 'pre',
+      "p",
+      "br",
+      "strong",
+      "em",
+      "u",
+      "h1",
+      "h2",
+      "h3",
+      "h4",
+      "h5",
+      "h6",
+      "ul",
+      "ol",
+      "li",
+      "a",
+      "span",
+      "div",
+      "blockquote",
+      "code",
+      "pre",
     ],
-    ALLOWED_ATTR: ['href', 'class', 'id', 'target', 'rel'],
+    ALLOWED_ATTR: ["href", "class", "id", "target", "rel"],
     ALLOW_DATA_ATTR: false,
     ALLOWED_URI_REGEXP: /^(?:(?:https?):\/\/)/i,
   };
@@ -35,15 +53,25 @@ export function sanitizeHtml(html, options = {}) {
  * @returns {string} Sanitized text
  */
 export function sanitizeText(text) {
-  if (!text || typeof text !== 'string') {
-    return '';
+  if (!text || typeof text !== "string") {
+    return "";
   }
 
-  return text
-    .replace(/[<>]/g, '') // Remove angle brackets
-    .replace(/javascript:/gi, '') // Remove javascript: protocol
-    .replace(/on\w+\s*=/gi, '') // Remove event handlers
-    .trim();
+  // Apply sanitization in a loop to handle nested bypass attempts
+  // e.g., "javajavascript:script:" -> "javascript:" after first pass
+  let result = text;
+  let previous;
+  do {
+    previous = result;
+    result = result
+      .replace(/[<>]/g, "") // Remove angle brackets
+      .replace(/javascript:/gi, "") // Remove javascript: protocol
+      .replace(/vbscript:/gi, "") // Remove vbscript: protocol
+      .replace(/data:/gi, "") // Remove data: protocol
+      .replace(/on\w+\s*=/gi, ""); // Remove event handlers
+  } while (result !== previous);
+
+  return result.trim();
 }
 
 /**
@@ -52,8 +80,8 @@ export function sanitizeText(text) {
  * @returns {string} Sanitized URL
  */
 export function sanitizeUrl(url) {
-  if (!url || typeof url !== 'string') {
-    return '';
+  if (!url || typeof url !== "string") {
+    return "";
   }
 
   const trimmedUrl = url.trim();
@@ -62,13 +90,13 @@ export function sanitizeUrl(url) {
     const urlObject = new URL(trimmedUrl);
 
     // Only allow http and https protocols
-    if (!['http:', 'https:'].includes(urlObject.protocol)) {
-      return '';
+    if (!["http:", "https:"].includes(urlObject.protocol)) {
+      return "";
     }
 
     return urlObject.href;
   } catch {
-    return '';
+    return "";
   }
 }
 
@@ -78,13 +106,13 @@ export function sanitizeUrl(url) {
  * @returns {string} Sanitized content
  */
 export function sanitizeLLMContent(content) {
-  if (!content || typeof content !== 'string') {
-    return '';
+  if (!content || typeof content !== "string") {
+    return "";
   }
 
   // First sanitize as HTML (handles any HTML tags the LLM might have generated)
   const sanitizedHtml = sanitizeHtml(content, {
-    ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'ul', 'ol', 'li'],
+    ALLOWED_TAGS: ["p", "br", "strong", "em", "ul", "ol", "li"],
     ALLOWED_ATTR: [],
   });
 
@@ -97,8 +125,8 @@ export function sanitizeLLMContent(content) {
  * @returns {string} Plain text
  */
 export function stripHtml(html) {
-  if (!html || typeof html !== 'string') {
-    return '';
+  if (!html || typeof html !== "string") {
+    return "";
   }
 
   return DOMPurify.sanitize(html, { ALLOWED_TAGS: [] });
@@ -110,11 +138,11 @@ export function stripHtml(html) {
  * @returns {string} Escaped text
  */
 export function escapeHtml(text) {
-  if (!text || typeof text !== 'string') {
-    return '';
+  if (!text || typeof text !== "string") {
+    return "";
   }
 
-  const div = document.createElement('div');
+  const div = document.createElement("div");
   div.textContent = text;
   return div.innerHTML;
 }
@@ -125,13 +153,13 @@ export function escapeHtml(text) {
  * @returns {string} Sanitized file name
  */
 export function sanitizeFileName(fileName) {
-  if (!fileName || typeof fileName !== 'string') {
-    return 'unknown';
+  if (!fileName || typeof fileName !== "string") {
+    return "unknown";
   }
 
   return fileName
-    .replace(/[^a-zA-Z0-9._-]/g, '_') // Replace unsafe characters
-    .replace(/\.{2,}/g, '.') // Remove multiple dots
-    .replace(/^\.+/, '') // Remove leading dots
+    .replace(/[^a-zA-Z0-9._-]/g, "_") // Replace unsafe characters
+    .replace(/\.{2,}/g, ".") // Remove multiple dots
+    .replace(/^\.+/, "") // Remove leading dots
     .slice(0, 255); // Limit length
 }

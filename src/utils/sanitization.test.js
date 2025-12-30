@@ -93,6 +93,44 @@ describe("sanitization utils", () => {
       expect(sanitizeText(null)).toBe("");
       expect(sanitizeText(undefined)).toBe("");
     });
+
+    it("should remove javascript: protocol", () => {
+      const result = sanitizeText("javascript:alert('xss')");
+      expect(result).not.toContain("javascript:");
+    });
+
+    it("should remove vbscript: protocol", () => {
+      const result = sanitizeText("vbscript:msgbox('xss')");
+      expect(result).not.toContain("vbscript:");
+    });
+
+    it("should remove data: protocol", () => {
+      const result = sanitizeText("data:text/html,<script>alert(1)</script>");
+      expect(result).not.toContain("data:");
+    });
+
+    it("should remove event handlers", () => {
+      const result = sanitizeText("onclick=alert(1)");
+      expect(result).not.toContain("onclick=");
+    });
+
+    it("should handle nested bypass attempts for protocols", () => {
+      // Nested javascript: - after removing inner "javascript:", outer chars form new "javascript:"
+      const result = sanitizeText("javajavascript:script:alert(1)");
+      expect(result).not.toContain("javascript:");
+    });
+
+    it("should handle nested bypass attempts for event handlers", () => {
+      // Nested onclick - after removing inner "onclick=", outer chars form new "onclick="
+      const result = sanitizeText("oonclick=nclick=alert(1)");
+      expect(result).not.toContain("onclick=");
+    });
+
+    it("should remove angle brackets", () => {
+      const result = sanitizeText("<script>alert(1)</script>");
+      expect(result).not.toContain("<");
+      expect(result).not.toContain(">");
+    });
   });
 
   describe("sanitizeUrl", () => {
