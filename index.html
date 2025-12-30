@@ -10,14 +10,17 @@
     <!-- DNS Prefetch: APIs used at runtime (non-blocking) -->
     <link rel="dns-prefetch" href="https://openrouter.ai" />
     <link rel="dns-prefetch" href="https://corsproxy.io" />
-    <link href="https://fonts.googleapis.com/css2?family=Inclusive+Sans:ital@0;1&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inclusive+Sans:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
     <meta
       http-equiv="Content-Security-Policy"
       content="default-src 'self';
                script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com;
                worker-src 'self' blob:;
                img-src 'self' blob: data:;
-               connect-src 'self' https://openrouter.ai https://*.openrouter.ai https://corsproxy.io https://api.allorigins.win http://localhost:* http://127.0.0.1:*;
+               connect-src 'self' https://openrouter.ai https://*.openrouter.ai https://proxy.privacydistiller.com https://corsproxy.io https://api.allorigins.win http://localhost:* http://127.0.0.1:*;
                style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
                font-src 'self' https://fonts.gstatic.com;
                frame-ancestors 'none';
