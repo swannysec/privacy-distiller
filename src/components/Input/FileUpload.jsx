@@ -93,18 +93,18 @@ export function FileUpload({
     }
   }, []);
 
-  const dropzoneClasses = [
-    'file-upload__dropzone',
-    isDragging && 'file-upload__dropzone--dragging',
-    selectedFile && 'file-upload__dropzone--has-file',
-    disabled && 'file-upload__dropzone--disabled',
-    error && 'file-upload__dropzone--error'
+  const uploadZoneClasses = [
+    'upload-zone',
+    isDragging && 'upload-zone--dragging',
+    selectedFile && 'upload-zone--has-file',
+    disabled && 'upload-zone--disabled',
+    error && 'upload-zone--error'
   ].filter(Boolean).join(' ');
 
   return (
     <div className={`file-upload ${className}`}>
       <div
-        className={dropzoneClasses}
+        className={uploadZoneClasses}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
@@ -120,40 +120,38 @@ export function FileUpload({
           accept=".pdf,application/pdf"
           onChange={handleFileChange}
           disabled={disabled}
-          className="file-upload__input"
+          className="upload-zone__input"
           aria-label="Choose PDF file"
         />
 
         {!selectedFile ? (
-          <div className="file-upload__prompt">
-            <div className="file-upload__icon" aria-hidden="true">
+          <>
+            <div className="upload-zone__icon" aria-hidden="true">
               📄
             </div>
-            <div className="file-upload__text">
-              <p className="file-upload__primary-text">
-                Drop a PDF here, or{' '}
-                <button
-                  type="button"
-                  className="file-upload__browse-button"
-                  onClick={handleBrowseClick}
-                  disabled={disabled}
-                >
-                  browse files
-                </button>
-              </p>
-              <p className="file-upload__secondary-text" id="file-upload-description">
-                Maximum file size: {formatFileSize(FILE_CONSTRAINTS.MAX_SIZE)}
-              </p>
+            <div className="upload-zone__text">
+              Drop a PDF here, or{' '}
+              <button
+                type="button"
+                className="upload-zone__link"
+                onClick={handleBrowseClick}
+                disabled={disabled}
+              >
+                browse files
+              </button>
             </div>
-          </div>
+            <p className="upload-zone__hint" id="file-upload-description">
+              Maximum file size: {formatFileSize(FILE_CONSTRAINTS.MAX_SIZE_BYTES)}
+            </p>
+          </>
         ) : (
-          <div className="file-upload__selected">
-            <div className="file-upload__file-icon" aria-hidden="true">
+          <div className="upload-zone__selected">
+            <div className="upload-zone__file-icon" aria-hidden="true">
               📄
             </div>
-            <div className="file-upload__file-info">
-              <p className="file-upload__file-name">{selectedFile.name}</p>
-              <p className="file-upload__file-size">
+            <div className="upload-zone__file-info">
+              <p className="upload-zone__file-name">{selectedFile.name}</p>
+              <p className="upload-zone__file-size">
                 {formatFileSize(selectedFile.size)}
               </p>
             </div>
@@ -164,7 +162,6 @@ export function FileUpload({
               onClick={handleClear}
               disabled={disabled}
               ariaLabel="Clear selected file"
-              className="file-upload__clear-button"
             >
               Clear
             </Button>
@@ -174,21 +171,16 @@ export function FileUpload({
 
       {/* Error message */}
       {error && (
-        <div className="file-upload__error" role="alert" aria-live="polite">
-          <span className="file-upload__error-icon" aria-hidden="true">⚠️</span>
-          <span className="file-upload__error-text">{error}</span>
+        <div className="error-message" role="alert" aria-live="polite">
+          <span aria-hidden="true">⚠️</span>
+          <span>{error}</span>
         </div>
       )}
 
-      {/* Requirements */}
-      <div className="file-upload__requirements">
-        <p className="file-upload__requirements-title">Requirements:</p>
-        <ul className="file-upload__requirements-list">
-          <li>PDF format only (.pdf)</li>
-          <li>Maximum {formatFileSize(FILE_CONSTRAINTS.MAX_SIZE)}</li>
-          <li>Text-based PDF (scanned images not supported)</li>
-        </ul>
-      </div>
+      {/* Requirements hint */}
+      <p className="input-hint" style={{ marginTop: 'var(--space-3)' }}>
+        PDF format only • Text-based PDF (scanned images not supported)
+      </p>
     </div>
   );
 }

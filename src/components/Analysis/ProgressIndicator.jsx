@@ -1,6 +1,20 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { LoadingSpinner } from '../Common';
 import { ANALYSIS_STATUS } from '../../utils/constants';
+
+/**
+ * Format elapsed time for display
+ * @param {number} seconds - Elapsed seconds
+ * @returns {string} Formatted time string
+ */
+function formatElapsedTime(seconds) {
+  if (seconds < 60) {
+    return `${seconds}s`;
+  }
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}m ${secs}s`;
+}
 
 /**
  * ProgressIndicator - Component for displaying analysis progress
@@ -19,6 +33,22 @@ export function ProgressIndicator({
   error = null,
   className = ''
 }) {
+  // Track elapsed time
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+
+  // Reset and start timer when analysis becomes active
+  useEffect(() => {
+    const isActive = status === ANALYSIS_STATUS.EXTRACTING || status === ANALYSIS_STATUS.ANALYZING;
+
+    if (isActive) {
+      setElapsedSeconds(0);
+      const interval = setInterval(() => {
+        setElapsedSeconds(prev => prev + 1);
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [status]);
+
   /**
    * Get status configuration
    */
@@ -64,7 +94,7 @@ export function ProgressIndicator({
 
   return (
     <div
-      className={`progress-indicator ${className}`}
+      className={`progress-indicator ${isActive ? 'progress-indicator--active' : ''} ${className}`}
       role="status"
       aria-live="polite"
       aria-label={`Analysis ${statusConfig.label.toLowerCase()}`}
@@ -72,7 +102,7 @@ export function ProgressIndicator({
       <div className="progress-indicator__header">
         {/* Status icon */}
         <div
-          className="progress-indicator__icon"
+          className={`progress-indicator__icon ${isActive ? 'progress-indicator__icon--pulse' : ''}`}
           style={{ color: statusConfig.color }}
           aria-hidden="true"
         >
@@ -89,7 +119,7 @@ export function ProgressIndicator({
           </h3>
 
           {currentStep && isActive && (
-            <p className="progress-indicator__step">
+            <p className="progress-indicator__step progress-indicator__step--pulse">
               {currentStep}
             </p>
           )}
@@ -101,10 +131,15 @@ export function ProgressIndicator({
           )}
         </div>
 
-        {/* Progress percentage */}
+        {/* Progress percentage and elapsed time */}
         {showProgressBar && (
-          <div className="progress-indicator__percentage">
-            {Math.round(progress)}%
+          <div className="progress-indicator__stats">
+            <div className="progress-indicator__percentage">
+              {Math.round(progress)}%
+            </div>
+            <div className="progress-indicator__elapsed">
+              {formatElapsedTime(elapsedSeconds)}
+            </div>
           </div>
         )}
       </div>
@@ -119,7 +154,7 @@ export function ProgressIndicator({
           aria-valuenow={progress}
         >
           <div
-            className="progress-indicator__bar"
+            className="progress-indicator__bar progress-indicator__bar--shimmer"
             style={{
               width: `${progress}%`,
               backgroundColor: statusConfig.color

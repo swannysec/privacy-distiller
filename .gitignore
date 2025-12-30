@@ -7,9 +7,15 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies
 node_modules
+
+# Build outputs
 dist
 dist-ssr
+build
+
+# Local environment files
 *.local
 
 # Editor directories and files
@@ -25,6 +31,32 @@ dist-ssr
 
 # Testing
 coverage
+test-results/
+test-results.json
+coverage_output.txt
+playwright-report/
 
-# Build
-build
+# Playwright MCP
+.playwright-mcp/
+playwright-mcp-config.json
+
+# Development artifacts
+debug-server.cjs
+server-debug.log
+nul
+
+# Development/design files (not needed in repo)
+mockup.html
+font-comparison.html
+FIREWALL_SETUP.md
+FUNCTIONAL_ANALYSIS.md
+
+# Exported PDFs from testing
+privacy-policy-analysis-*.pdf
+
+# ConPort and Serena context directories
+.serena
+context_portal
+
+# Claude Code local settings
+.claude/settings.local.json

@@ -1,6 +1,8 @@
-# Privacy Policy Analyzer
+<p align="center">
+  <img src="./src/assets/privacy_policy_distiller.png" alt="Privacy Policy Distiller" width="400">
+</p>
 
-A web application that uses LLMs to analyze, break down, and summarize privacy policies and terms of service documents in plain language for everyday users.
+A web application that uses LLMs to distill, break down, and summarize privacy policies in plain language for everyday users.
 
 ## Features
 

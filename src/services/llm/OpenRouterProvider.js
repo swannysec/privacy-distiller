@@ -37,7 +37,7 @@ export class OpenRouterProvider extends BaseLLMProvider {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${this.config.apiKey}`,
           'HTTP-Referer': window.location.origin,
-          'X-Title': 'Privacy Policy Analyzer',
+          'X-Title': 'Privacy Policy Distiller',
         },
         body: JSON.stringify(requestBody),
         signal: controller.signal,

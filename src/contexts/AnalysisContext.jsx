@@ -3,10 +3,16 @@
  * @description Manages document analysis state and results
  */
 
-import React, { createContext, useContext, useState, useCallback } from 'react';
-import { ANALYSIS_STATUS } from '../utils/constants.js';
-import { generateId } from '../utils/helpers.js';
-import { saveAnalysisToHistory } from '../utils/storage.js';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useMemo,
+} from "react";
+import { ANALYSIS_STATUS } from "../utils/constants.js";
+import { generateId } from "../utils/helpers.js";
+import { saveAnalysisToHistory } from "../utils/storage.js";
 
 const AnalysisContext = createContext(null);
 
@@ -51,7 +57,7 @@ export function AnalysisProvider({ children }) {
       status: ANALYSIS_STATUS.EXTRACTING,
       error: null,
       progress: 0,
-      currentStep: 'Extracting document text...',
+      currentStep: "Extracting document text...",
     }));
   }, []);
 
@@ -76,7 +82,7 @@ export function AnalysisProvider({ children }) {
       ...prev,
       status: ANALYSIS_STATUS.ANALYZING,
       progress: 25,
-      currentStep: 'Analyzing policy document...',
+      currentStep: "Analyzing policy document...",
     }));
   }, []);
 
@@ -96,7 +102,7 @@ export function AnalysisProvider({ children }) {
       result: completeResult,
       error: null,
       progress: 100,
-      currentStep: 'Analysis complete',
+      currentStep: "Analysis complete",
     });
 
     // Save to history
@@ -145,16 +151,65 @@ export function AnalysisProvider({ children }) {
     }));
   }, []);
 
-  const value = {
-    // State
-    status: state.status,
-    result: state.result,
-    error: state.error,
-    progress: state.progress,
-    currentStep: state.currentStep,
-    document,
+  /**
+   * Clears error state but keeps document for retry
+   */
+  const clearError = useCallback(() => {
+    setState((prev) => ({
+      ...prev,
+      status: ANALYSIS_STATUS.IDLE,
+      error: null,
+      progress: 0,
+      currentStep: null,
+    }));
+  }, []);
 
-    // Actions
+  // Memoized context value to prevent unnecessary re-renders
+  const value = useMemo(() => {
+    const stateValues = {
+      status: state.status,
+      result: state.result,
+      error: state.error,
+      progress: state.progress,
+      currentStep: state.currentStep,
+      document,
+    };
+
+    const actions = {
+      setDocumentInput,
+      startAnalysis,
+      updateProgress,
+      setAnalyzing,
+      completeAnalysis,
+      setError,
+      resetAnalysis,
+      clearResults,
+      clearError,
+    };
+
+    const computed = {
+      isIdle: state.status === ANALYSIS_STATUS.IDLE,
+      isExtracting: state.status === ANALYSIS_STATUS.EXTRACTING,
+      isAnalyzing: state.status === ANALYSIS_STATUS.ANALYZING,
+      isCompleted: state.status === ANALYSIS_STATUS.COMPLETED,
+      isError: state.status === ANALYSIS_STATUS.ERROR,
+      hasResult: state.result !== null,
+    };
+
+    return {
+      // Grouped structure (preferred)
+      state: stateValues,
+      actions,
+      computed,
+
+      // Flat structure (backward compatibility)
+      ...stateValues,
+      ...actions,
+      ...computed,
+    };
+  }, [
+    state,
+    document,
     setDocumentInput,
     startAnalysis,
     updateProgress,
@@ -163,15 +218,8 @@ export function AnalysisProvider({ children }) {
     setError,
     resetAnalysis,
     clearResults,
-
-    // Computed
-    isIdle: state.status === ANALYSIS_STATUS.IDLE,
-    isExtracting: state.status === ANALYSIS_STATUS.EXTRACTING,
-    isAnalyzing: state.status === ANALYSIS_STATUS.ANALYZING,
-    isCompleted: state.status === ANALYSIS_STATUS.COMPLETED,
-    isError: state.status === ANALYSIS_STATUS.ERROR,
-    hasResult: state.result !== null,
-  };
+    clearError,
+  ]);
 
   return (
     <AnalysisContext.Provider value={value}>
@@ -187,7 +235,7 @@ export function AnalysisProvider({ children }) {
 export function useAnalysis() {
   const context = useContext(AnalysisContext);
   if (!context) {
-    throw new Error('useAnalysis must be used within AnalysisProvider');
+    throw new Error("useAnalysis must be used within AnalysisProvider");
   }
   return context;
 }

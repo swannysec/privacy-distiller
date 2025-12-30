@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Build a simple web application hosted on GitHub Pages that uses LLMs (local or OpenRouter) to analyze, break down, and summarize privacy policies and terms of service documents via URL or PDF upload for laypeople, including highlighting significant privacy risks.
+Build a simple web application hosted on GitHub Pages that uses LLMs (local or OpenRouter) to analyze, break down, and summarize privacy policies via URL or PDF upload for laypeople, including highlighting significant privacy risks.
 
 ## Development Environment
 
@@ -23,6 +23,30 @@ Build a simple web application hosted on GitHub Pages that uses LLMs (local or O
 - Consistent Node.js 20 environment
 - Safe unattended operation with `--dangerously-skip-permissions`
 - No Windows-specific npm issues
+
+## User-Level Resources Available
+
+The following user-level skills and commands are available across all projects. Project-specific guidance below may override or extend these.
+
+**Skills** (invoke with Skill tool):
+| Skill | Purpose |
+|-------|---------|
+| `session-lifecycle` | Session start/end workflows with incremental capture triggers |
+| `debug-journal` | Structured debugging with escalation triggers |
+| `error-patterns` | Quick JS/TS error recognition |
+| `context7-first` | Documentation-first approach for dependencies |
+| `tool-selection` | Guide for choosing between overlapping tools |
+| `5-minute-planning` | Pre-task planning to avoid wasted effort |
+
+**Commands** (invoke with `/command`):
+| Command | Purpose |
+|---------|---------|
+| `/dep-check <package>` | Check dependency health before adding |
+| `/git-safe-commit <message>` | Safe commit with build/test validation |
+| `/git-branch-cleanup [mode]` | Clean up merged/stale git branches |
+| `/bootstrap-project <name> [type]` | Set up new project with best practices |
+
+**Note**: This project uses ConPort and Serena as primary tools. User-level skills that offer `.md` file fallbacks should use the project-specific ConPort/Serena workflows instead.
 
 ## Critical Tools - DO NOT SKIP
 
@@ -61,19 +85,53 @@ Build a simple web application hosted on GitHub Pages that uses LLMs (local or O
 4. Use `find_referencing_symbols` before modifying APIs to understand impact
 5. Document architectural patterns in memories for future sessions
 
+## Pre-Task Planning
+
+**User-Level Skill**: `5-minute-planning` provides the full planning workflow. Invoke it for comprehensive planning guidance.
+
+### 5-Minute Planning Check (Quick Reference)
+
+Before starting any significant task, answer these questions:
+
+1. **What does "done" look like?** - Clear success criteria
+2. **What files will likely change?** - Scope assessment
+3. **Are there complexity signals?** - See checklist below
+4. **Should I use Context7 first?** - For any library/dependency work
+5. **Can any parts be parallelized?** - Multiple agents, independent subtasks
+
+### Complexity Signals
+
+Check for these early warning signs before diving in:
+
+| Signal | Implication | Action |
+|--------|-------------|--------|
+| Involves external library | Bundler/version issues likely | Use `context7-first` immediately |
+| Error mentions "module", "import", "fetch" | Bundler configuration issue | Check Vite/build config |
+| Multiple possible causes | Investigation needed | Start `debug-journal` before first attempt |
+| Version numbers in error | Version mismatch | Check npm vs CDN availability |
+| Works in dev, fails in production | Build/bundling issue | Test with `npm run build && npm run preview` |
+| Error message is vague/generic | Root cause unclear | Research before attempting fixes |
+
+**If 2+ signals present**: Stop, plan approach, use `debug-journal`, consider asking user for context before attempting fixes.
+
 ## Required Agents and Skills
 
 ### Phase 0: Dependency Management (Initial Setup)
+
+**User-Level Resources**:
+- **`/dep-check <package>`** command - Check dependency health before adding
+- **`context7-first`** skill - Enforce documentation-first approach
 
 **Agents**:
 - **`dependency-management:legacy-modernizer`** - Update dependencies, check for security vulnerabilities, ensure latest stable versions
 
 **Process**:
-1. BEFORE creating package.json, use Context7 to verify latest stable versions of all dependencies
-2. When creating package.json, use `dependency-management:legacy-modernizer` agent to validate dependency versions
-3. After npm install, run `npm audit` and address any security vulnerabilities
-4. Log dependency choices and version rationale in ConPort
-5. Document any version constraints or compatibility requirements
+1. Run `/dep-check <package>` to evaluate dependency health before adding
+2. Use `context7-first` skill to check library documentation
+3. When creating package.json, use `dependency-management:legacy-modernizer` agent to validate dependency versions
+4. After npm install, run `npm audit` and address any security vulnerabilities
+5. Log dependency choices and version rationale in ConPort
+6. Document any version constraints or compatibility requirements
 
 **When to Use**:
 - Creating initial package.json
@@ -151,17 +209,35 @@ Build a simple web application hosted on GitHub Pages that uses LLMs (local or O
 
 ### Phase 6: Code Quality and Review (Continuous)
 
+**User-Level Resources**:
+- **`pre-commit-check`** skill - Validation checklist with sub-agent triggers
+- **`/git-safe-commit <message>`** command - Safe commit with build/test validation
+
+**Project Skills**:
+- **`pre-commit-check`** - MUST use before every commit to validate build, tests, and trigger appropriate review agents
+
 **Agents**:
 - **`pr-review-toolkit:code-reviewer`** - Use BEFORE every commit
 - **`pr-review-toolkit:code-simplifier`** - Use after completing logical chunks of code
 - **`code-review-ai:architect-review`** - Architecture integrity checks
 - **`tdd-workflows:tdd-orchestrator`** - Test-driven development (if applicable)
+- **`security-pro:security-auditor`** - Security review for significant changes
+- **`frontend-mobile-security:frontend-security-coder`** - Frontend security for UI changes
+- **`backend-api-security:backend-security-coder`** - Backend security for API changes
 
 **Process**:
-1. Use `code-reviewer` proactively after writing code
-2. Use `code-simplifier` to improve clarity while preserving functionality
-3. Log refactoring decisions in ConPort
-4. Link code review findings to relevant decisions in ConPort knowledge graph
+1. Invoke `pre-commit-check` skill BEFORE staging any commit
+2. Use `code-reviewer` proactively after writing code
+3. Use `code-simplifier` to improve clarity while preserving functionality
+4. Run security agents for changes involving user input, authentication, or external APIs
+5. Log refactoring decisions in ConPort
+6. Link code review findings to relevant decisions in ConPort knowledge graph
+
+**MANDATORY After Significant Changes**:
+After completing any feature addition, major fix, or substantial code change:
+1. **MUST** invoke `pre-commit-check` skill to run full validation
+2. **MUST** use `/git-safe-commit <message>` command for the commit
+3. These are NOT optional - skipping them for "small" changes that turn out significant is a common source of bugs
 
 ### Phase 7: Testing
 
@@ -169,11 +245,47 @@ Build a simple web application hosted on GitHub Pages that uses LLMs (local or O
 - **`testing-suite:test-engineer`** - Test automation and quality assurance
 - **`testing-suite:generate-tests`** - Generate comprehensive test suites
 
+**CRITICAL TEST DEVELOPMENT RULES**:
+
+**BEFORE Writing Any Tests**:
+1. **ALWAYS inspect the actual implementation first** using Serena:
+   ```
+   mcp__plugin_serena_serena__get_symbols_overview(relative_path, depth=1)
+   mcp__plugin_serena_serena__find_symbol(name_path_pattern, include_body=true)
+   ```
+2. **Verify the actual API** - method names, signatures, return types, static vs instance
+3. **DO NOT write tests for imagined or ideal APIs** - test what actually exists
+4. **DO NOT assume method behavior** - read the actual implementation
+
+**Test Structure Requirements**:
+1. **Match actual method signatures**: If class methods are static, call them as static (`ClassName.method()` not `instance.method()`)
+2. **Match actual return types**: If function returns `null`, test for `null` (not `{}` or `[]`)
+3. **Match actual validation structures**: Verify exact shape of return objects (e.g., `{valid, errors}` vs `{isValid, error}`)
+4. **Use correct imports**: Include all needed test utilities (`describe`, `it`, `expect`, `beforeEach`, etc.)
+
+**Common Pitfalls to Avoid**:
+- ❌ Testing for methods that don't exist in the codebase
+- ❌ Assuming instance methods when they're actually static
+- ❌ Wrong return type expectations (null vs empty object/array)
+- ❌ Using wrong property names in return objects
+- ❌ Testing ideal behavior instead of actual behavior
+- ❌ Missing test utility imports
+
+**Test Validation Process**:
+1. Write tests based on actual implementation
+2. Tests should fail if implementation changes unexpectedly
+3. Tests should accurately document what the code actually does
+4. Log any discovered API gaps or missing features in ConPort for future implementation
+5. Use Serena memories to document test patterns and implementation quirks
+
 **Process**:
-1. Write tests for LLM prompt processing
-2. Test PDF extraction with various document formats
-3. Test privacy risk detection accuracy
-4. Log test coverage decisions in ConPort
+1. Use Serena to inspect implementation before writing tests
+2. Write tests that match actual API and behavior
+3. Test LLM prompt processing with actual method signatures
+4. Test PDF extraction with various document formats
+5. Test privacy risk detection accuracy
+6. Log test coverage decisions and any API gaps discovered in ConPort
+7. Document test patterns in Serena memories
 
 ### Phase 8: Performance Optimization
 
@@ -196,6 +308,9 @@ Build a simple web application hosted on GitHub Pages that uses LLMs (local or O
 4. Create deployment checklist in ConPort progress tracking
 
 ## Context Management Workflow
+
+**User-Level Skill**: `session-lifecycle` provides general session start/end workflows.
+**Project Override**: This project REQUIRES ConPort - use the specific steps below instead of fallback `.md` files.
 
 ### Session Start (EVERY TIME)
 ```
@@ -244,6 +359,8 @@ Build a simple web application hosted on GitHub Pages that uses LLMs (local or O
 ```
 
 ## Code Navigation Workflow
+
+**User-Level Skill**: `tool-selection` provides guidance for choosing between overlapping tools (Serena vs Read, Glob vs Grep, etc.)
 
 ### Exploring New Code
 ```
@@ -332,6 +449,250 @@ Use Serena memories to document:
 - ✅ All patterns documented in Serena
 - ✅ Comprehensive test coverage
 
+## Definition of Done
+
+Use these checklists to determine when work is complete. Different types of work have different completion criteria.
+
+### Feature Complete Checklist
+
+Before declaring a feature "done":
+
+- [ ] **Functionality**: Feature works as specified in requirements
+- [ ] **Tests**: Unit tests written and passing (verify with `npm test`)
+- [ ] **Build**: Production build succeeds (`npm run build`)
+- [ ] **No regressions**: Existing tests still pass
+- [ ] **ConPort logged**: Decision logged with rationale
+- [ ] **Code reviewed**: `pre-commit-check` skill invoked, all agents satisfied
+- [ ] **Security reviewed**: If user input involved, security agents consulted
+- [ ] **Committed**: Used `/git-safe-commit` command
+
+### Bug Fix Complete Checklist
+
+Before declaring a bug fix "done":
+
+- [ ] **Root cause identified**: Not just symptoms, actual cause documented
+- [ ] **Fix applied**: Code change addresses root cause
+- [ ] **Test added**: Regression test prevents recurrence
+- [ ] **Build passes**: `npm run build` succeeds
+- [ ] **Existing tests pass**: No regressions introduced
+- [ ] **Debug journal closed**: If used, root cause and solution documented
+- [ ] **Committed**: Used `/git-safe-commit` command
+
+### Refactoring Complete Checklist
+
+Before declaring a refactoring "done":
+
+- [ ] **Behavior preserved**: All existing tests still pass
+- [ ] **No functional changes**: Unless explicitly requested
+- [ ] **Build passes**: `npm run build` succeeds
+- [ ] **Code simplified**: Complexity reduced, not just moved
+- [ ] **Pattern documented**: If new pattern introduced, logged in ConPort
+- [ ] **Committed**: Used `/git-safe-commit` command
+
+### Investigation/Research Complete Checklist
+
+For exploratory tasks (not code changes):
+
+- [ ] **Question answered**: Original question addressed
+- [ ] **Findings documented**: Learnings logged in ConPort or Serena memory
+- [ ] **Recommendations clear**: If applicable, next steps identified
+- [ ] **No orphan work**: If code was prototyped, either commit or discard
+
+### Session End Checklist
+
+Before ending any session:
+
+- [ ] **All open tasks**: Either completed or status updated in ConPort
+- [ ] **No dangling state**: All debug journals closed
+- [ ] **Progress logged**: Summary of what was accomplished
+- [ ] **Next steps documented**: If work continues later, context preserved
+
+## Debugging Workflow
+
+**User-Level Resources**:
+- **`debug-journal`** skill - Structured debugging workflow for complex issues
+- **`error-patterns`** skill - Quick error recognition for common JS/TS patterns
+- **`context7-first`** skill - Check library docs before troubleshooting
+
+**Project Skills**:
+- **`troubleshooting-bundler-compatibility`** - Use for library loading failures, CDN issues, worker errors, or bundler compatibility problems
+
+### Quick Fix vs Deep Investigation Decision Tree
+
+When encountering an error, determine the appropriate approach:
+
+**Quick Fix (< 5 minutes)**
+Use when:
+- Error message is clear and specific
+- Single file/function involved
+- Common error pattern (typo, missing import, syntax)
+- No external dependencies involved
+
+Process:
+1. Read error message carefully
+2. Locate the exact line/file
+3. Apply fix
+4. Test immediately
+
+**Deep Investigation (> 5 minutes)**
+Use when:
+- Error involves external libraries or bundlers
+- Multiple possible causes
+- Error persists after obvious fixes
+- Version mismatches suspected
+
+Process:
+1. **Document**: Create ConPort debug log entry immediately
+2. **Research**: Use Context7 for library documentation
+3. **Isolate**: Create minimal reproduction if possible
+4. **Track**: Log each attempt and result in debug log
+5. **Escalate**: Use `troubleshooting-bundler-compatibility` skill if applicable
+6. **Document**: Log final solution and root cause in ConPort
+
+### Debug Log Pattern (ConPort Custom Data)
+
+For complex debugging sessions, use ConPort custom data to track attempts:
+
+```
+mcp__conport__log_custom_data(
+  category="DebugLog",
+  key="<issue-name>-<timestamp>",
+  value={
+    "issue": "Description of the problem",
+    "attempts": [
+      {"approach": "What was tried", "result": "What happened", "timestamp": "..."}
+    ],
+    "root_cause": "Final determination",
+    "solution": "What fixed it",
+    "lessons": "What to remember for next time"
+  }
+)
+```
+
+## Agent Triggering Rules
+
+### Automatic Triggers
+
+These agents should be invoked WITHOUT user prompting:
+
+| Trigger Condition | Agent/Skill to Invoke |
+|-------------------|----------------------|
+| About to write UI code | `frontend-design` skill |
+| Working with PDFs | `pdf` skill |
+| About to commit code | `pre-commit-check` skill (runs sub-agents for review) |
+| Completing significant code chunk | `pr-review-toolkit:code-reviewer` agent |
+| Library loading errors | `troubleshooting-bundler-compatibility` skill |
+| Adding/updating dependencies | `dependency-management:legacy-modernizer` agent |
+| Security-sensitive code | `security-pro:security-auditor` agent |
+| UI changes with user input | `frontend-mobile-security:frontend-security-coder` agent |
+| API/backend changes | `backend-api-security:backend-security-coder` agent |
+| Structural/architectural changes | `code-review-ai:architect-review` agent |
+
+### Context7 Mandatory Usage
+
+**ALWAYS use Context7 when:**
+- Adding a new npm dependency
+- Encountering library-specific errors
+- Configuring bundler plugins
+- Working with library APIs you haven't used recently
+
+```
+mcp__mcp-server-context7__resolve-library-id (libraryName)
+mcp__mcp-server-context7__get-library-docs (context7CompatibleLibraryID, topic)
+```
+
+## Parallel Agent Patterns
+
+When multiple independent reviews are needed, launch agents in parallel to save time. Use the Task tool with multiple simultaneous invocations.
+
+### Pre-Commit Parallel Reviews
+
+For significant changes, launch these agents simultaneously:
+
+```
+// All in single message block for parallel execution
+Task(subagent_type="pr-review-toolkit:code-reviewer", 
+     prompt="Review unstaged changes for code quality...")
+
+Task(subagent_type="security-pro:security-auditor", 
+     prompt="Review changes for security vulnerabilities...")
+
+Task(subagent_type="frontend-mobile-security:frontend-security-coder", 
+     prompt="Review frontend changes for XSS prevention...")
+```
+
+### When to Parallelize
+
+**Parallelize when:**
+- Tasks have no dependencies on each other's output
+- Multiple independent validations needed
+- Comprehensive review required before commit
+- Time-sensitive multi-faceted analysis
+
+**Sequential when:**
+- One task's output feeds into another
+- Decisions need to be made between steps
+- Exploring unknowns (need findings before next step)
+
+### Common Parallel Patterns
+
+**Pattern 1: Multi-perspective Code Review**
+```
+Task(subagent_type="pr-review-toolkit:code-reviewer", prompt="...")
+Task(subagent_type="code-review-ai:architect-review", prompt="...")
+Task(subagent_type="security-pro:security-auditor", prompt="...")
+```
+
+**Pattern 2: Full Test + Build Validation**
+```
+Task(subagent_type="testing-suite:test-engineer", prompt="Run and analyze test suite...")
+Task(subagent_type="application-performance:frontend-developer", prompt="Check bundle size and performance...")
+```
+
+**Pattern 3: Documentation + Quality Check**
+```
+Task(subagent_type="documentation-generator:docs-architect", prompt="...")
+Task(subagent_type="pr-review-toolkit:code-simplifier", prompt="...")
+```
+
+### Collecting Parallel Results
+
+After launching parallel agents:
+1. Use `TaskOutput` to retrieve results from each
+2. Synthesize findings - look for agreement and conflicts
+3. Address issues in priority order (security > functionality > style)
+4. Log consolidated findings in ConPort
+
+## Common Pitfalls
+
+### Bundler and Library Issues
+
+1. **npm version != CDN version** - npm packages release faster than CDNs update. Always verify CDN has your version before using CDN URLs.
+
+2. **Protocol-relative URLs** - `//cdn.example.com` can resolve to `http:` in some contexts, causing mixed content or fetch failures.
+
+3. **Vite ?url vs ?raw** - `?url` returns a URL reference to the bundled asset, NOT the content. Use `?raw` to get actual file content as a string.
+
+4. **ES module workers** - Some workers must load as classic scripts, not ES modules. Use blob URL pattern when workers fail to load.
+
+5. **Dynamic imports in production** - Files in `public/` served as static files, not bundled. Dynamic `import()` of public files fails.
+
+### Testing Pitfalls
+
+1. **Testing imagined APIs** - Always inspect actual implementation with Serena before writing tests.
+
+2. **Static vs instance methods** - Verify whether methods are static (`Class.method()`) or instance (`obj.method()`).
+
+3. **Return type assumptions** - Check actual return types; `null` is not the same as `{}` or `[]`.
+
+### Context Management Pitfalls
+
+1. **Forgetting to log decisions** - Log decisions IMMEDIATELY when making them, not at end of session.
+
+2. **Stale progress entries** - Update progress status in real-time as work completes.
+
+3. **Missing links** - Connect related ConPort items to build the knowledge graph.
+
 ## Forbidden Actions
 
 - ❌ DO NOT skip ConPort logging - it's mandatory for context continuity
@@ -344,6 +705,10 @@ Use Serena memories to document:
 - ❌ DO NOT skip the `pdf` skill for document processing
 - ❌ DO NOT create helper functions or abstractions for one-time operations
 - ❌ DO NOT add error handling for scenarios that can't happen
+- ❌ DO NOT run `npm run dev` or `npm run preview` - user runs preview server manually
+- ❌ DO NOT start any vite server - only run `npm run build` and `npm test`
+- ❌ DO NOT skip `pre-commit-check` skill after feature additions or major fixes
+- ❌ DO NOT commit significant changes without using `/git-safe-commit` command
 
 ## Agent Invocation Reminders
 

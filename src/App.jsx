@@ -1,10 +1,12 @@
 import { useState, useCallback } from "react";
+import { exportToPDF } from "./utils/pdfExport";
 import {
   LLMConfigProvider,
   AnalysisProvider,
   useLLMConfig,
   useAnalysis,
 } from "./contexts";
+import { ThemeProvider } from "./contexts/ThemeContext";
 import { useAnalysisOrchestrator } from "./hooks";
 import {
   Header,
@@ -16,6 +18,8 @@ import {
   ErrorBoundary,
   Card,
   Button,
+  TipsModal,
+  LegalDocumentModal,
 } from "./components";
 import { ANALYSIS_STATUS } from "./utils/constants";
 import "./globals.css";
@@ -25,11 +29,14 @@ import "./globals.css";
  */
 function AppContent() {
   const { config, validateConfig } = useLLMConfig();
-  const { state } = useAnalysis();
+  const { status, result, error, progress, currentStep, resetAnalysis, clearError, document } = useAnalysis();
   const { startAnalysis } = useAnalysisOrchestrator();
 
   const [showConfig, setShowConfig] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
+  const [showTips, setShowTips] = useState(false);
+  const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
+  const [showTermsOfService, setShowTermsOfService] = useState(false);
   const [configError, setConfigError] = useState(null);
 
   /**
@@ -57,6 +64,25 @@ function AppContent() {
   );
 
   /**
+   * Handle retry analysis - re-run with same document
+   */
+  const handleRetryAnalysis = useCallback(async () => {
+    if (!document) {
+      // No document to retry, just clear error
+      clearError();
+      return;
+    }
+
+    // Clear error and re-run analysis with same document
+    clearError();
+    try {
+      await startAnalysis(document, config);
+    } catch (err) {
+      console.error("Retry analysis failed:", err);
+    }
+  }, [document, config, clearError, startAnalysis]);
+
+  /**
    * Handle new analysis
    */
   const handleNewAnalysis = useCallback(() => {
@@ -66,23 +92,16 @@ function AppContent() {
   }, []);
 
   /**
-   * Handle export results
+   * Handle export results - generates a PDF formatted like the full report
    */
-  const handleExportResults = useCallback((result) => {
-    const dataStr = JSON.stringify(result, null, 2);
-    const dataBlob = new Blob([dataStr], { type: "application/json" });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `privacy-policy-analysis-${Date.now()}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
+  const handleExportResults = useCallback(async (result) => {
+    await exportToPDF(result);
   }, []);
 
   const isAnalyzing =
-    state.status === ANALYSIS_STATUS.EXTRACTING ||
-    state.status === ANALYSIS_STATUS.ANALYZING;
-  const hasResults = state.status === ANALYSIS_STATUS.COMPLETED && state.result;
+    status === ANALYSIS_STATUS.EXTRACTING ||
+    status === ANALYSIS_STATUS.ANALYZING;
+  const hasResults = status === ANALYSIS_STATUS.COMPLETED && result;
   const showInput = !isAnalyzing && !hasResults;
 
   return (
@@ -90,79 +109,93 @@ function AppContent() {
       <Header
         onConfigOpen={() => setShowConfig(true)}
         onAboutOpen={() => setShowAbout(true)}
+        onTipsOpen={() => setShowTips(true)}
       />
 
       <Main>
         {/* Configuration Modal */}
         {showConfig && (
           <div className="modal-overlay" onClick={() => setShowConfig(false)}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <button
-                type="button"
-                className="modal-close"
-                onClick={() => setShowConfig(false)}
-                aria-label="Close configuration"
-              >
-                ✕
-              </button>
-
+            <div onClick={(e) => e.stopPropagation()}>
               <LLMConfigPanel
                 onSave={() => {
                   setShowConfig(false);
                   setConfigError(null);
                 }}
+                onClose={() => setShowConfig(false)}
               />
-
-              {configError && (
-                <Card className="modal-error">
-                  <p className="modal-error-text">
-                    <strong>Configuration Error:</strong> {configError}
-                  </p>
-                </Card>
-              )}
             </div>
+          </div>
+        )}
+
+        {/* Tips Modal */}
+        {showTips && (
+          <div className="modal-overlay" onClick={() => setShowTips(false)}>
+            <TipsModal onClose={() => setShowTips(false)} />
           </div>
         )}
 
         {/* About Modal */}
         {showAbout && (
           <div className="modal-overlay" onClick={() => setShowAbout(false)}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <button
-                type="button"
-                className="modal-close"
-                onClick={() => setShowAbout(false)}
-                aria-label="Close about"
-              >
-                ✕
-              </button>
+            <div className="modal" onClick={(e) => e.stopPropagation()}>
+              <div className="modal__header">
+                <h2 className="modal__title">About Privacy Policy Distiller</h2>
+                <button
+                  type="button"
+                  className="modal__close"
+                  onClick={() => setShowAbout(false)}
+                  aria-label="Close about"
+                >
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
 
-              <Card title="About Privacy Policy Analyzer">
+              <div className="modal__body">
                 <div className="about-content">
                   <p>
-                    <strong>Privacy Policy Analyzer</strong> helps you
-                    understand complex privacy policies and terms of service
-                    documents using AI-powered analysis.
+                    <strong>Privacy Policy Distiller</strong> helps you
+                    understand complex privacy policies using AI-powered
+                    analysis with objective scoring.
+                  </p>
+
+                  <h3>7-Category Privacy Scorecard</h3>
+                  <p>
+                    Policies are evaluated across seven weighted categories based on
+                    EFF, NIST, FTC, and GDPR privacy frameworks:
+                  </p>
+                  <ul>
+                    <li><strong>Third-Party Sharing (20%)</strong> - Who receives user data and why</li>
+                    <li><strong>User Rights & Control (18%)</strong> - What control users have over their data</li>
+                    <li><strong>Data Collection (18%)</strong> - What data is collected and necessity</li>
+                    <li><strong>Data Retention (14%)</strong> - How long data is kept</li>
+                    <li><strong>Purpose Clarity (12%)</strong> - How clearly data uses are explained</li>
+                    <li><strong>Security Measures (10%)</strong> - How data is protected</li>
+                    <li><strong>Policy Transparency (8%)</strong> - Policy readability and accessibility</li>
+                  </ul>
+                  <p>
+                    Each category is scored 1-10, producing an overall score (0-100)
+                    and traditional letter grade (A+ through F).
                   </p>
 
                   <h3>Features</h3>
                   <ul>
-                    <li>📄 Analyze policies from URLs or PDF uploads</li>
-                    <li>
-                      🤖 Multiple LLM providers (OpenRouter, Ollama, LM Studio)
-                    </li>
-                    <li>📊 Layered summaries (brief, detailed, full)</li>
-                    <li>⚠️ Privacy risk identification with severity levels</li>
-                    <li>📚 Key terms glossary with explanations</li>
-                    <li>🔒 Privacy-first: all processing in your browser</li>
+                    <li>Analyze policies from URLs or PDF uploads</li>
+                    <li>Multiple LLM providers: OpenRouter, Ollama, LM Studio</li>
+                    <li>Recommended: Google Gemini 3 Flash (via OpenRouter)</li>
+                    <li>Layered summaries (brief, detailed, full analysis)</li>
+                    <li>Privacy risk identification with severity levels</li>
+                    <li>Key terms glossary with plain-language explanations</li>
+                    <li>Privacy-first: all processing in your browser</li>
                   </ul>
 
                   <h3>How to Use</h3>
                   <ol>
-                    <li>Configure your LLM provider (click ⚙️ Configure)</li>
+                    <li>Configure your LLM provider (click Configure)</li>
                     <li>Enter a privacy policy URL or upload a PDF</li>
                     <li>Wait for AI analysis (30-60 seconds)</li>
-                    <li>Review results and identified risks</li>
+                    <li>Review scorecard, risks, and detailed summaries</li>
+                    <li>Check Tips for model selection guidance</li>
                   </ol>
 
                   <h3>Technology</h3>
@@ -170,36 +203,49 @@ function AppContent() {
                     Built with React 19, Vite 7, and modern web technologies.
                     Open source under MIT License.
                   </p>
-
-                  <div className="about-actions">
-                    <Button
-                      variant="primary"
-                      onClick={() => setShowAbout(false)}
-                    >
-                      Got It
-                    </Button>
-                  </div>
                 </div>
-              </Card>
+              </div>
+
+              <div className="modal__footer">
+                <Button
+                  variant="primary"
+                  onClick={() => setShowAbout(false)}
+                >
+                  Got It
+                </Button>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Welcome / Input Section */}
+        {/* Hero / Input Section */}
         {showInput && (
-          <div className="welcome-section">
-            <Card className="welcome-card">
-              <h2 className="welcome-title">Welcome!</h2>
-              <p className="welcome-text">
-                Privacy policies can be long, complex, and full of legal jargon.
-                This tool uses AI to break them down into plain language,
-                highlight potential risks, and explain key terms.
+          <>
+            <section className="hero">
+              <h1 className="hero__title">
+                Understand Privacy Policies<br />in Plain Language
+              </h1>
+              <p className="hero__subtitle">
+                AI-powered analysis that breaks down complex legal jargon,
+                highlights privacy risks, and explains what really matters.
               </p>
-              <p className="welcome-text">
-                To get started, make sure you've configured your LLM provider,
-                then provide a privacy policy URL or upload a PDF.
+              <p className="hero__demo">
+                <button
+                  type="button"
+                  className="hero__demo-link"
+                  onClick={() => handleDocumentSelected({
+                    type: 'url',
+                    source: 'https://privacydistiller.com/privacy-policy.md',
+                    metadata: {
+                      inputMode: 'url',
+                      timestamp: new Date().toISOString(),
+                    }
+                  })}
+                >
+                  Try it: Analyze our own Privacy Policy
+                </button>
               </p>
-            </Card>
+            </section>
 
             {configError && (
               <Card className="error-card">
@@ -215,8 +261,11 @@ function AppContent() {
             <DocumentInput
               onDocumentSelected={handleDocumentSelected}
               disabled={isAnalyzing}
+              analysisError={status === ANALYSIS_STATUS.ERROR ? error : null}
+              onClearAnalysisError={handleRetryAnalysis}
+              onTipsOpen={() => setShowTips(true)}
             />
-          </div>
+          </>
         )}
 
         {/* Analysis Section */}
@@ -226,7 +275,29 @@ function AppContent() {
         />
       </Main>
 
-      <Footer />
+      <Footer
+        onAboutOpen={() => setShowAbout(true)}
+        onPrivacyPolicyOpen={() => setShowPrivacyPolicy(true)}
+        onTermsOfServiceOpen={() => setShowTermsOfService(true)}
+      />
+
+      {/* Privacy Policy Modal */}
+      {showPrivacyPolicy && (
+        <LegalDocumentModal
+          documentPath="privacy-policy.md"
+          title="Privacy Policy"
+          onClose={() => setShowPrivacyPolicy(false)}
+        />
+      )}
+
+      {/* Terms of Service Modal */}
+      {showTermsOfService && (
+        <LegalDocumentModal
+          documentPath="terms-of-service.md"
+          title="Terms of Service"
+          onClose={() => setShowTermsOfService(false)}
+        />
+      )}
     </div>
   );
 }
@@ -237,11 +308,13 @@ function AppContent() {
 function App() {
   return (
     <ErrorBoundary>
-      <LLMConfigProvider>
-        <AnalysisProvider>
-          <AppContent />
-        </AnalysisProvider>
-      </LLMConfigProvider>
+      <ThemeProvider>
+        <LLMConfigProvider>
+          <AnalysisProvider>
+            <AppContent />
+          </AnalysisProvider>
+        </LLMConfigProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 }

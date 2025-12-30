@@ -71,6 +71,100 @@ export class ResponseParser {
     }
   }
 
+
+  /**
+   * Parse privacy scorecard JSON from LLM response
+   * @param {string} responseText - Raw LLM response
+   * @returns {Object|null} Parsed scorecard or null
+   */
+  static parseScorecard(responseText) {
+    try {
+      // Clean the response - remove markdown code blocks if present
+      let cleanedText = responseText
+        .replace(/```json\s*/gi, '')
+        .replace(/```\s*/g, '')
+        .trim();
+      
+      // Try to extract JSON object from response
+      const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
+      
+      if (!jsonMatch) {
+        console.error('No JSON object found in scorecard response');
+        return null;
+      }
+
+      const scorecard = JSON.parse(jsonMatch[0]);
+
+      // New 7-category system with weights (total = 100%)
+      const categories = [
+        { key: 'thirdPartySharing', weight: 20 },
+        { key: 'userRights', weight: 18 },
+        { key: 'dataCollection', weight: 18 },
+        { key: 'dataRetention', weight: 14 },
+        { key: 'purposeClarity', weight: 12 },
+        { key: 'securityMeasures', weight: 10 },
+        { key: 'policyTransparency', weight: 8 },
+      ];
+      
+      // Validate and normalize each category
+      for (const { key, weight } of categories) {
+        if (!scorecard[key]) {
+          scorecard[key] = { score: 5, weight, summary: 'Unable to assess' };
+        }
+        // Ensure score is within 1-10 bounds
+        scorecard[key].score = Math.max(1, Math.min(10, Number(scorecard[key].score) || 5));
+        // Ensure weight is set correctly
+        scorecard[key].weight = weight;
+      }
+
+      // Calculate weighted overall score (0-100)
+      let totalWeightedScore = 0;
+      for (const { key } of categories) {
+        const catData = scorecard[key];
+        // Each category contributes: (score/10) * weight
+        // e.g., score of 8 with weight 20 = 0.8 * 20 = 16 points
+        totalWeightedScore += (catData.score / 10) * catData.weight;
+      }
+      
+      // Round to nearest integer for overall score (0-100)
+      scorecard.overallScore = Math.round(totalWeightedScore);
+
+      // Convert overall score to traditional letter grade
+      scorecard.overallGrade = ResponseParser.scoreToGrade(scorecard.overallScore);
+
+      // Ensure arrays exist
+      scorecard.topConcerns = scorecard.topConcerns || [];
+      scorecard.positiveAspects = scorecard.positiveAspects || [];
+
+      return scorecard;
+
+    } catch (error) {
+      console.error('Failed to parse scorecard:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Convert numerical score (0-100) to traditional letter grade
+   * @param {number} score - Score from 0-100
+   * @returns {string} Letter grade
+   */
+  static scoreToGrade(score) {
+    if (score >= 97) return 'A+';
+    if (score >= 93) return 'A';
+    if (score >= 90) return 'A-';
+    if (score >= 87) return 'B+';
+    if (score >= 83) return 'B';
+    if (score >= 80) return 'B-';
+    if (score >= 77) return 'C+';
+    if (score >= 73) return 'C';
+    if (score >= 70) return 'C-';
+    if (score >= 67) return 'D+';
+    if (score >= 63) return 'D';
+    if (score >= 60) return 'D-';
+    return 'F';
+  }
+
   /**
    * Extracts key points from summary text
    * @param {string} summaryText - Summary text
