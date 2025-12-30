@@ -205,9 +205,8 @@ export const ERROR_MESSAGES = {
 };
 
 // CORS proxy configuration
-// Set CLOUDFLARE_WORKER_URL to your deployed Worker URL after deployment
-// Example: 'https://privacy-policy-cors-proxy.your-subdomain.workers.dev'
-export const CLOUDFLARE_WORKER_URL = '';
+// Cloudflare Worker proxies requests to bypass CORS restrictions
+export const CLOUDFLARE_WORKER_URL = 'https://proxy.privacydistiller.com';
 
 // CORS proxy fallback chain
 // When CLOUDFLARE_WORKER_URL is set, it will be used exclusively

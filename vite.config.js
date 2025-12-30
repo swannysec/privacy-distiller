@@ -5,7 +5,7 @@ import react from "@vitejs/plugin-react";
 // Windows-optimized configuration for stable dev server operation
 export default defineConfig({
   plugins: [react()],
-  base: "/policy-analyzer/",
+  base: "/",
   build: {
     outDir: "dist",
     sourcemap: true,
