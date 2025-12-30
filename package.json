@@ -27,7 +27,6 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0",
-    "@rollup/rollup-win32-x64-msvc": "^4.54.0",
     "@testing-library/jest-dom": "^6.6.5",
     "@testing-library/react": "^16.1.0",
     "@vitejs/plugin-react": "^5.1.2",
