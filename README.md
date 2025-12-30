@@ -76,7 +76,7 @@ npm run preview
 
 ### OpenRouter
 1. Get API key from [openrouter.ai](https://openrouter.ai)
-2. Enter key in the app settings (stored in memory only)
+2. Enter key in the app settings (stored in session storage with 60-minute inactivity timeout)
 
 ### Ollama (Local)
 1. Install [Ollama](https://ollama.ai)

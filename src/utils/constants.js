@@ -61,6 +61,7 @@ export const FILE_CONSTRAINTS = {
   MAX_SIZE_MB: 10,
   ALLOWED_TYPES: ["application/pdf"],
   ALLOWED_EXTENSIONS: [".pdf"],
+  PDF_MAGIC_BYTES: [0x25, 0x50, 0x44, 0x46, 0x2d], // %PDF- signature
 };
 
 // URL validation
@@ -157,9 +158,13 @@ export const SUMMARY_TYPES = {
 // Storage keys
 export const STORAGE_KEYS = {
   LLM_CONFIG: "ppa_llm_config",
+  LLM_CONFIG_TIMESTAMP: "ppa_llm_config_timestamp",
   ANALYSIS_HISTORY: "ppa_analysis_history",
   USER_PREFERENCES: "ppa_user_preferences",
 };
+
+// Security: API key timeout (60 minutes of inactivity)
+export const API_KEY_TIMEOUT_MS = 60 * 60 * 1000; // 60 minutes
 
 // Error codes
 export const ERROR_CODES = {
