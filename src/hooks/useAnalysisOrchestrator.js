@@ -1,16 +1,109 @@
 /**
  * @file Analysis Orchestration hook
- * @description Orchestrates the full analysis process
+ * @description Orchestrates the full analysis process, delegating to PolicyAnalyzer
  */
 
-import { useCallback } from 'react';
-import { useAnalysis } from '../contexts/AnalysisContext.jsx';
-import { useDocumentExtractor } from './useDocumentExtractor.js';
-import { useLLMProvider } from './useLLMProvider.js';
-import { generateId } from '../utils/helpers.js';
+import { useCallback, useRef, useEffect } from "react";
+import { useAnalysis } from "../contexts/AnalysisContext.jsx";
+import { useDocumentExtractor } from "./useDocumentExtractor.js";
+import { useLLMProvider } from "./useLLMProvider.js";
+import { PolicyAnalyzer } from "../services/analysis/PolicyAnalyzer.js";
+
+// Default context windows for local providers (conservative estimates)
+const DEFAULT_CONTEXT_WINDOWS = {
+  ollama: 8192,    // Most Ollama models default to 8K
+  lmstudio: 8192,  // Conservative default for LM Studio
+};
+
+// Rough estimate: ~4 characters per token (varies by model/language)
+const CHARS_PER_TOKEN = 4;
+
+// Reserve tokens for prompts and response (the prompts + expected output)
+const RESERVED_TOKENS = 8000;
+
+/**
+ * Fetches model context length from OpenRouter API
+ * @param {string} modelId - Model ID (e.g., "anthropic/claude-3.5-sonnet")
+ * @param {string} apiKey - OpenRouter API key
+ * @returns {Promise<number|null>} Context length in tokens, or null if unavailable
+ */
+async function fetchOpenRouterModelContextLength(modelId, apiKey) {
+  try {
+    const response = await fetch('https://openrouter.ai/api/v1/models', {
+      headers: { 'Authorization': `Bearer ${apiKey}` }
+    });
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    const model = data.data?.find(m => m.id === modelId);
+
+    return model?.context_length || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Validates that document fits within model's context window
+ * @param {string} text - Document text
+ * @param {Object} config - LLM configuration
+ * @returns {Promise<{valid: boolean, error?: string, contextLength?: number, estimatedTokens?: number}>}
+ */
+async function validateContextWindow(text, config) {
+  const charCount = text.length;
+  const estimatedTokens = Math.ceil(charCount / CHARS_PER_TOKEN);
+
+  let contextLength = null;
+
+  // Get context length based on provider
+  // First check if user has configured a custom context window
+  if (config.contextWindow && config.contextWindow > 0) {
+    contextLength = config.contextWindow;
+  } else if (config.provider === 'openrouter' && config.apiKey && config.model) {
+    // For OpenRouter, auto-detect from API
+    contextLength = await fetchOpenRouterModelContextLength(config.model, config.apiKey);
+  } else if (config.provider === 'ollama' || config.provider === 'lmstudio') {
+    // For local providers, use conservative defaults
+    contextLength = DEFAULT_CONTEXT_WINDOWS[config.provider];
+  }
+
+  // If we couldn't determine context length, skip validation
+  if (!contextLength) {
+    return { valid: true };
+  }
+
+  // Available tokens = context window - reserved for prompts/response
+  const availableTokens = contextLength - RESERVED_TOKENS;
+
+  if (estimatedTokens > availableTokens) {
+    const modelName = config.model || config.provider;
+    const contextK = Math.round(contextLength / 1000);
+    const estimatedK = Math.round(estimatedTokens / 1000);
+    const isLocalProvider = config.provider === 'ollama' || config.provider === 'lmstudio';
+
+    let suggestion = 'Please use a shorter document.';
+    if (isLocalProvider) {
+      suggestion = 'Consider using OpenRouter with a large-context model (e.g., Claude, GPT-4, or Gemini), or use a shorter document.';
+    } else {
+      suggestion = 'Please try a model with a larger context window, or use a shorter document.';
+    }
+
+    return {
+      valid: false,
+      error: `Document is too large for the selected model. The document is approximately ${estimatedK.toLocaleString()}K tokens, but "${modelName}" has a ${contextK}K token context window. ${suggestion}`,
+      contextLength,
+      estimatedTokens,
+    };
+  }
+
+  return { valid: true, contextLength, estimatedTokens };
+}
 
 /**
  * Hook for orchestrating document analysis
+ * Handles document extraction, state management, and error handling
+ * Delegates actual LLM analysis to PolicyAnalyzer service
  * @returns {Object} Analysis orchestration utilities
  */
 export function useAnalysisOrchestrator() {
@@ -18,274 +111,244 @@ export function useAnalysisOrchestrator() {
   const extractor = useDocumentExtractor();
   const llm = useLLMProvider();
 
+  // Ref to hold simulated progress interval
+  const simulatedProgressRef = useRef(null);
+
+  /**
+   * Start simulated progress updates during long operations
+   * @param {number} startProgress - Starting progress value
+   * @param {number} maxProgress - Maximum progress value (won't exceed this)
+   * @param {string} message - Progress message to show
+   */
+  const startSimulatedProgress = useCallback((startProgress, maxProgress, message) => {
+    // Clear any existing interval
+    if (simulatedProgressRef.current) {
+      clearInterval(simulatedProgressRef.current);
+    }
+
+    let currentProgress = startProgress;
+    simulatedProgressRef.current = setInterval(() => {
+      // Add small random increment (0.5-2%)
+      const increment = 0.5 + Math.random() * 1.5;
+      currentProgress = Math.min(currentProgress + increment, maxProgress);
+      analysis.updateProgress(currentProgress, message);
+    }, 800);
+  }, [analysis]);
+
+  /**
+   * Stop simulated progress updates
+   */
+  const stopSimulatedProgress = useCallback(() => {
+    if (simulatedProgressRef.current) {
+      clearInterval(simulatedProgressRef.current);
+      simulatedProgressRef.current = null;
+    }
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (simulatedProgressRef.current) {
+        clearInterval(simulatedProgressRef.current);
+      }
+    };
+  }, []);
+
   /**
    * Analyzes a document from URL
    * @param {string} url - Document URL
    */
-  const analyzeUrl = useCallback(async (url) => {
-    try {
-      // Set document input
-      analysis.setDocumentInput({
-        source: 'url',
-        url,
-      });
+  const analyzeUrl = useCallback(
+    async (url) => {
+      try {
+        // Set document input (format matches what startAnalysis expects for retry)
+        analysis.setDocumentInput({
+          type: "url",
+          source: url,
+        });
 
-      // Start analysis
-      analysis.startAnalysis();
-      analysis.updateProgress(10, 'Fetching document from URL...');
+        // Start analysis
+        analysis.startAnalysis();
+        analysis.updateProgress(5, "Fetching document from URL...");
 
-      // Extract text
-      const rawText = await extractor.extractFromUrl(url);
+        // Start simulated progress during URL fetch
+        startSimulatedProgress(5, 25, "Fetching document from URL...");
 
-      analysis.updateProgress(30, 'Document text extracted successfully');
+        // Extract text
+        const rawText = await extractor.extractFromUrl(url);
+        stopSimulatedProgress();
 
-      // Update document with extracted text
-      analysis.setDocumentInput({
-        source: 'url',
-        url,
-        rawText,
-      });
+        analysis.updateProgress(30, "Document text extracted successfully");
 
-      // Begin LLM analysis
-      analysis.setAnalyzing();
-      analysis.updateProgress(40, 'Generating privacy policy summary...');
+        // Validate context window before sending to LLM
+        analysis.updateProgress(32, "Checking model context limits...");
+        const contextValidation = await validateContextWindow(rawText, llm.config);
+        if (!contextValidation.valid) {
+          throw new Error(contextValidation.error);
+        }
 
-      // Create prompts for different summary types
-      const briefPrompt = createBriefSummaryPrompt(rawText);
-      const detailedPrompt = createDetailedSummaryPrompt(rawText);
-      const risksPrompt = createRisksPrompt(rawText);
-      const termsPrompt = createKeyTermsPrompt(rawText);
+        // Begin LLM analysis
+        analysis.setAnalyzing();
 
-      // Execute analysis in sequence
-      analysis.updateProgress(50, 'Analyzing privacy risks...');
-      const [briefSummary, detailedSummary, risksText, termsText] = await Promise.all([
-        llm.complete(briefPrompt),
-        llm.complete(detailedPrompt),
-        llm.complete(risksPrompt),
-        llm.complete(termsPrompt),
-      ]);
+        // Start simulated progress during LLM analysis
+        startSimulatedProgress(35, 85, "Analyzing policy with AI...");
 
-      analysis.updateProgress(90, 'Processing results...');
-
-      // Parse results
-      const risks = parseRisks(risksText);
-      const keyTerms = parseKeyTerms(termsText);
-
-      const result = {
-        id: generateId(),
-        document: {
-          source: 'url',
-          url,
+        // Create analyzer and delegate to PolicyAnalyzer
+        const analyzer = new PolicyAnalyzer(llm.config);
+        const analysisResult = await analyzer.analyze(
           rawText,
-        },
-        summaries: [
-          {
-            type: 'brief',
-            content: briefSummary,
-            keyPoints: extractKeyPoints(briefSummary),
+          (progress, message) => {
+            stopSimulatedProgress();
+            analysis.updateProgress(progress, message);
           },
-          {
-            type: 'detailed',
-            content: detailedSummary,
-            keyPoints: extractKeyPoints(detailedSummary),
-          },
-          {
-            type: 'full',
-            content: rawText,
-            keyPoints: [],
-          },
-        ],
-        risks,
-        keyTerms,
-        timestamp: new Date(),
-        llmConfig: llm.config,
-      };
+          true // useParallel = true for Promise.allSettled
+        );
+        stopSimulatedProgress();
 
-      // Complete analysis
-      analysis.completeAnalysis(result);
+        // Transform PolicyAnalyzer result format to orchestrator format
+        const result = {
+          id: analysisResult.id,
+          documentMetadata: {
+            source: url,
+            type: "url",
+            rawText,
+          },
+          summary: {
+            brief: analysisResult.summaries[0].content,
+            detailed: analysisResult.summaries[1].content,
+            full: analysisResult.summaries[2].content,
+          },
+          risks: analysisResult.risks,
+          keyTerms: analysisResult.keyTerms,
+          scorecard: analysisResult.scorecard,
+          timestamp: analysisResult.timestamp,
+          llmConfig: analysisResult.llmConfig,
+          partialFailures: analysisResult.partialFailures || [],
+          hasPartialFailures: analysisResult.hasPartialFailures || false,
+        };
 
-    } catch (err) {
-      analysis.setError(err.message || 'Failed to analyze document');
-    }
-  }, [analysis, extractor, llm]);
+        // Complete analysis
+        analysis.completeAnalysis(result);
+      } catch (err) {
+        stopSimulatedProgress();
+        analysis.setError(err.message || "Failed to analyze document");
+      }
+    },
+    [analysis, extractor, llm, startSimulatedProgress, stopSimulatedProgress],
+  );
 
   /**
    * Analyzes a PDF file
    * @param {File} file - PDF file
    */
-  const analyzePdf = useCallback(async (file) => {
-    try {
-      // Set document input
-      analysis.setDocumentInput({
-        source: 'pdf',
-        file,
-      });
+  const analyzePdf = useCallback(
+    async (file) => {
+      try {
+        // Set document input (format matches what startAnalysis expects for retry)
+        analysis.setDocumentInput({
+          type: "file",
+          source: file,
+        });
 
-      // Start analysis
-      analysis.startAnalysis();
-      analysis.updateProgress(10, 'Reading PDF file...');
+        // Start analysis
+        analysis.startAnalysis();
+        analysis.updateProgress(5, "Reading PDF file...");
 
-      // Extract text
-      const rawText = await extractor.extractFromPdf(file);
+        // Start simulated progress during PDF extraction
+        startSimulatedProgress(5, 25, "Reading PDF file...");
 
-      analysis.updateProgress(30, 'PDF text extracted successfully');
+        // Extract text
+        const rawText = await extractor.extractFromPdf(file);
+        stopSimulatedProgress();
 
-      // Update document with extracted text
-      analysis.setDocumentInput({
-        source: 'pdf',
-        file,
-        rawText,
-      });
+        analysis.updateProgress(30, "PDF text extracted successfully");
 
-      // Begin LLM analysis
-      analysis.setAnalyzing();
-      analysis.updateProgress(40, 'Generating privacy policy summary...');
-
-      // Create prompts
-      const briefPrompt = createBriefSummaryPrompt(rawText);
-      const detailedPrompt = createDetailedSummaryPrompt(rawText);
-      const risksPrompt = createRisksPrompt(rawText);
-      const termsPrompt = createKeyTermsPrompt(rawText);
-
-      // Execute analysis
-      analysis.updateProgress(50, 'Analyzing privacy risks...');
-      const [briefSummary, detailedSummary, risksText, termsText] = await Promise.all([
-        llm.complete(briefPrompt),
-        llm.complete(detailedPrompt),
-        llm.complete(risksPrompt),
-        llm.complete(termsPrompt),
-      ]);
-
-      analysis.updateProgress(90, 'Processing results...');
-
-      // Parse results
-      const risks = parseRisks(risksText);
-      const keyTerms = parseKeyTerms(termsText);
-
-      const result = {
-        id: generateId(),
-        document: {
-          source: 'pdf',
-          file: { name: file.name, size: file.size, type: file.type },
+        // Validate context window before sending to LLM
+        analysis.updateProgress(32, "Checking model context limits...");
+        const contextValidation = await validateContextWindow(
           rawText,
-        },
-        summaries: [
-          {
-            type: 'brief',
-            content: briefSummary,
-            keyPoints: extractKeyPoints(briefSummary),
-          },
-          {
-            type: 'detailed',
-            content: detailedSummary,
-            keyPoints: extractKeyPoints(detailedSummary),
-          },
-          {
-            type: 'full',
-            content: rawText,
-            keyPoints: [],
-          },
-        ],
-        risks,
-        keyTerms,
-        timestamp: new Date(),
-        llmConfig: llm.config,
-      };
+          llm.config,
+        );
+        if (!contextValidation.valid) {
+          throw new Error(contextValidation.error);
+        }
 
-      // Complete analysis
-      analysis.completeAnalysis(result);
+        // Begin LLM analysis
+        analysis.setAnalyzing();
 
-    } catch (err) {
-      analysis.setError(err.message || 'Failed to analyze PDF');
-    }
-  }, [analysis, extractor, llm]);
+        // Start simulated progress during LLM analysis
+        startSimulatedProgress(35, 85, "Analyzing policy with AI...");
+
+        // Create analyzer and delegate to PolicyAnalyzer
+        const analyzer = new PolicyAnalyzer(llm.config);
+        const analysisResult = await analyzer.analyze(
+          rawText,
+          (progress, message) => {
+            stopSimulatedProgress();
+            analysis.updateProgress(progress, message);
+          },
+          true // useParallel = true for Promise.allSettled
+        );
+        stopSimulatedProgress();
+
+        // Transform PolicyAnalyzer result format to orchestrator format
+        const result = {
+          id: analysisResult.id,
+          documentMetadata: {
+            source: file.name,
+            type: "pdf",
+            file: { name: file.name, size: file.size, type: file.type },
+            rawText,
+          },
+          summary: {
+            brief: analysisResult.summaries[0].content,
+            detailed: analysisResult.summaries[1].content,
+            full: analysisResult.summaries[2].content,
+          },
+          risks: analysisResult.risks,
+          keyTerms: analysisResult.keyTerms,
+          scorecard: analysisResult.scorecard,
+          timestamp: analysisResult.timestamp,
+          llmConfig: analysisResult.llmConfig,
+          partialFailures: analysisResult.partialFailures || [],
+          hasPartialFailures: analysisResult.hasPartialFailures || false,
+        };
+
+        // Complete analysis
+        analysis.completeAnalysis(result);
+      } catch (err) {
+        stopSimulatedProgress();
+        analysis.setError(err.message || "Failed to analyze PDF");
+      }
+    },
+    [analysis, extractor, llm, startSimulatedProgress, stopSimulatedProgress],
+  );
+
+  /**
+   * Unified analysis entry point - dispatches to appropriate handler based on document type
+   * @param {Object} documentInput - Document input from DocumentInput component
+   * @param {string} documentInput.type - 'url' or 'file'
+   * @param {string|File} documentInput.source - URL string or File object
+   * @param {Object} _config - LLM config (unused, llm hook gets config from context)
+   */
+  const startAnalysis = useCallback(
+    async (documentInput, _config) => {
+      if (documentInput.type === "url") {
+        return analyzeUrl(documentInput.source);
+      } else if (documentInput.type === "file") {
+        return analyzePdf(documentInput.source);
+      } else {
+        throw new Error(`Unknown document type: ${documentInput.type}`);
+      }
+    },
+    [analyzeUrl, analyzePdf],
+  );
 
   return {
+    // Spread analysis context first, then override with orchestrator's functions
+    ...analysis,
     analyzeUrl,
     analyzePdf,
-    ...analysis,
+    startAnalysis,
   };
-}
-
-// Helper functions for creating prompts
-
-function createBriefSummaryPrompt(text) {
-  return `Analyze this privacy policy and provide a brief summary (3-5 sentences) in plain language that a layperson can understand. Focus on the most important aspects.
-
-Privacy Policy:
-${text}
-
-Brief Summary:`;
-}
-
-function createDetailedSummaryPrompt(text) {
-  return `Analyze this privacy policy and provide a detailed summary in plain language. Break down the key sections and explain what they mean for the user. Make it clear and accessible.
-
-Privacy Policy:
-${text}
-
-Detailed Summary:`;
-}
-
-function createRisksPrompt(text) {
-  return `Analyze this privacy policy and identify privacy risks for users. For each risk, provide:
-- Title (brief description)
-- Description (what the risk means)
-- Severity (low, medium, high, or critical)
-- Location (which section)
-- Recommendation (what users should know)
-
-Format as JSON array with this structure:
-[{"title": "...", "description": "...", "severity": "...", "location": "...", "recommendation": "..."}]
-
-Privacy Policy:
-${text}
-
-Privacy Risks (JSON):`;
-}
-
-function createKeyTermsPrompt(text) {
-  return `Extract key terms and technical jargon from this privacy policy and provide plain language definitions. Format as JSON array:
-[{"term": "...", "definition": "...", "location": "..."}]
-
-Privacy Policy:
-${text}
-
-Key Terms (JSON):`;
-}
-
-// Helper functions for parsing LLM responses
-
-function parseRisks(text) {
-  try {
-    const jsonMatch = text.match(/\[[\s\S]*\]/);
-    if (jsonMatch) {
-      const risks = JSON.parse(jsonMatch[0]);
-      return risks.map((risk, index) => ({
-        id: generateId(),
-        ...risk,
-      }));
-    }
-  } catch {
-    // Parsing failed, return empty array
-  }
-  return [];
-}
-
-function parseKeyTerms(text) {
-  try {
-    const jsonMatch = text.match(/\[[\s\S]*\]/);
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
-    }
-  } catch {
-    // Parsing failed, return empty array
-  }
-  return [];
-}
-
-function extractKeyPoints(summary) {
-  // Extract bullet points or numbered items
-  const points = summary.match(/^[-•*]\s+(.+)$/gm) || [];
-  return points.map(point => point.replace(/^[-•*]\s+/, '').trim());
 }

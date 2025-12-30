@@ -1,77 +1,58 @@
-import { useState, useMemo } from 'react';
-import { Card } from '../Common';
-import { sanitizeHtml } from '../../utils/sanitization';
+import { useMemo, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
 
 /**
- * Severity levels with colors and icons
+ * Severity configuration with colors matching mockup
  */
 const SEVERITY_CONFIG = {
   critical: {
-    color: '#dc2626',
-    bgColor: '#fee2e2',
-    icon: '🚨',
+    color: 'var(--risk-high)',
+    bgColor: 'var(--risk-high-bg)',
     label: 'Critical'
   },
   high: {
-    color: '#ea580c',
-    bgColor: '#ffedd5',
-    icon: '⚠️',
-    label: 'High'
+    color: 'var(--risk-high)',
+    bgColor: 'var(--risk-high-bg)',
+    label: 'Higher Risk'
   },
   medium: {
-    color: '#d97706',
-    bgColor: '#fef3c7',
-    icon: '⚡',
-    label: 'Medium'
+    color: 'var(--risk-medium)',
+    bgColor: 'var(--risk-medium-bg)',
+    label: 'Medium Risk'
   },
   low: {
-    color: '#65a30d',
-    bgColor: '#ecfccb',
-    icon: 'ℹ️',
-    label: 'Low'
+    color: 'var(--risk-low)',
+    bgColor: 'var(--risk-low-bg)',
+    label: 'Low Risk'
   }
-};
+};;
 
 /**
  * RiskHighlights - Component for displaying privacy risks with severity levels
+ * Matches mockup design with colored left borders and expandable details
  * @param {Object} props
  * @param {import('../../types').PrivacyRisk[]} props.risks - Array of identified risks
- * @param {Object} props.documentMetadata - Document metadata
  * @param {string} props.className - Additional CSS classes
  * @returns {JSX.Element}
  */
-export function RiskHighlights({ risks, documentMetadata, className = '' }) {
-  const [filterSeverity, setFilterSeverity] = useState(/** @type {string | null} */ (null));
+export function RiskHighlights({ risks = [], className = '' }) {
   const [expandedRisks, setExpandedRisks] = useState(/** @type {Set<number>} */ (new Set()));
 
+  // Ensure risks is always an array
+  const safeRisks = Array.isArray(risks) ? risks : [];
+
   /**
-   * Filter and sort risks
+   * Sort risks by severity
    */
-  const filteredRisks = useMemo(() => {
-    let filtered = risks;
-
-    if (filterSeverity) {
-      filtered = risks.filter(risk => risk.severity === filterSeverity);
-    }
-
-    // Sort by severity
+  const sortedRisks = useMemo(() => {
     const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
-    return filtered.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
-  }, [risks, filterSeverity]);
-
-  /**
-   * Count risks by severity
-   */
-  const severityCounts = useMemo(() => {
-    return risks.reduce((acc, risk) => {
-      acc[risk.severity] = (acc[risk.severity] || 0) + 1;
-      return acc;
-    }, {});
-  }, [risks]);
+    return [...safeRisks].sort((a, b) =>
+      (severityOrder[a.severity] || 3) - (severityOrder[b.severity] || 3)
+    );
+  }, [safeRisks]);
 
   /**
    * Toggle risk expansion
-   * @param {number} index
    */
   const toggleRisk = (index) => {
     setExpandedRisks(prev => {
@@ -85,9 +66,14 @@ export function RiskHighlights({ risks, documentMetadata, className = '' }) {
     });
   };
 
-  if (risks.length === 0) {
+  if (safeRisks.length === 0) {
     return (
-      <Card className={`risk-highlights ${className}`} title="Privacy Risks">
+      <div className={`card risk-highlights ${className}`}>
+        <div className="card__header">
+          <h2 className="card__title">
+            <span aria-hidden="true">🚨</span> Privacy Risks Identified
+          </h2>
+        </div>
         <div className="risk-highlights__empty">
           <span className="risk-highlights__empty-icon" aria-hidden="true">✅</span>
           <p className="risk-highlights__empty-text">
@@ -97,123 +83,69 @@ export function RiskHighlights({ risks, documentMetadata, className = '' }) {
             This doesn't guarantee the policy is perfect, but no major concerns were detected.
           </p>
         </div>
-      </Card>
+      </div>
     );
   }
 
   return (
-    <Card
-      className={`risk-highlights ${className}`}
-      title="Privacy Risks"
-      subtitle={`${risks.length} potential ${risks.length === 1 ? 'concern' : 'concerns'} identified`}
-    >
-      {/* Severity filter */}
-      <div className="risk-highlights__filters">
-        <span className="risk-highlights__filter-label">Filter by severity:</span>
-
-        <div className="risk-highlights__filter-buttons" role="group" aria-label="Risk severity filter">
-          <button
-            type="button"
-            className={`risk-highlights__filter-button ${!filterSeverity ? 'risk-highlights__filter-button--active' : ''}`}
-            onClick={() => setFilterSeverity(null)}
-          >
-            All ({risks.length})
-          </button>
-
-          {Object.entries(SEVERITY_CONFIG).map(([severity, config]) => {
-            const count = severityCounts[severity] || 0;
-            if (count === 0) return null;
-
-            return (
-              <button
-                key={severity}
-                type="button"
-                className={`risk-highlights__filter-button ${filterSeverity === severity ? 'risk-highlights__filter-button--active' : ''}`}
-                style={{
-                  borderColor: filterSeverity === severity ? config.color : undefined
-                }}
-                onClick={() => setFilterSeverity(severity)}
-              >
-                <span aria-hidden="true">{config.icon}</span>
-                {config.label} ({count})
-              </button>
-            );
-          })}
-        </div>
+    <div className={`card risk-highlights ${className}`}>
+      <div className="card__header">
+        <h2 className="card__title">
+          <span aria-hidden="true">🚨</span> Privacy Risks Identified
+        </h2>
+        <p className="card__subtitle">Potential concerns ranked by severity</p>
       </div>
 
-      {/* Risk list */}
-      <div className="risk-highlights__list">
-        {filteredRisks.map((risk, index) => {
-          const config = SEVERITY_CONFIG[risk.severity];
+      <div className="risk-list">
+        {sortedRisks.map((risk, index) => {
+          const config = SEVERITY_CONFIG[risk.severity] || SEVERITY_CONFIG.medium;
           const isExpanded = expandedRisks.has(index);
-          const sanitizedDescription = sanitizeHtml(risk.description);
-          const sanitizedExplanation = sanitizeHtml(risk.explanation);
 
           return (
             <div
               key={index}
-              className="risk-highlights__item"
-              style={{ borderLeftColor: config.color }}
+              className={`risk-item risk-item--${risk.severity}`}
+              style={{ '--risk-color': config.color }}
             >
-              {/* Risk header */}
-              <button
-                type="button"
-                className="risk-highlights__item-header"
-                onClick={() => toggleRisk(index)}
-                aria-expanded={isExpanded}
-              >
-                <div className="risk-highlights__item-header-content">
-                  <span
-                    className="risk-highlights__severity-badge"
-                    style={{
-                      backgroundColor: config.bgColor,
-                      color: config.color
-                    }}
-                  >
-                    <span aria-hidden="true">{config.icon}</span>
-                    {config.label}
-                  </span>
-
-                  <h3 className="risk-highlights__item-title">
-                    {risk.title}
-                  </h3>
-                </div>
-
+              <div className="risk-item__header">
+                <h3 className="risk-item__title">{risk.title}</h3>
                 <span
-                  className={`risk-highlights__expand-icon ${isExpanded ? 'risk-highlights__expand-icon--expanded' : ''}`}
-                  aria-hidden="true"
+                  className={`risk-item__severity risk-item__severity--${risk.severity}`}
+                  style={{
+                    backgroundColor: config.bgColor,
+                    color: config.color
+                  }}
                 >
-                  ▼
+                  {config.label}
                 </span>
-              </button>
+              </div>
 
-              {/* Risk details */}
-              {isExpanded && (
-                <div className="risk-highlights__item-details">
-                  <div
-                    className="risk-highlights__description"
-                    dangerouslySetInnerHTML={{ __html: sanitizedDescription }}
-                  />
+              <p className="risk-item__description">
+                {risk.description}
+              </p>
 
-                  {risk.explanation && (
-                    <div className="risk-highlights__explanation">
-                      <h4 className="risk-highlights__explanation-title">
-                        Why this matters:
-                      </h4>
-                      <div
-                        className="risk-highlights__explanation-text"
-                        dangerouslySetInnerHTML={{ __html: sanitizedExplanation }}
-                      />
-                    </div>
-                  )}
+              {risk.explanation && (
+                <button
+                  type="button"
+                  className="risk-item__expand"
+                  onClick={() => toggleRisk(index)}
+                  aria-expanded={isExpanded}
+                >
+                  {isExpanded ? 'Show less' : 'Learn more'} →
+                </button>
+              )}
+
+              {isExpanded && risk.explanation && (
+                <div className="risk-item__details">
+                  <h4 className="risk-item__details-title">Why this matters:</h4>
+                  <div className="risk-item__details-content">
+                    <ReactMarkdown>{risk.explanation}</ReactMarkdown>
+                  </div>
 
                   {risk.affectedSections && risk.affectedSections.length > 0 && (
-                    <div className="risk-highlights__sections">
-                      <h4 className="risk-highlights__sections-title">
-                        Related sections:
-                      </h4>
-                      <ul className="risk-highlights__sections-list">
+                    <div className="risk-item__sections">
+                      <h4 className="risk-item__sections-title">Related sections:</h4>
+                      <ul className="risk-item__sections-list">
                         {risk.affectedSections.map((section, idx) => (
                           <li key={idx}>{section}</li>
                         ))}
@@ -226,6 +158,6 @@ export function RiskHighlights({ risks, documentMetadata, className = '' }) {
           );
         })}
       </div>
-    </Card>
+    </div>
   );
 }

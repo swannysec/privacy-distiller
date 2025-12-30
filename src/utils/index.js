@@ -8,3 +8,4 @@ export * from './sanitization.js';
 export * from './formatting.js';
 export * from './storage.js';
 export * from './helpers.js';
+export * from './pdfExport.js';

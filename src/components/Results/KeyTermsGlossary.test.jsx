@@ -1,20 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, it, expect, beforeEach } from "vitest";
+import { render, screen } from "@testing-library/react";
 import { KeyTermsGlossary } from "./KeyTermsGlossary";
-
-vi.mock("../Common", () => ({
-  Card: ({ children, title, subtitle, className }) => (
-    <div className={className} data-testid="card">
-      {title && <h2>{title}</h2>}
-      {subtitle && <p>{subtitle}</p>}
-      {children}
-    </div>
-  ),
-}));
-
-vi.mock("../../utils/sanitization", () => ({
-  sanitizeHtml: vi.fn((html) => html),
-}));
 
 describe("KeyTermsGlossary", () => {
   const mockKeyTerms = [
@@ -22,90 +8,68 @@ describe("KeyTermsGlossary", () => {
       term: "PII",
       definition:
         "Personally Identifiable Information that can be used to identify an individual",
-      category: "Privacy",
-      examples: ["Name", "Email address", "Social Security Number"],
     },
     {
       term: "Cookie",
       definition: "A small piece of data stored on your browser",
-      category: "Tracking",
-      examples: ["Session cookies", "Persistent cookies"],
     },
     {
       term: "Anonymization",
       definition: "The process of removing personally identifiable information",
-      category: "Data Processing",
-      examples: [],
     },
     {
       term: "GDPR",
       definition: "General Data Protection Regulation - EU privacy law",
-      category: "Legal",
-      examples: null,
     },
   ];
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    // Clear any mocks if needed
   });
 
   describe("Rendering with Terms", () => {
-    it("should render title and subtitle", () => {
+    it("should render title", () => {
       render(<KeyTermsGlossary keyTerms={mockKeyTerms} />);
 
-      expect(screen.getByText("Key Terms Glossary")).toBeInTheDocument();
-      expect(
-        screen.getByText(/4 important terms explained/i),
-      ).toBeInTheDocument();
+      expect(screen.getByText("Key Terms Explained")).toBeInTheDocument();
     });
 
-    it('should render singular "term" for single term', () => {
-      render(<KeyTermsGlossary keyTerms={[mockKeyTerms[0]]} />);
-
-      expect(
-        screen.getByText(/1 important term explained/i),
-      ).toBeInTheDocument();
-    });
-
-    it("should render search input", () => {
-      render(<KeyTermsGlossary keyTerms={mockKeyTerms} />);
-
-      expect(screen.getByRole("searchbox")).toBeInTheDocument();
-      expect(
-        screen.getByPlaceholderText("Search terms..."),
-      ).toBeInTheDocument();
-    });
-
-    it("should render Expand All and Collapse All buttons", () => {
+    it("should render subtitle when terms exist", () => {
       render(<KeyTermsGlossary keyTerms={mockKeyTerms} />);
 
       expect(
-        screen.getByRole("button", { name: /Expand All/i }),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole("button", { name: /Collapse All/i }),
+        screen.getByText("Important terms from the policy in plain language"),
       ).toBeInTheDocument();
     });
 
-    it("should render all terms collapsed by default", () => {
+    it("should render all terms", () => {
       render(<KeyTermsGlossary keyTerms={mockKeyTerms} />);
 
       expect(screen.getByText("PII")).toBeInTheDocument();
       expect(screen.getByText("Cookie")).toBeInTheDocument();
       expect(screen.getByText("Anonymization")).toBeInTheDocument();
-
-      // Definitions should not be visible
-      expect(
-        screen.queryByText("Personally Identifiable Information"),
-      ).not.toBeInTheDocument();
+      expect(screen.getByText("GDPR")).toBeInTheDocument();
     });
 
-    it("should render category badges", () => {
+    it("should render all definitions", () => {
       render(<KeyTermsGlossary keyTerms={mockKeyTerms} />);
 
-      expect(screen.getByText("Privacy")).toBeInTheDocument();
-      expect(screen.getByText("Tracking")).toBeInTheDocument();
-      expect(screen.getByText("Data Processing")).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          "Personally Identifiable Information that can be used to identify an individual",
+        ),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("A small piece of data stored on your browser"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          "The process of removing personally identifiable information",
+        ),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("General Data Protection Regulation - EU privacy law"),
+      ).toBeInTheDocument();
     });
 
     it("should apply custom className", () => {
@@ -113,9 +77,58 @@ describe("KeyTermsGlossary", () => {
         <KeyTermsGlossary keyTerms={mockKeyTerms} className="custom-class" />,
       );
 
-      expect(
-        container.querySelector(".key-terms-glossary.custom-class"),
-      ).toBeInTheDocument();
+      expect(container.querySelector(".custom-class")).toBeInTheDocument();
+    });
+
+    it("should render terms in a grid", () => {
+      const { container } = render(
+        <KeyTermsGlossary keyTerms={mockKeyTerms} />,
+      );
+
+      const grid = container.querySelector(".terms-grid");
+      expect(grid).toBeInTheDocument();
+
+      const termItems = container.querySelectorAll(".term-item");
+      expect(termItems.length).toBe(4);
+    });
+
+    it("should render term with correct structure", () => {
+      const { container } = render(
+        <KeyTermsGlossary keyTerms={mockKeyTerms} />,
+      );
+
+      const termItem = container.querySelector(".term-item");
+      expect(termItem).toBeInTheDocument();
+
+      const termWord = termItem.querySelector(".term-item__word");
+      expect(termWord).toBeInTheDocument();
+
+      const termDefinition = termItem.querySelector(".term-item__definition");
+      expect(termDefinition).toBeInTheDocument();
+    });
+
+    it("should render card with correct classes", () => {
+      const { container } = render(
+        <KeyTermsGlossary keyTerms={mockKeyTerms} />,
+      );
+
+      const card = container.querySelector(".card.key-terms");
+      expect(card).toBeInTheDocument();
+    });
+
+    it("should render card header", () => {
+      const { container } = render(
+        <KeyTermsGlossary keyTerms={mockKeyTerms} />,
+      );
+
+      const header = container.querySelector(".card__header");
+      expect(header).toBeInTheDocument();
+    });
+
+    it("should render card title with icon", () => {
+      render(<KeyTermsGlossary keyTerms={mockKeyTerms} />);
+
+      expect(screen.getByText("📚")).toBeInTheDocument();
     });
   });
 
@@ -124,8 +137,14 @@ describe("KeyTermsGlossary", () => {
       render(<KeyTermsGlossary keyTerms={[]} />);
 
       expect(
-        screen.getByText(/No key terms were extracted/i),
+        screen.getByText(/No key terms were extracted from this policy/i),
       ).toBeInTheDocument();
+    });
+
+    it("should render title in empty state", () => {
+      render(<KeyTermsGlossary keyTerms={[]} />);
+
+      expect(screen.getByText("Key Terms Explained")).toBeInTheDocument();
     });
 
     it("should render book icon in empty state", () => {
@@ -134,541 +153,307 @@ describe("KeyTermsGlossary", () => {
       expect(screen.getByText("📖")).toBeInTheDocument();
     });
 
-    it("should not render search or controls in empty state", () => {
+    it("should not render subtitle in empty state", () => {
       render(<KeyTermsGlossary keyTerms={[]} />);
 
-      expect(screen.queryByRole("searchbox")).not.toBeInTheDocument();
       expect(
-        screen.queryByRole("button", { name: /Expand All/i }),
-      ).not.toBeInTheDocument();
-    });
-  });
-
-  describe("Term Expansion", () => {
-    it("should expand term when clicked", () => {
-      render(<KeyTermsGlossary keyTerms={mockKeyTerms} />);
-
-      const termButton = screen.getByRole("button", { name: /PII/i });
-      fireEvent.click(termButton);
-
-      expect(
-        screen.getByText(/Personally Identifiable Information/i),
-      ).toBeInTheDocument();
-    });
-
-    it("should show examples when expanded", () => {
-      render(<KeyTermsGlossary keyTerms={mockKeyTerms} />);
-
-      const termButton = screen.getByRole("button", { name: /PII/i });
-      fireEvent.click(termButton);
-
-      expect(screen.getByText("Examples:")).toBeInTheDocument();
-      expect(screen.getByText("Name")).toBeInTheDocument();
-      expect(screen.getByText("Email address")).toBeInTheDocument();
-      expect(screen.getByText("Social Security Number")).toBeInTheDocument();
-    });
-
-    it("should not show examples section if empty array", () => {
-      render(<KeyTermsGlossary keyTerms={mockKeyTerms} />);
-
-      const termButton = screen.getByRole("button", { name: /Anonymization/i });
-      fireEvent.click(termButton);
-
-      expect(screen.queryByText("Examples:")).not.toBeInTheDocument();
-    });
-
-    it("should not show examples section if null", () => {
-      render(<KeyTermsGlossary keyTerms={mockKeyTerms} />);
-
-      const termButton = screen.getByRole("button", { name: /GDPR/i });
-      fireEvent.click(termButton);
-
-      expect(screen.queryByText("Examples:")).not.toBeInTheDocument();
-    });
-
-    it("should collapse term when clicked again", () => {
-      render(<KeyTermsGlossary keyTerms={mockKeyTerms} />);
-
-      const termButton = screen.getByRole("button", { name: /PII/i });
-      fireEvent.click(termButton);
-
-      expect(
-        screen.getByText(/Personally Identifiable Information/i),
-      ).toBeInTheDocument();
-
-      fireEvent.click(termButton);
-
-      expect(
-        screen.queryByText(/Personally Identifiable Information/i),
+        screen.queryByText("Important terms from the policy in plain language"),
       ).not.toBeInTheDocument();
     });
 
-    it("should update aria-expanded attribute", () => {
-      render(<KeyTermsGlossary keyTerms={mockKeyTerms} />);
+    it("should not render terms grid in empty state", () => {
+      const { container } = render(<KeyTermsGlossary keyTerms={[]} />);
 
-      const termButton = screen.getByRole("button", { name: /PII/i });
-
-      expect(termButton).toHaveAttribute("aria-expanded", "false");
-
-      fireEvent.click(termButton);
-
-      expect(termButton).toHaveAttribute("aria-expanded", "true");
+      expect(container.querySelector(".terms-grid")).not.toBeInTheDocument();
     });
 
-    it("should allow multiple terms to be expanded simultaneously", () => {
-      render(<KeyTermsGlossary keyTerms={mockKeyTerms} />);
+    it("should render empty state with correct classes", () => {
+      const { container } = render(<KeyTermsGlossary keyTerms={[]} />);
 
-      const term1Button = screen.getByRole("button", { name: /PII/i });
-      const term2Button = screen.getByRole("button", { name: /Cookie/i });
+      const emptyState = container.querySelector(".key-terms__empty");
+      expect(emptyState).toBeInTheDocument();
 
-      fireEvent.click(term1Button);
-      fireEvent.click(term2Button);
+      const emptyIcon = container.querySelector(".key-terms__empty-icon");
+      expect(emptyIcon).toBeInTheDocument();
+
+      const emptyText = container.querySelector(".key-terms__empty-text");
+      expect(emptyText).toBeInTheDocument();
+    });
+
+    it("should handle undefined keyTerms", () => {
+      render(<KeyTermsGlossary />);
 
       expect(
-        screen.getByText(/Personally Identifiable Information/i),
+        screen.getByText(/No key terms were extracted from this policy/i),
       ).toBeInTheDocument();
+    });
+
+    it("should handle null keyTerms", () => {
+      render(<KeyTermsGlossary keyTerms={null} />);
+
       expect(
-        screen.getByText(/small piece of data stored on your browser/i),
+        screen.getByText(/No key terms were extracted from this policy/i),
       ).toBeInTheDocument();
     });
   });
 
-  describe("Expand/Collapse All", () => {
-    // Note: Removed test with multiple element matches.
-    // The term "Personally Identifiable Information" appears multiple times (term name, definition).
-    // The expand/collapse functionality is already tested by other tests.
-
-    it("should collapse all terms when Collapse All clicked", () => {
-      render(<KeyTermsGlossary keyTerms={mockKeyTerms} />);
-
-      const expandAllButton = screen.getByRole("button", {
-        name: /Expand All/i,
-      });
-      fireEvent.click(expandAllButton);
-
-      const collapseAllButton = screen.getByRole("button", {
-        name: /Collapse All/i,
-      });
-      fireEvent.click(collapseAllButton);
-
-      expect(
-        screen.queryByText(/Personally Identifiable Information/i),
-      ).not.toBeInTheDocument();
-      expect(
-        screen.queryByText(/small piece of data stored on your browser/i),
-      ).not.toBeInTheDocument();
-    });
-
-    it("should disable Expand All when all terms are expanded", () => {
-      render(<KeyTermsGlossary keyTerms={mockKeyTerms} />);
-
-      const expandAllButton = screen.getByRole("button", {
-        name: /Expand All/i,
-      });
-      fireEvent.click(expandAllButton);
-
-      expect(expandAllButton).toBeDisabled();
-    });
-
-    it("should disable Collapse All when all terms are collapsed", () => {
-      render(<KeyTermsGlossary keyTerms={mockKeyTerms} />);
-
-      const collapseAllButton = screen.getByRole("button", {
-        name: /Collapse All/i,
-      });
-      expect(collapseAllButton).toBeDisabled();
-    });
-
-    it("should enable both buttons when some terms are expanded", () => {
-      render(<KeyTermsGlossary keyTerms={mockKeyTerms} />);
-
-      const termButton = screen.getByRole("button", { name: /PII/i });
-      fireEvent.click(termButton);
-
-      const expandAllButton = screen.getByRole("button", {
-        name: /Expand All/i,
-      });
-      const collapseAllButton = screen.getByRole("button", {
-        name: /Collapse All/i,
-      });
-
-      expect(expandAllButton).not.toBeDisabled();
-      expect(collapseAllButton).not.toBeDisabled();
-    });
-  });
-
-  describe("Search Functionality", () => {
-    it("should filter terms by term name", () => {
-      render(<KeyTermsGlossary keyTerms={mockKeyTerms} />);
-
-      const searchInput = screen.getByRole("searchbox");
-      fireEvent.change(searchInput, { target: { value: "cookie" } });
-
-      expect(screen.getByText("Cookie")).toBeInTheDocument();
-      expect(screen.queryByText("PII")).not.toBeInTheDocument();
-      expect(screen.queryByText("Anonymization")).not.toBeInTheDocument();
-    });
-
-    it("should filter terms by definition", () => {
-      render(<KeyTermsGlossary keyTerms={mockKeyTerms} />);
-
-      const searchInput = screen.getByRole("searchbox");
-      fireEvent.change(searchInput, { target: { value: "privacy law" } });
-
-      expect(screen.getByText("GDPR")).toBeInTheDocument();
-      expect(screen.queryByText("PII")).not.toBeInTheDocument();
-    });
-
-    it("should be case insensitive", () => {
-      render(<KeyTermsGlossary keyTerms={mockKeyTerms} />);
-
-      const searchInput = screen.getByRole("searchbox");
-      fireEvent.change(searchInput, { target: { value: "COOKIE" } });
-
-      expect(screen.getByText("Cookie")).toBeInTheDocument();
-    });
-
-    it("should show results count when searching", () => {
-      render(<KeyTermsGlossary keyTerms={mockKeyTerms} />);
-
-      const searchInput = screen.getByRole("searchbox");
-      fireEvent.change(searchInput, { target: { value: "data" } });
-
-      expect(screen.getByText(/Showing 2 of 4 terms/i)).toBeInTheDocument();
-    });
-
-    it('should show "No terms match" when no results', () => {
-      render(<KeyTermsGlossary keyTerms={mockKeyTerms} />);
-
-      const searchInput = screen.getByRole("searchbox");
-      fireEvent.change(searchInput, { target: { value: "nonexistent" } });
-
-      expect(
-        screen.getByText("No terms match your search"),
-      ).toBeInTheDocument();
-    });
-
-    it("should clear search when input is emptied", () => {
-      render(<KeyTermsGlossary keyTerms={mockKeyTerms} />);
-
-      const searchInput = screen.getByRole("searchbox");
-      fireEvent.change(searchInput, { target: { value: "cookie" } });
-      fireEvent.change(searchInput, { target: { value: "" } });
-
-      expect(screen.getByText("PII")).toBeInTheDocument();
-      expect(screen.getByText("Cookie")).toBeInTheDocument();
-      expect(screen.getByText("Anonymization")).toBeInTheDocument();
-    });
-
-    // Note: Removed test that doesn't match actual component behavior.
-    // The search functionality filtering is already tested by other tests.
-  });
-
-  describe("Alphabetical Grouping", () => {
-    // Note: Removed test trying to find single letters which appear in multiple places.
-    // The alphabetical grouping is already tested by other tests checking section structure.
-
-    it("should sort terms alphabetically within groups", () => {
+  describe("Alphabetical Sorting", () => {
+    it("should sort terms alphabetically", () => {
       const unsortedTerms = [
-        { term: "Zebra", definition: "Def", category: "Cat" },
-        { term: "Apple", definition: "Def", category: "Cat" },
-        { term: "Banana", definition: "Def", category: "Cat" },
+        { term: "Zebra", definition: "Last animal" },
+        { term: "Apple", definition: "First fruit" },
+        { term: "Banana", definition: "Second fruit" },
+        { term: "Mango", definition: "Third fruit" },
       ];
 
-      render(<KeyTermsGlossary keyTerms={unsortedTerms} />);
-
-      const termButtons = screen
-        .getAllByRole("button")
-        .filter((btn) =>
-          btn.className.includes("key-terms-glossary__term-header"),
-        );
-
-      expect(termButtons[0]).toHaveTextContent("Apple");
-      expect(termButtons[1]).toHaveTextContent("Banana");
-      expect(termButtons[2]).toHaveTextContent("Zebra");
-    });
-  });
-
-  describe("Alphabet Navigation", () => {
-    it("should render alphabet navigation", () => {
-      render(<KeyTermsGlossary keyTerms={mockKeyTerms} />);
-
-      const nav = screen.getByRole("navigation", { name: /Jump to letter/i });
-      expect(nav).toBeInTheDocument();
-    });
-
-    it("should render all 26 letters", () => {
       const { container } = render(
-        <KeyTermsGlossary keyTerms={mockKeyTerms} />,
+        <KeyTermsGlossary keyTerms={unsortedTerms} />,
       );
 
-      const letters = container.querySelectorAll(
-        ".key-terms-glossary__alphabet-link",
-      );
-      expect(letters.length).toBe(26);
+      const termWords = container.querySelectorAll(".term-item__word");
+      expect(termWords[0]).toHaveTextContent("Apple");
+      expect(termWords[1]).toHaveTextContent("Banana");
+      expect(termWords[2]).toHaveTextContent("Mango");
+      expect(termWords[3]).toHaveTextContent("Zebra");
     });
 
-    it("should disable letters with no terms", () => {
+    it("should handle case-insensitive sorting", () => {
+      const mixedCaseTerms = [
+        { term: "zebra", definition: "lowercase z" },
+        { term: "Apple", definition: "capital A" },
+        { term: "banana", definition: "lowercase b" },
+      ];
+
       const { container } = render(
-        <KeyTermsGlossary keyTerms={mockKeyTerms} />,
+        <KeyTermsGlossary keyTerms={mixedCaseTerms} />,
       );
 
-      const bLink = Array.from(
-        container.querySelectorAll(".key-terms-glossary__alphabet-link"),
-      ).find((link) => link.textContent === "B");
-
-      expect(bLink).toHaveAttribute("aria-disabled", "true");
-      expect(bLink.className).toContain(
-        "key-terms-glossary__alphabet-link--disabled",
-      );
+      const termWords = container.querySelectorAll(".term-item__word");
+      expect(termWords[0]).toHaveTextContent("Apple");
+      expect(termWords[1]).toHaveTextContent("banana");
+      expect(termWords[2]).toHaveTextContent("zebra");
     });
 
-    it("should enable letters with terms", () => {
+    it("should handle terms with missing term property", () => {
+      const termsWithMissing = [
+        { term: "Zebra", definition: "Has term" },
+        { term: "", definition: "Empty term" },
+        { definition: "No term property" },
+        { term: "Apple", definition: "Has term" },
+      ];
+
       const { container } = render(
-        <KeyTermsGlossary keyTerms={mockKeyTerms} />,
+        <KeyTermsGlossary keyTerms={termsWithMissing} />,
       );
 
-      const pLink = Array.from(
-        container.querySelectorAll(".key-terms-glossary__alphabet-link"),
-      ).find((link) => link.textContent === "P");
-
-      expect(pLink).not.toHaveAttribute("aria-disabled", "true");
-      expect(pLink.className).not.toContain(
-        "key-terms-glossary__alphabet-link--disabled",
-      );
+      // Should not crash and should render terms that have valid term values
+      const termWords = container.querySelectorAll(".term-item__word");
+      expect(termWords.length).toBe(4);
     });
 
-    it("should have href to letter section", () => {
+    it("should maintain original order for identical terms", () => {
+      const duplicateTerms = [
+        { term: "Same", definition: "First definition" },
+        { term: "Same", definition: "Second definition" },
+        { term: "Same", definition: "Third definition" },
+      ];
+
       const { container } = render(
-        <KeyTermsGlossary keyTerms={mockKeyTerms} />,
+        <KeyTermsGlossary keyTerms={duplicateTerms} />,
       );
 
-      const pLink = Array.from(
-        container.querySelectorAll(".key-terms-glossary__alphabet-link"),
-      ).find((link) => link.textContent === "P");
-
-      expect(pLink).toHaveAttribute("href", "#letter-P");
-    });
-
-    it("should prevent navigation for disabled letters", () => {
-      const { container } = render(
-        <KeyTermsGlossary keyTerms={mockKeyTerms} />,
+      const termDefinitions = container.querySelectorAll(
+        ".term-item__definition",
       );
-
-      const bLink = Array.from(
-        container.querySelectorAll(".key-terms-glossary__alphabet-link"),
-      ).find((link) => link.textContent === "B");
-
-      const event = new MouseEvent("click", { bubbles: true });
-      const preventDefaultSpy = vi.spyOn(event, "preventDefault");
-
-      bLink.dispatchEvent(event);
-
-      expect(preventDefaultSpy).toHaveBeenCalled();
-    });
-  });
-
-  describe("Content Sanitization", () => {
-    // Note: Removed test that checked if sanitizeHTML function was called.
-    // This tests implementation details rather than actual sanitization behavior.
-
-    it("should render sanitized HTML with dangerouslySetInnerHTML", () => {
-      const { container } = render(
-        <KeyTermsGlossary keyTerms={mockKeyTerms} />,
-      );
-
-      const termButton = screen.getByRole("button", { name: /PII/i });
-      fireEvent.click(termButton);
-
-      const definitionDiv = container.querySelector(
-        ".key-terms-glossary__term-definition",
-      );
-      expect(definitionDiv).toBeInTheDocument();
+      expect(termDefinitions[0]).toHaveTextContent("First definition");
+      expect(termDefinitions[1]).toHaveTextContent("Second definition");
+      expect(termDefinitions[2]).toHaveTextContent("Third definition");
     });
   });
 
   describe("Accessibility", () => {
-    it("should have aria-label on search input", () => {
-      render(<KeyTermsGlossary keyTerms={mockKeyTerms} />);
-
-      const searchInput = screen.getByRole("searchbox");
-      expect(searchInput).toHaveAttribute("aria-label", "Search key terms");
-    });
-
-    it('should have type="button" on all interactive buttons', () => {
-      render(<KeyTermsGlossary keyTerms={mockKeyTerms} />);
-
-      const buttons = screen.getAllByRole("button");
-      buttons.forEach((button) => {
-        expect(button).toHaveAttribute("type", "button");
-      });
-    });
-
     it("should have aria-hidden on decorative icons", () => {
       const { container } = render(
         <KeyTermsGlossary keyTerms={mockKeyTerms} />,
       );
 
-      const searchIcon = container.querySelector(
-        ".key-terms-glossary__search-icon",
-      );
-      expect(searchIcon).toHaveAttribute("aria-hidden", "true");
+      // Title icon
+      const titleIcon = container.querySelector('.card__title span[aria-hidden="true"]');
+      expect(titleIcon).toBeInTheDocument();
+      expect(titleIcon).toHaveTextContent("📚");
     });
 
-    it("should have aria-hidden on expand icons", () => {
-      const { container } = render(
-        <KeyTermsGlossary keyTerms={mockKeyTerms} />,
-      );
+    it("should have aria-hidden on empty state icon", () => {
+      const { container } = render(<KeyTermsGlossary keyTerms={[]} />);
 
-      const expandIcons = container.querySelectorAll(
-        ".key-terms-glossary__expand-icon",
-      );
-      expandIcons.forEach((icon) => {
-        expect(icon).toHaveAttribute("aria-hidden", "true");
+      const emptyIcon = container.querySelector('.key-terms__empty-icon[aria-hidden="true"]');
+      expect(emptyIcon).toBeInTheDocument();
+      expect(emptyIcon).toHaveTextContent("📖");
+    });
+
+    it("should use semantic HTML headings", () => {
+      render(<KeyTermsGlossary keyTerms={mockKeyTerms} />);
+
+      // Main title should be h2
+      const mainTitle = screen.getByRole("heading", {
+        level: 2,
+        name: /Key Terms Explained/,
       });
+      expect(mainTitle).toBeInTheDocument();
     });
 
-    it('should have role="list" on terms container', () => {
-      const { container } = render(
-        <KeyTermsGlossary keyTerms={mockKeyTerms} />,
-      );
+    it("should use h3 for term names", () => {
+      render(<KeyTermsGlossary keyTerms={mockKeyTerms} />);
 
-      const list = container.querySelector('[role="list"]');
-      expect(list).toBeInTheDocument();
-    });
-
-    it('should have role="listitem" on term elements', () => {
-      const { container } = render(
-        <KeyTermsGlossary keyTerms={mockKeyTerms} />,
-      );
-
-      const listItems = container.querySelectorAll('[role="listitem"]');
-      expect(listItems.length).toBe(mockKeyTerms.length);
-    });
-
-    it("should have id on section letters for navigation", () => {
-      const { container } = render(
-        <KeyTermsGlossary keyTerms={mockKeyTerms} />,
-      );
-
-      const pSection = container.querySelector("#letter-P");
-      expect(pSection).toBeInTheDocument();
+      const termHeadings = screen.getAllByRole("heading", { level: 3 });
+      expect(termHeadings.length).toBe(4);
+      expect(termHeadings[0]).toHaveTextContent("Anonymization");
+      expect(termHeadings[1]).toHaveTextContent("Cookie");
+      expect(termHeadings[2]).toHaveTextContent("GDPR");
+      expect(termHeadings[3]).toHaveTextContent("PII");
     });
   });
 
   describe("Edge Cases", () => {
-    it("should handle term without category", () => {
-      const termWithoutCategory = [
+    it("should handle single term", () => {
+      render(<KeyTermsGlossary keyTerms={[mockKeyTerms[0]]} />);
+
+      expect(screen.getByText("PII")).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          "Personally Identifiable Information that can be used to identify an individual",
+        ),
+      ).toBeInTheDocument();
+    });
+
+    it("should handle very long term names", () => {
+      const longTerms = [
         {
-          term: "Term",
+          term: "Very Long Term Name That Should Still Display Correctly",
           definition: "Definition",
-          category: null,
         },
       ];
 
-      render(<KeyTermsGlossary keyTerms={termWithoutCategory} />);
+      render(<KeyTermsGlossary keyTerms={longTerms} />);
 
-      expect(screen.getByText("Term")).toBeInTheDocument();
+      expect(
+        screen.getByText("Very Long Term Name That Should Still Display Correctly"),
+      ).toBeInTheDocument();
     });
 
-    it("should handle rapid expansion/collapse", () => {
-      render(<KeyTermsGlossary keyTerms={mockKeyTerms} />);
+    it("should handle very long definitions", () => {
+      const longDefTerms = [
+        {
+          term: "Term",
+          definition:
+            "This is a very long definition that goes on and on and contains lots of information about the term and should still be displayed correctly without breaking the layout or causing any rendering issues in the component.",
+        },
+      ];
 
-      const termButton = screen.getByRole("button", { name: /PII/i });
+      render(<KeyTermsGlossary keyTerms={longDefTerms} />);
 
-      for (let i = 0; i < 10; i++) {
-        fireEvent.click(termButton);
-      }
-
-      expect(screen.getByText("PII")).toBeInTheDocument();
+      expect(
+        screen.getByText(/This is a very long definition that goes on and on/),
+      ).toBeInTheDocument();
     });
-
-    it("should handle rapid search changes", () => {
-      render(<KeyTermsGlossary keyTerms={mockKeyTerms} />);
-
-      const searchInput = screen.getByRole("searchbox");
-
-      const searches = ["cookie", "pii", "gdpr", "anon", ""];
-      searches.forEach((query) => {
-        fireEvent.change(searchInput, { target: { value: query } });
-      });
-
-      expect(screen.getByText("PII")).toBeInTheDocument();
-    });
-
-    // Note: Removed edge case test for undefined keyTerms.
-    // TypeScript props should enforce correct types at compile time.
 
     it("should handle terms with special characters", () => {
       const specialTerms = [
         {
-          term: "A/B Testing",
-          definition: "Testing methodology",
-          category: "Analytics",
+          term: "Term & Special <Characters>",
+          definition: 'Definition with "quotes" and \'apostrophes\'',
         },
       ];
 
       render(<KeyTermsGlossary keyTerms={specialTerms} />);
 
-      expect(screen.getByText("A/B Testing")).toBeInTheDocument();
+      expect(screen.getByText("Term & Special <Characters>")).toBeInTheDocument();
+      expect(
+        screen.getByText('Definition with "quotes" and \'apostrophes\''),
+      ).toBeInTheDocument();
     });
 
-    it("should handle very long definitions", () => {
-      const longTerm = [
-        {
-          term: "Term",
-          definition: "A".repeat(1000),
-          category: "Cat",
-        },
+    it("should handle empty term string", () => {
+      const emptyStringTerms = [
+        { term: "", definition: "Definition with empty term" },
+        { term: "Valid", definition: "Valid definition" },
       ];
 
-      render(<KeyTermsGlossary keyTerms={longTerm} />);
+      const { container } = render(
+        <KeyTermsGlossary keyTerms={emptyStringTerms} />,
+      );
 
-      const termButton = screen.getByRole("button", { name: /Term/i });
-      fireEvent.click(termButton);
-
-      expect(screen.getByText("A".repeat(1000))).toBeInTheDocument();
+      const termItems = container.querySelectorAll(".term-item");
+      expect(termItems.length).toBe(2);
     });
 
-    it("should maintain search when expanding terms", () => {
-      render(<KeyTermsGlossary keyTerms={mockKeyTerms} />);
+    it("should handle empty definition string", () => {
+      const emptyDefTerms = [
+        { term: "Term", definition: "" },
+        { term: "Valid", definition: "Valid definition" },
+      ];
 
-      const searchInput = screen.getByRole("searchbox");
-      fireEvent.change(searchInput, { target: { value: "cookie" } });
+      const { container } = render(
+        <KeyTermsGlossary keyTerms={emptyDefTerms} />,
+      );
 
-      const termButton = screen.getByRole("button", { name: /Cookie/i });
-      fireEvent.click(termButton);
-
-      expect(searchInput).toHaveValue("cookie");
-      expect(screen.getByText(/small piece of data/i)).toBeInTheDocument();
+      const termItems = container.querySelectorAll(".term-item");
+      expect(termItems.length).toBe(2);
     });
 
-    it("should update alphabet nav when filtering", () => {
+    it("should handle non-array keyTerms gracefully", () => {
+      render(<KeyTermsGlossary keyTerms="not an array" />);
+
+      expect(
+        screen.getByText(/No key terms were extracted from this policy/i),
+      ).toBeInTheDocument();
+    });
+  });
+
+  describe("Component Structure", () => {
+    it("should render with default className when none provided", () => {
       const { container } = render(
         <KeyTermsGlossary keyTerms={mockKeyTerms} />,
       );
 
-      const searchInput = screen.getByRole("searchbox");
-      fireEvent.change(searchInput, { target: { value: "cookie" } });
-
-      // After filtering, only C should be enabled
-      const cLink = Array.from(
-        container.querySelectorAll(".key-terms-glossary__alphabet-link"),
-      ).find((link) => link.textContent === "C");
-      const pLink = Array.from(
-        container.querySelectorAll(".key-terms-glossary__alphabet-link"),
-      ).find((link) => link.textContent === "P");
-
-      expect(cLink).not.toHaveAttribute("aria-disabled", "true");
-      expect(pLink).toHaveAttribute("aria-disabled", "true");
+      const card = container.querySelector(".card.key-terms");
+      expect(card).toBeInTheDocument();
+      // Should have class attribute but empty className prop
+      expect(card.className).toContain("card");
+      expect(card.className).toContain("key-terms");
     });
-  });
 
-  describe("Search Icon", () => {
-    it("should render search icon", () => {
-      render(<KeyTermsGlossary keyTerms={mockKeyTerms} />);
+    it("should combine custom className with default classes", () => {
+      const { container } = render(
+        <KeyTermsGlossary keyTerms={mockKeyTerms} className="my-custom-class" />,
+      );
 
-      expect(screen.getByText("🔍")).toBeInTheDocument();
+      const card = container.querySelector(".card.key-terms.my-custom-class");
+      expect(card).toBeInTheDocument();
+    });
+
+    it("should render correct number of term items", () => {
+      const { container } = render(
+        <KeyTermsGlossary keyTerms={mockKeyTerms} />,
+      );
+
+      const termItems = container.querySelectorAll(".term-item");
+      expect(termItems.length).toBe(mockKeyTerms.length);
+    });
+
+    it("should use consistent key for term items", () => {
+      const { rerender, container } = render(
+        <KeyTermsGlossary keyTerms={mockKeyTerms} />,
+      );
+
+      const firstRenderItems = container.querySelectorAll(".term-item");
+
+      // Re-render with same data
+      rerender(<KeyTermsGlossary keyTerms={mockKeyTerms} />);
+
+      const secondRenderItems = container.querySelectorAll(".term-item");
+
+      expect(firstRenderItems.length).toBe(secondRenderItems.length);
     });
   });
 });

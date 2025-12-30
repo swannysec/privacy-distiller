@@ -8,13 +8,14 @@ import React from 'react';
  * @param {Object} props
  * @param {React.ReactNode} props.children
  * @param {'button' | 'submit' | 'reset'} [props.type='button']
- * @param {'primary' | 'secondary' | 'danger'} [props.variant='primary']
+ * @param {'primary' | 'secondary' | 'danger' | 'ghost'} [props.variant='primary']
  * @param {'small' | 'medium' | 'large'} [props.size='medium']
  * @param {boolean} [props.disabled=false]
  * @param {boolean} [props.loading=false]
  * @param {Function} [props.onClick]
  * @param {string} [props.className]
  * @param {string} [props.ariaLabel]
+ * @param {Object} [props.style]
  */
 export function Button({
   children,
@@ -26,13 +27,18 @@ export function Button({
   onClick,
   className = '',
   ariaLabel,
+  style,
   ...props
 }) {
-  const baseClasses = 'button';
-  const variantClass = `button--${variant}`;
-  const sizeClass = `button--${size}`;
-  const disabledClass = disabled || loading ? 'button--disabled' : '';
-  const loadingClass = loading ? 'button--loading' : '';
+  const baseClasses = 'btn';
+  const variantClass = variant === 'primary' ? 'btn--primary' :
+                       variant === 'secondary' ? 'btn--secondary' :
+                       variant === 'danger' ? 'btn--danger' :
+                       variant === 'ghost' ? 'btn--ghost' : '';
+  const sizeClass = size === 'small' ? 'btn--small' :
+                    size === 'large' ? 'btn--large' : '';
+  const disabledClass = disabled || loading ? 'btn--disabled' : '';
+  const loadingClass = loading ? 'btn--loading' : '';
 
   const classes = [baseClasses, variantClass, sizeClass, disabledClass, loadingClass, className]
     .filter(Boolean)
@@ -46,10 +52,11 @@ export function Button({
       onClick={onClick}
       aria-label={ariaLabel}
       aria-busy={loading}
+      style={style}
       {...props}
     >
-      {loading && <span className="button__spinner" aria-hidden="true" />}
-      <span className="button__content">{children}</span>
+      {loading && <span className="btn__spinner" aria-hidden="true" />}
+      <span className="btn__content">{children}</span>
     </button>
   );
 }

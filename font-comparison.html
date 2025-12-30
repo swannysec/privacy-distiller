@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Font Comparison - Best of Both Worlds</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;600;700;800&family=Inclusive+Sans:ital@0;1&family=Lexend:wght@400;500;600;700&family=Lexend+Deca:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-tertiary: #334155;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent-primary: #0891b2;
+      --border-color: #334155;
+      --highlight: #fbbf24;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: system-ui, sans-serif;
+      line-height: 1.6;
+      padding: 2rem;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 0.5rem;
+      font-size: 1.4rem;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      font-size: 0.85rem;
+    }
+
+    .comparison {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .panel {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.25rem;
+    }
+
+    .panel.highlight {
+      border-color: var(--highlight);
+      box-shadow: 0 0 20px rgba(251, 191, 36, 0.15);
+    }
+
+    .panel-title {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent-primary);
+      margin-bottom: 0.25rem;
+      font-family: system-ui, sans-serif;
+    }
+
+    .panel.highlight .panel-title {
+      color: var(--highlight);
+    }
+
+    .panel-desc {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      font-family: system-ui, sans-serif;
+    }
+
+    /* Font families */
+    .font-lexend { font-family: 'Lexend', sans-serif; }
+    .font-lexend-deca { font-family: 'Lexend Deca', sans-serif; }
+    .font-atkinson { font-family: 'Atkinson Hyperlegible Next', sans-serif; }
+    .font-inclusive { font-family: 'Inclusive Sans', sans-serif; }
+
+    /* Samples */
+    .sample-section {
+      margin-bottom: 1rem;
+    }
+
+    .sample-label {
+      font-size: 0.55rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 0.25rem;
+      font-family: system-ui, sans-serif;
+    }
+
+    .hero-text {
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 0.5rem;
+    }
+
+    .subhead-text {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .body-text {
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 0.75rem;
+    }
+
+    .small-text {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    .char-row {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 0.75rem;
+      margin-top: 0.75rem;
+    }
+
+    .char-sample {
+      font-size: 22px;
+      letter-spacing: 0.08em;
+      font-weight: 400;
+    }
+
+    .char-highlight {
+      background: rgba(251, 191, 36, 0.2);
+      padding: 0 4px;
+      border-radius: 3px;
+    }
+
+    .ui-card {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 0.75rem;
+    }
+
+    .ui-card-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 0.35rem;
+    }
+
+    .ui-card-body {
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--text-secondary);
+      margin-bottom: 0.75rem;
+      line-height: 1.5;
+    }
+
+    .ui-btn {
+      display: inline-block;
+      padding: 8px 16px;
+      background: var(--accent-primary);
+      color: var(--bg-primary);
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .verdict {
+      margin-top: 0.75rem;
+      padding: 0.75rem;
+      background: var(--bg-tertiary);
+      border-radius: 6px;
+      font-family: system-ui, sans-serif;
+      font-size: 0.75rem;
+    }
+
+    .verdict-title {
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.25rem;
+    }
+
+    .verdict-text {
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    .star { color: var(--highlight); }
+  </style>
+</head>
+<body>
+  <h1>Finding the Best of Both Worlds</h1>
+  <p class="subtitle">Lexend's spacing + Atkinson's character differentiation</p>
+
+  <div class="comparison">
+    <!-- 1: Lexend (baseline) -->
+    <div class="panel">
+      <div class="panel-title">Lexend (Your Preferred Spacing)</div>
+      <div class="panel-desc">Reading fluency • Dyslexia/ADHD • Optimized spacing</div>
+
+      <div class="sample-section font-lexend">
+        <div class="hero-text">Understand Privacy Policies</div>
+        <div class="subhead-text">Analyze a Privacy Policy</div>
+        <div class="body-text">AI-powered analysis that breaks down complex legal jargon, highlights privacy risks, and explains what really matters to you.</div>
+      </div>
+
+      <div class="char-row font-lexend">
+        <div class="sample-label">Character Differentiation (key pairs highlighted)</div>
+        <div class="char-sample"><span class="char-highlight">I l 1</span> | <span class="char-highlight">0 O o</span> | a g | rn m</div>
+      </div>
+
+      <div class="ui-card font-lexend">
+        <div class="ui-card-title">Cross-Service Data Sharing</div>
+        <div class="ui-card-body">Google combines data from all their services to build comprehensive user profiles.</div>
+        <div class="ui-btn">Learn More</div>
+      </div>
+
+      <div class="verdict">
+        <div class="verdict-title">Assessment</div>
+        <div class="verdict-text">
+          <span class="star">★★★★</span> Spacing & feel<br>
+          <span class="star">★★★</span> Character differentiation (decent but not exceptional)
+        </div>
+      </div>
+    </div>
+
+    <!-- 2: Atkinson (baseline) -->
+    <div class="panel">
+      <div class="panel-title">Atkinson Next +100wt (Your Preferred Differentiation)</div>
+      <div class="panel-desc">Braille Institute • Low vision • Maximum differentiation</div>
+
+      <div class="sample-section font-atkinson">
+        <div class="hero-text" style="font-weight: 800;">Understand Privacy Policies</div>
+        <div class="subhead-text" style="font-weight: 700;">Analyze a Privacy Policy</div>
+        <div class="body-text" style="font-weight: 500;">AI-powered analysis that breaks down complex legal jargon, highlights privacy risks, and explains what really matters to you.</div>
+      </div>
+
+      <div class="char-row font-atkinson">
+        <div class="sample-label">Character Differentiation (key pairs highlighted)</div>
+        <div class="char-sample" style="font-weight: 500;"><span class="char-highlight">I l 1</span> | <span class="char-highlight">0 O o</span> | a g | rn m</div>
+      </div>
+
+      <div class="ui-card font-atkinson">
+        <div class="ui-card-title" style="font-weight: 800;">Cross-Service Data Sharing</div>
+        <div class="ui-card-body" style="font-weight: 500;">Google combines data from all their services to build comprehensive user profiles.</div>
+        <div class="ui-btn" style="font-weight: 700;">Learn More</div>
+      </div>
+
+      <div class="verdict">
+        <div class="verdict-title">Assessment</div>
+        <div class="verdict-text">
+          <span class="star">★★★</span> Spacing & feel (more traditional)<br>
+          <span class="star">★★★★★</span> Character differentiation (slashed 0, serifed I)
+        </div>
+      </div>
+    </div>
+
+    <!-- 3: Inclusive Sans -->
+    <div class="panel highlight">
+      <div class="panel-title">★ Inclusive Sans (Potential Match)</div>
+      <div class="panel-desc">By Olivia King • Designed for accessibility • Modern aesthetic</div>
+
+      <div class="sample-section font-inclusive">
+        <div class="hero-text">Understand Privacy Policies</div>
+        <div class="subhead-text">Analyze a Privacy Policy</div>
+        <div class="body-text">AI-powered analysis that breaks down complex legal jargon, highlights privacy risks, and explains what really matters to you.</div>
+      </div>
+
+      <div class="char-row font-inclusive">
+        <div class="sample-label">Character Differentiation (key pairs highlighted)</div>
+        <div class="char-sample"><span class="char-highlight">I l 1</span> | <span class="char-highlight">0 O o</span> | a g | rn m</div>
+      </div>
+
+      <div class="ui-card font-inclusive">
+        <div class="ui-card-title">Cross-Service Data Sharing</div>
+        <div class="ui-card-body">Google combines data from all their services to build comprehensive user profiles.</div>
+        <div class="ui-btn">Learn More</div>
+      </div>
+
+      <div class="verdict">
+        <div class="verdict-title">Assessment</div>
+        <div class="verdict-text">
+          Modern aesthetic + accessibility-first design.<br>
+          Check character differentiation above.
+        </div>
+      </div>
+    </div>
+
+    <!-- 4: Direct comparison of confusables -->
+    <div class="panel">
+      <div class="panel-title">Direct Comparison: Confusable Characters</div>
+      <div class="panel-desc">Focus on the most commonly confused character pairs</div>
+
+      <div class="char-row" style="margin-top: 0;">
+        <div class="sample-label">Uppercase I, lowercase L, number 1</div>
+        <div class="font-lexend char-sample" style="margin-bottom: 0.75rem; font-size: 28px;">Lexend: I l 1 | Illinois | l1l1l1</div>
+        <div class="font-atkinson char-sample" style="margin-bottom: 0.75rem; font-size: 28px; font-weight: 500;">Atkinson: I l 1 | Illinois | l1l1l1</div>
+        <div class="font-inclusive char-sample" style="font-size: 28px;">Inclusive: I l 1 | Illinois | l1l1l1</div>
+      </div>
+
+      <div class="char-row">
+        <div class="sample-label">Zero vs Letter O</div>
+        <div class="font-lexend char-sample" style="margin-bottom: 0.75rem; font-size: 28px;">Lexend: 0 O o | O0O0 | 100%</div>
+        <div class="font-atkinson char-sample" style="margin-bottom: 0.75rem; font-size: 28px; font-weight: 500;">Atkinson: 0 O o | O0O0 | 100%</div>
+        <div class="font-inclusive char-sample" style="font-size: 28px;">Inclusive: 0 O o | O0O0 | 100%</div>
+      </div>
+
+      <div class="char-row">
+        <div class="sample-label">rn vs m (classic test)</div>
+        <div class="font-lexend char-sample" style="margin-bottom: 0.75rem; font-size: 28px;">Lexend: rn m | modern | burn</div>
+        <div class="font-atkinson char-sample" style="margin-bottom: 0.75rem; font-size: 28px; font-weight: 500;">Atkinson: rn m | modern | burn</div>
+        <div class="font-inclusive char-sample" style="font-size: 28px;">Inclusive: rn m | modern | burn</div>
+      </div>
+
+      <div class="verdict">
+        <div class="verdict-title">Key Differences</div>
+        <div class="verdict-text">
+          <strong>Atkinson:</strong> Slashed 0, serifed I, tailed l<br>
+          <strong>Lexend:</strong> Dotless distinction, thicker l<br>
+          <strong>Inclusive:</strong> Check above for its approach
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -48,10 +48,10 @@ describe("DocumentInput", () => {
   describe("rendering", () => {
     it("should render with Card wrapper", () => {
       render(<DocumentInput onDocumentSelected={mockOnDocumentSelected} />);
-      expect(screen.getByText("Select Document Source")).toBeInTheDocument();
+      expect(screen.getByText("Analyze a Privacy Policy")).toBeInTheDocument();
       expect(
         screen.getByText(
-          "Provide a privacy policy URL or upload a PDF document",
+          "Paste a URL or upload a PDF document to get started",
         ),
       ).toBeInTheDocument();
     });
@@ -113,8 +113,8 @@ describe("DocumentInput", () => {
 
     it("should clear errors when switching modes", () => {
       vi.spyOn(validation, "validateUrl").mockReturnValue({
-        isValid: false,
-        errors: ["Invalid URL"],
+        valid: false,
+        errors: [{ message: "Invalid URL" }],
       });
 
       render(<DocumentInput onDocumentSelected={mockOnDocumentSelected} />);
@@ -137,20 +137,20 @@ describe("DocumentInput", () => {
       const urlTab = screen.getByRole("tab", { name: /URL/i });
       const fileTab = screen.getByRole("tab", { name: /PDF Upload/i });
 
-      expect(urlTab.className).toContain("mode-toggle__button--active");
-      expect(fileTab.className).not.toContain("mode-toggle__button--active");
+      expect(urlTab.className).toContain("tab--active");
+      expect(fileTab.className).not.toContain("tab--active");
 
       fireEvent.click(fileTab);
 
-      expect(urlTab.className).not.toContain("mode-toggle__button--active");
-      expect(fileTab.className).toContain("mode-toggle__button--active");
+      expect(urlTab.className).not.toContain("tab--active");
+      expect(fileTab.className).toContain("tab--active");
     });
   });
 
   describe("URL submission", () => {
     it("should validate and submit URL", () => {
       vi.spyOn(validation, "validateUrl").mockReturnValue({
-        isValid: true,
+        valid: true,
         errors: [],
       });
 
@@ -175,8 +175,8 @@ describe("DocumentInput", () => {
 
     it("should show error for invalid URL", () => {
       vi.spyOn(validation, "validateUrl").mockReturnValue({
-        isValid: false,
-        errors: ["Invalid URL format"],
+        valid: false,
+        errors: [{ message: "Invalid URL format" }],
       });
 
       render(<DocumentInput onDocumentSelected={mockOnDocumentSelected} />);
@@ -192,8 +192,11 @@ describe("DocumentInput", () => {
 
     it("should handle multiple validation errors", () => {
       vi.spyOn(validation, "validateUrl").mockReturnValue({
-        isValid: false,
-        errors: ["Invalid URL format", "Protocol not allowed"],
+        valid: false,
+        errors: [
+          { message: "Invalid URL format" },
+          { message: "Protocol not allowed" },
+        ],
       });
 
       render(<DocumentInput onDocumentSelected={mockOnDocumentSelected} />);
@@ -211,8 +214,8 @@ describe("DocumentInput", () => {
 
       // First submission - invalid
       validateUrlSpy.mockReturnValueOnce({
-        isValid: false,
-        errors: ["Invalid URL"],
+        valid: false,
+        errors: [{ message: "Invalid URL" }],
       });
 
       render(<DocumentInput onDocumentSelected={mockOnDocumentSelected} />);
@@ -224,7 +227,7 @@ describe("DocumentInput", () => {
 
       // Second submission - valid
       validateUrlSpy.mockReturnValueOnce({
-        isValid: true,
+        valid: true,
         errors: [],
       });
 
@@ -237,7 +240,7 @@ describe("DocumentInput", () => {
   describe("file selection", () => {
     it("should validate and submit file", () => {
       vi.spyOn(validation, "validateFile").mockReturnValue({
-        isValid: true,
+        valid: true,
         errors: [],
       });
 
@@ -267,8 +270,8 @@ describe("DocumentInput", () => {
 
     it("should show error for invalid file", () => {
       vi.spyOn(validation, "validateFile").mockReturnValue({
-        isValid: false,
-        errors: ["File too large"],
+        valid: false,
+        errors: [{ message: "File too large" }],
       });
 
       render(<DocumentInput onDocumentSelected={mockOnDocumentSelected} />);
@@ -289,7 +292,7 @@ describe("DocumentInput", () => {
 
     it("should include file metadata in submission", () => {
       vi.spyOn(validation, "validateFile").mockReturnValue({
-        isValid: true,
+        valid: true,
         errors: [],
       });
 
@@ -384,15 +387,15 @@ describe("DocumentInput", () => {
       const urlTab = screen.getByRole("tab", { name: /URL/i });
       const fileTab = screen.getByRole("tab", { name: /PDF Upload/i });
 
-      expect(urlTab).toHaveAttribute("aria-controls", "url-input-panel");
-      expect(fileTab).toHaveAttribute("aria-controls", "file-input-panel");
+      expect(urlTab).toHaveAttribute("aria-controls", "tab-url");
+      expect(fileTab).toHaveAttribute("aria-controls", "tab-pdf");
     });
 
     it("should have proper ARIA attributes for tab panels", () => {
       render(<DocumentInput onDocumentSelected={mockOnDocumentSelected} />);
 
       const panel = screen.getByRole("tabpanel");
-      expect(panel).toHaveAttribute("id", "url-input-panel");
+      expect(panel).toHaveAttribute("id", "tab-url");
       expect(panel).toHaveAttribute("role", "tabpanel");
     });
 
@@ -403,15 +406,15 @@ describe("DocumentInput", () => {
       fireEvent.click(fileTab);
 
       const panel = screen.getByRole("tabpanel");
-      expect(panel).toHaveAttribute("id", "file-input-panel");
+      expect(panel).toHaveAttribute("id", "tab-pdf");
     });
   });
 
   describe("error propagation", () => {
     it("should pass errors to URLInput", () => {
       vi.spyOn(validation, "validateUrl").mockReturnValue({
-        isValid: false,
-        errors: ["URL error"],
+        valid: false,
+        errors: [{ message: "URL error" }],
       });
 
       render(<DocumentInput onDocumentSelected={mockOnDocumentSelected} />);
@@ -426,8 +429,8 @@ describe("DocumentInput", () => {
 
     it("should pass errors to FileUpload", () => {
       vi.spyOn(validation, "validateFile").mockReturnValue({
-        isValid: false,
-        errors: ["File error"],
+        valid: false,
+        errors: [{ message: "File error" }],
       });
 
       render(<DocumentInput onDocumentSelected={mockOnDocumentSelected} />);
@@ -447,7 +450,7 @@ describe("DocumentInput", () => {
   describe("metadata", () => {
     it("should include timestamp in URL metadata", () => {
       vi.spyOn(validation, "validateUrl").mockReturnValue({
-        isValid: true,
+        valid: true,
         errors: [],
       });
 
@@ -463,7 +466,7 @@ describe("DocumentInput", () => {
 
     it("should include timestamp in file metadata", () => {
       vi.spyOn(validation, "validateFile").mockReturnValue({
-        isValid: true,
+        valid: true,
         errors: [],
       });
 

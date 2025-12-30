@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Playwright configuration for Privacy Policy Analyzer functional tests
+ * Playwright configuration for Privacy Policy Distiller functional tests
  * @see https://playwright.dev/docs/test-configuration
  */
 export default defineConfig({
@@ -22,9 +22,12 @@ export default defineConfig({
   /* Reporter to use */
   reporter: [
     ['list'],
-    ['json', { outputFile: 'test-results/playwright-results.json' }],
-    ['html', { outputFolder: 'test-results/playwright-report' }]
+    ['json', { outputFile: 'playwright-report/playwright-results.json' }],
+    ['html', { outputFolder: 'playwright-report' }]
   ],
+
+  /* Output folder for test artifacts */
+  outputDir: 'test-results',
 
   /* Shared settings for all projects */
   use: {
@@ -72,10 +75,19 @@ export default defineConfig({
     */
   ],
 
-  /* Don't start servers automatically - we'll start them manually */
-  // webServer: {
-  //   command: 'npm run dev',
-  //   url: 'http://localhost:8765/policy-analyzer/',
-  //   reuseExistingServer: !process.env.CI,
-  // },
+  /* Start servers automatically for tests */
+  webServer: [
+    {
+      command: 'npm run dev -- --port 8765',
+      url: 'http://localhost:8765/policy-analyzer/',
+      reuseExistingServer: !process.env.CI,
+      timeout: 30000,
+    },
+    {
+      command: 'npm run preview -- --port 8766',
+      url: 'http://localhost:8766/policy-analyzer/',
+      reuseExistingServer: !process.env.CI,
+      timeout: 30000,
+    },
+  ],
 });

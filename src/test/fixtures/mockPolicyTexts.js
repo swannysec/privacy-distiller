@@ -74,12 +74,6 @@ We will notify you 30 days before any material changes to this policy.
 privacy@example.com - We respond within 48 hours.
 `;
 
-export const TERMS_OF_SERVICE = `
-Terms of Service
-
-By using this service, you agree to arbitration and waive your right to sue. You grant us unlimited rights to any content you upload. We can terminate your account at any time for any reason without refund.
-`;
-
 export const MOCK_LLM_RESPONSES = {
   summary: {
     brief: 'This privacy policy describes data collection practices for a web service.',

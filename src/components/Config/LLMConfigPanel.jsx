@@ -3,110 +3,167 @@ import { useLLMConfig } from '../../contexts';
 import { ProviderSelector } from './ProviderSelector';
 import { APIKeyInput } from './APIKeyInput';
 import { ModelSelector } from './ModelSelector';
-import { Card, Button } from '../Common';
-import { LLM_PROVIDERS } from '../../utils/constants';
+import { Button } from '../Common';
+import { LLM_PROVIDERS, DEFAULT_CONTEXT_WINDOWS } from '../../utils/constants';
 
 /**
  * LLMConfigPanel - Panel for configuring LLM provider settings
+ * Uses form-section layout matching the mockup design
  * @param {Object} props
  * @param {boolean} props.disabled - Whether panel is disabled
  * @param {Function} props.onSave - Optional callback when config is saved
  * @param {string} props.className - Additional CSS classes
  * @returns {JSX.Element}
  */
-export function LLMConfigPanel({ disabled = false, onSave, className = '' }) {
+export function LLMConfigPanel({ disabled = false, onSave, onClose, className = '' }) {
   const { config, updateConfig, setProvider, validateConfig, resetConfig } = useLLMConfig();
   const [hasChanges, setHasChanges] = useState(false);
   const [validationError, setValidationError] = useState(null);
+  const [testStatus, setTestStatus] = useState(null); // 'testing', 'success', 'error'
+  const [testMessage, setTestMessage] = useState('');
 
-  /**
-   * Handle provider change
-   * @param {string} providerId
-   */
   const handleProviderChange = useCallback((providerId) => {
     setProvider(providerId);
     setHasChanges(true);
     setValidationError(null);
+    setTestStatus(null);
   }, [setProvider]);
 
-  /**
-   * Handle API key change
-   * @param {string} apiKey
-   */
   const handleApiKeyChange = useCallback((apiKey) => {
     updateConfig({ apiKey });
     setHasChanges(true);
     setValidationError(null);
   }, [updateConfig]);
 
-  /**
-   * Handle model change
-   * @param {string} model
-   */
   const handleModelChange = useCallback((model) => {
     updateConfig({ model });
     setHasChanges(true);
     setValidationError(null);
   }, [updateConfig]);
 
-  /**
-   * Handle temperature change
-   * @param {number} temperature
-   */
-  const handleTemperatureChange = useCallback((temperature) => {
-    updateConfig({ temperature });
+  const handleEndpointChange = useCallback((e) => {
+    updateConfig({ baseUrl: e.target.value });
+    setHasChanges(true);
+    setValidationError(null);
+    setTestStatus(null);
+  }, [updateConfig]);
+
+  const handleTemperatureChange = useCallback((e) => {
+    updateConfig({ temperature: parseFloat(e.target.value) });
     setHasChanges(true);
   }, [updateConfig]);
 
-  /**
-   * Handle max tokens change
-   * @param {number} maxTokens
-   */
-  const handleMaxTokensChange = useCallback((maxTokens) => {
-    updateConfig({ maxTokens });
+  const handleMaxTokensChange = useCallback((e) => {
+    updateConfig({ maxTokens: parseInt(e.target.value) });
     setHasChanges(true);
   }, [updateConfig]);
 
-  /**
-   * Handle save
-   */
+  const handleContextWindowChange = useCallback((e) => {
+    const value = e.target.value;
+    // Allow empty string to reset to default, otherwise parse as integer
+    updateConfig({ contextWindow: value === '' ? null : parseInt(value) });
+    setHasChanges(true);
+  }, [updateConfig]);
+
   const handleSave = useCallback(() => {
     const validation = validateConfig();
-
     if (!validation.isValid) {
       setValidationError(validation.errors.join(', '));
       return;
     }
-
     setValidationError(null);
     setHasChanges(false);
-
     if (onSave) {
       onSave(config);
     }
   }, [config, validateConfig, onSave]);
 
-  /**
-   * Handle reset
-   */
   const handleReset = useCallback(() => {
     resetConfig();
     setHasChanges(false);
     setValidationError(null);
+    setTestStatus(null);
+    setTestMessage('');
   }, [resetConfig]);
+
+  const handleTestConnection = useCallback(async () => {
+    const validation = validateConfig();
+    if (!validation.isValid) {
+      setValidationError(validation.errors.join(', '));
+      return;
+    }
+
+    setTestStatus('testing');
+    setTestMessage('');
+    setValidationError(null);
+
+    try {
+      if (config.provider === 'openrouter') {
+        const response = await fetch(`${config.baseUrl}/models`, {
+          headers: { 'Authorization': `Bearer ${config.apiKey}` },
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        const data = await response.json();
+        setTestStatus('success');
+        setTestMessage(`Connected! ${data.data?.length || 0} models available.`);
+
+      } else if (config.provider === 'ollama') {
+        const response = await fetch(`${config.baseUrl}/api/tags`);
+        if (!response.ok) {
+          throw new Error('Cannot connect to Ollama. Make sure it is running.');
+        }
+        const data = await response.json();
+        const models = data.models || [];
+        setTestStatus('success');
+        setTestMessage(models.length > 0
+          ? `Connected! ${models.length} model(s) installed.`
+          : 'Connected, but no models installed. Use `ollama pull` to download models.'
+        );
+
+      } else if (config.provider === 'lmstudio') {
+        const response = await fetch(`${config.baseUrl}/models`);
+        if (!response.ok) {
+          throw new Error('Cannot connect to LM Studio. Make sure the server is running.');
+        }
+        const data = await response.json();
+        const models = data.data || [];
+        setTestStatus('success');
+        setTestMessage(models.length > 0
+          ? `Connected! ${models.length} model(s) loaded.`
+          : 'Connected, but no models loaded. Load a model in LM Studio first.'
+        );
+      }
+    } catch (error) {
+      setTestStatus('error');
+      setTestMessage(`Connection failed: ${error.message}`);
+    }
+  }, [config, validateConfig]);
 
   const currentProvider = LLM_PROVIDERS[config.provider.toUpperCase()];
   const requiresApiKey = currentProvider?.requiresApiKey ?? false;
 
   return (
-    <Card
-      className={`llm-config-panel ${className}`}
-      title="LLM Configuration"
-      subtitle="Configure your language model provider and settings"
-    >
-      <div className="llm-config-panel__content">
-        {/* Provider selection */}
-        <div className="llm-config-panel__section">
+    <div className={`modal ${className}`}>
+      <div className="modal__header">
+        <h2 className="modal__title">⚙️ LLM Configuration</h2>
+        {onClose && (
+          <button
+            type="button"
+            className="modal__close"
+            onClick={onClose}
+            aria-label="Close configuration"
+          >
+            ×
+          </button>
+        )}
+      </div>
+
+      <div className="modal__body">
+        {/* Provider Section */}
+        <div className="form-section">
+          <h3 className="form-section__title">Provider</h3>
           <ProviderSelector
             value={config.provider}
             onChange={handleProviderChange}
@@ -114,20 +171,40 @@ export function LLMConfigPanel({ disabled = false, onSave, className = '' }) {
           />
         </div>
 
-        {/* API key (if required) */}
-        {requiresApiKey && (
-          <div className="llm-config-panel__section">
+        {/* API Settings Section */}
+        <div className="form-section">
+          <h3 className="form-section__title">API Settings</h3>
+
+          {requiresApiKey && (
             <APIKeyInput
               value={config.apiKey}
               onChange={handleApiKeyChange}
               provider={config.provider}
               disabled={disabled}
             />
-          </div>
-        )}
+          )}
 
-        {/* Model selection */}
-        <div className="llm-config-panel__section">
+          {/* Endpoint URL for local providers */}
+          {!requiresApiKey && (
+            <div className="input-group">
+              <label htmlFor="endpoint-url" className="input-label">
+                Endpoint URL
+              </label>
+              <input
+                type="text"
+                id="endpoint-url"
+                className="input-field"
+                value={config.baseUrl}
+                onChange={handleEndpointChange}
+                placeholder={currentProvider?.baseUrl || 'http://localhost:11434'}
+                disabled={disabled}
+              />
+              <p className="input-hint">
+                Default: {currentProvider?.baseUrl}
+              </p>
+            </div>
+          )}
+
           <ModelSelector
             provider={config.provider}
             value={config.model}
@@ -136,112 +213,148 @@ export function LLMConfigPanel({ disabled = false, onSave, className = '' }) {
           />
         </div>
 
-        {/* Advanced settings */}
-        <details className="llm-config-panel__advanced">
-          <summary className="llm-config-panel__advanced-toggle">
-            Advanced Settings
-          </summary>
+        {/* Advanced Section */}
+        <div className="form-section">
+          <h3 className="form-section__title">Advanced</h3>
 
-          <div className="llm-config-panel__advanced-content">
-            {/* Temperature */}
-            <div className="llm-config-panel__setting">
-              <label
-                htmlFor="temperature-input"
-                className="llm-config-panel__label"
-              >
+          <div className="form-row">
+            <div className="input-group">
+              <label htmlFor="temperature" className="input-label">
                 Temperature
-                <span className="llm-config-panel__label-hint">
-                  ({config.temperature})
-                </span>
               </label>
               <input
-                id="temperature-input"
-                type="range"
+                type="number"
+                id="temperature"
+                className="input-field"
+                value={config.temperature}
+                onChange={handleTemperatureChange}
+                step="0.1"
                 min="0"
                 max="2"
-                step="0.1"
-                value={config.temperature}
-                onChange={(e) => handleTemperatureChange(parseFloat(e.target.value))}
                 disabled={disabled}
-                className="llm-config-panel__slider"
-                aria-describedby="temperature-description"
               />
-              <p
-                id="temperature-description"
-                className="llm-config-panel__description"
-              >
-                Controls randomness. Lower values are more focused and deterministic.
+              <p className="input-hint">
+                Controls randomness. 0.7 is recommended (0 = deterministic, 2 = very creative)
               </p>
             </div>
 
-            {/* Max tokens */}
-            <div className="llm-config-panel__setting">
-              <label
-                htmlFor="max-tokens-input"
-                className="llm-config-panel__label"
-              >
-                Max Tokens
-                <span className="llm-config-panel__label-hint">
-                  ({config.maxTokens})
-                </span>
+            <div className="input-group">
+              <label htmlFor="max-tokens" className="input-label">
+                Max Response Length
               </label>
               <input
-                id="max-tokens-input"
-                type="range"
-                min="1000"
-                max="16000"
-                step="1000"
+                type="number"
+                id="max-tokens"
+                className="input-field"
                 value={config.maxTokens}
-                onChange={(e) => handleMaxTokensChange(parseInt(e.target.value))}
+                onChange={handleMaxTokensChange}
+                step="1000"
+                min="1000"
+                max="32000"
                 disabled={disabled}
-                className="llm-config-panel__slider"
-                aria-describedby="max-tokens-description"
               />
-              <p
-                id="max-tokens-description"
-                className="llm-config-panel__description"
-              >
-                Maximum length of generated response.
+              <p className="input-hint">
+                Maximum tokens in each AI response (~750 words per 1K tokens)
               </p>
             </div>
           </div>
-        </details>
 
-        {/* Validation error */}
-        {validationError && (
-          <div className="llm-config-panel__error" role="alert" aria-live="polite">
-            <span className="llm-config-panel__error-icon" aria-hidden="true">⚠️</span>
-            <span className="llm-config-panel__error-text">{validationError}</span>
+          {/* Context Window - Local Models Only */}
+          {!requiresApiKey && (
+            <div className="input-group" style={{ marginTop: '1rem' }}>
+              <label htmlFor="context-window" className="input-label">
+                Model Context Window
+              </label>
+              <input
+                type="number"
+                id="context-window"
+                className="input-field"
+                value={config.contextWindow ?? DEFAULT_CONTEXT_WINDOWS[config.provider] ?? 8192}
+                onChange={handleContextWindowChange}
+                step="1024"
+                min="2048"
+                max="1000000"
+                disabled={disabled}
+              />
+              <p className="input-hint">
+                Total capacity for document + responses. Larger documents need bigger context windows.
+                Must match your model&apos;s configuration in {config.provider === 'ollama' ? 'Ollama' : 'LM Studio'}.
+              </p>
+            </div>
+          )}
+
+          {/* Context Window Info - OpenRouter */}
+          {requiresApiKey && config.provider === 'openrouter' && (
+            <div className="config-info" style={{ marginTop: '1rem' }}>
+              <span className="config-info__icon">ℹ️</span>
+              <span className="config-info__text">
+                Model context window (document capacity) is automatically detected from OpenRouter.
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Local Model Warning */}
+        {!requiresApiKey && (
+          <div className="config-alert config-alert--warning">
+            <span>⚠️</span>
+            <div>
+              <strong>Local Model Limitations</strong>
+              <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.875rem' }}>
+                <strong>For large documents, we recommend using OpenRouter</strong> with cloud models 
+                (Claude, GPT-4, Gemini) that support 100K+ token contexts and 32K+ response lengths. 
+                Local models typically have limited capacity.
+              </p>
+              <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.875rem' }}>
+                Current settings: {(config.contextWindow || DEFAULT_CONTEXT_WINDOWS[config.provider] || 8192).toLocaleString()} token context, {(config.maxTokens || 4096).toLocaleString()} max response.
+                If using a local model, ensure:
+              </p>
+              <ul style={{ margin: '0.25rem 0 0 0', paddingLeft: '1.25rem', fontSize: '0.875rem' }}>
+                <li>Your model supports these limits in {config.provider === 'ollama' ? 'Ollama' : 'LM Studio'}</li>
+                <li>You have sufficient RAM (larger contexts need more memory)</li>
+                <li>For Ollama: set <code>num_ctx</code> in Modelfile or use <code>--ctx-size</code> flag</li>
+              </ul>
+            </div>
           </div>
         )}
 
-        {/* Actions */}
-        <div className="llm-config-panel__actions">
-          <Button
-            variant="secondary"
-            onClick={handleReset}
-            disabled={disabled || !hasChanges}
-            ariaLabel="Reset to default configuration"
-          >
-            Reset
-          </Button>
+        {/* Validation Error */}
+        {validationError && (
+          <div className="config-alert config-alert--error">
+            <span>⚠️</span> {validationError}
+          </div>
+        )}
 
-          <Button
-            variant="primary"
-            onClick={handleSave}
-            disabled={disabled || !hasChanges}
-            ariaLabel="Save configuration"
-          >
-            Save Configuration
-          </Button>
-        </div>
-
-        {/* Info note */}
-        <p className="llm-config-panel__note">
-          <strong>Note:</strong> API keys are stored securely in your browser's session storage
-          and are never sent to any server except your chosen LLM provider.
-        </p>
+        {/* Connection Status */}
+        {testStatus && (
+          <div className="config-status">
+            <span className={`status-badge status-badge--${testStatus === 'success' ? 'success' : testStatus === 'error' ? 'error' : 'warning'}`}>
+              <span>{testStatus === 'success' ? '●' : testStatus === 'error' ? '✕' : '...'}</span>
+              {testStatus === 'testing' ? 'Testing' : testStatus === 'success' ? 'Connected' : 'Failed'}
+            </span>
+            {testMessage && (
+              <span className="config-status__message">{testMessage}</span>
+            )}
+          </div>
+        )}
       </div>
-    </Card>
+
+      <div className="modal__footer">
+        <Button
+          variant="secondary"
+          onClick={handleTestConnection}
+          disabled={disabled || testStatus === 'testing'}
+        >
+          Test Connection
+        </Button>
+        <Button
+          variant="primary"
+          onClick={handleSave}
+          disabled={disabled}
+        >
+          Save Configuration
+        </Button>
+      </div>
+    </div>
   );
 }

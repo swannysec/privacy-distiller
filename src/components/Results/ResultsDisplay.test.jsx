@@ -10,32 +10,37 @@ vi.mock("./SummaryView", () => ({
 }));
 
 vi.mock("./RiskHighlights", () => ({
-  RiskHighlights: vi.fn(({ risks, documentMetadata }) => (
-    <div data-testid="risk-highlights">Risks: {risks.length}</div>
+  RiskHighlights: vi.fn(({ risks }) => (
+    <div data-testid="risk-highlights">Risks: {risks?.length || 0}</div>
   )),
 }));
 
 vi.mock("./KeyTermsGlossary", () => ({
   KeyTermsGlossary: vi.fn(({ keyTerms }) => (
-    <div data-testid="key-terms-glossary">Terms: {keyTerms.length}</div>
+    <div data-testid="key-terms-glossary">Terms: {keyTerms?.length || 0}</div>
+  )),
+}));
+
+vi.mock("./PrivacyScorecard", () => ({
+  PrivacyScorecard: vi.fn(({ scorecard }) => (
+    <div data-testid="privacy-scorecard">Scorecard</div>
   )),
 }));
 
 vi.mock("../Common", () => ({
-  Card: ({ children, className }) => (
-    <div className={className} data-testid="card">
-      {children}
-    </div>
-  ),
-  Button: ({ children, variant, onClick, ariaLabel }) => (
-    <button onClick={onClick} aria-label={ariaLabel} data-variant={variant}>
+  Button: ({ children, variant, size, onClick }) => (
+    <button onClick={onClick} data-variant={variant} data-size={size}>
       {children}
     </button>
   ),
 }));
 
 vi.mock("../../utils/formatting", () => ({
-  formatDate: vi.fn((date) => "Jan 1, 2025 12:00 PM"),
+  formatDate: vi.fn((date) => "Jan 1, 2025"),
+}));
+
+vi.mock("../../utils/sanitization", () => ({
+  sanitizeText: vi.fn((text) => text),
 }));
 
 describe("ResultsDisplay", () => {
@@ -53,7 +58,7 @@ describe("ResultsDisplay", () => {
     summary: {
       brief: "Brief summary",
       detailed: "Detailed summary",
-      full: "Full summary",
+      full: "Full summary with more words to count properly for display",
     },
     risks: [
       {
@@ -77,35 +82,60 @@ describe("ResultsDisplay", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Mock clipboard API
+    Object.assign(navigator, {
+      clipboard: {
+        writeText: vi.fn().mockResolvedValue(undefined),
+      },
+    });
   });
 
   describe("Rendering", () => {
-    it("should render metadata section", () => {
+    it("should render results header with document title", () => {
       render(
         <ResultsDisplay
           result={mockResult}
           onNewAnalysis={mockOnNewAnalysis}
-        />,
+        />
       );
 
-      expect(screen.getByText("Document:")).toBeInTheDocument();
-      expect(
-        screen.getByText("https://example.com/privacy"),
-      ).toBeInTheDocument();
-      expect(screen.getByText("Analyzed:")).toBeInTheDocument();
-      expect(screen.getByText("Jan 1, 2025 12:00 PM")).toBeInTheDocument();
+      // Should extract company name from URL and create title
+      expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+        /Privacy Policy Analysis/i
+      );
     });
 
-    it("should render overall risk score", () => {
+    it("should render source in metadata", () => {
       render(
         <ResultsDisplay
           result={mockResult}
           onNewAnalysis={mockOnNewAnalysis}
-        />,
+        />
       );
 
-      expect(screen.getByText("Overall Risk:")).toBeInTheDocument();
-      expect(screen.getByText("MEDIUM")).toBeInTheDocument();
+      expect(screen.getByText(/example.com/)).toBeInTheDocument();
+    });
+
+    it("should render analyzed date", () => {
+      render(
+        <ResultsDisplay
+          result={mockResult}
+          onNewAnalysis={mockOnNewAnalysis}
+        />
+      );
+
+      expect(screen.getByText(/Analyzed Jan 1, 2025/)).toBeInTheDocument();
+    });
+
+    it("should render word count estimate", () => {
+      render(
+        <ResultsDisplay
+          result={mockResult}
+          onNewAnalysis={mockOnNewAnalysis}
+        />
+      );
+
+      expect(screen.getByText(/~\d+ words/)).toBeInTheDocument();
     });
 
     it("should render view mode tabs", () => {
@@ -113,18 +143,18 @@ describe("ResultsDisplay", () => {
         <ResultsDisplay
           result={mockResult}
           onNewAnalysis={mockOnNewAnalysis}
-        />,
+        />
       );
 
       expect(screen.getByRole("tab", { name: /Summary/i })).toBeInTheDocument();
       expect(
-        screen.getByRole("tab", { name: /Privacy Risks/i }),
+        screen.getByRole("tab", { name: /Privacy Risks/i })
       ).toBeInTheDocument();
       expect(
-        screen.getByRole("tab", { name: /Key Terms/i }),
+        screen.getByRole("tab", { name: /Key Terms/i })
       ).toBeInTheDocument();
       expect(
-        screen.getByRole("tab", { name: /Full Report/i }),
+        screen.getByRole("tab", { name: /Full Report/i })
       ).toBeInTheDocument();
     });
 
@@ -133,7 +163,7 @@ describe("ResultsDisplay", () => {
         <ResultsDisplay
           result={mockResult}
           onNewAnalysis={mockOnNewAnalysis}
-        />,
+        />
       );
 
       const risksTab = screen.getByRole("tab", { name: /Privacy Risks/i });
@@ -143,57 +173,58 @@ describe("ResultsDisplay", () => {
       expect(termsTab).toHaveTextContent("2");
     });
 
-    it('should render "Analyze Another Document" button', () => {
+    it("should render New Analysis button", () => {
       render(
         <ResultsDisplay
           result={mockResult}
           onNewAnalysis={mockOnNewAnalysis}
-        />,
+        />
       );
 
       expect(
-        screen.getByRole("button", { name: /Analyze another document/i }),
+        screen.getByRole("button", { name: /New Analysis/i })
       ).toBeInTheDocument();
     });
 
-    it('should render "Export Results" button when onExport provided', () => {
+    it("should render Export button when onExport provided", () => {
       render(
         <ResultsDisplay
           result={mockResult}
           onNewAnalysis={mockOnNewAnalysis}
           onExport={mockOnExport}
-        />,
+        />
       );
 
       expect(
-        screen.getByRole("button", { name: /Export results/i }),
+        screen.getByRole("button", { name: /Export/i })
       ).toBeInTheDocument();
     });
 
-    it('should NOT render "Export Results" button when onExport not provided', () => {
+    it("should NOT render Export button when onExport not provided", () => {
       render(
         <ResultsDisplay
           result={mockResult}
           onNewAnalysis={mockOnNewAnalysis}
-        />,
+        />
       );
 
-      expect(
-        screen.queryByRole("button", { name: /Export results/i }),
-      ).not.toBeInTheDocument();
+      // Only the Copy button should have "Export" text
+      const buttons = screen.getAllByRole("button");
+      const exportButton = buttons.find(
+        (btn) => btn.textContent === "💾 Export"
+      );
+      expect(exportButton).toBeUndefined();
     });
 
-    it("should render disclaimer", () => {
+    it("should render Copy button", () => {
       render(
         <ResultsDisplay
           result={mockResult}
           onNewAnalysis={mockOnNewAnalysis}
-        />,
+        />
       );
 
-      expect(
-        screen.getByText(/should not be considered legal advice/i),
-      ).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /Copy/i })).toBeInTheDocument();
     });
 
     it("should apply custom className", () => {
@@ -202,17 +233,315 @@ describe("ResultsDisplay", () => {
           result={mockResult}
           onNewAnalysis={mockOnNewAnalysis}
           className="custom-class"
-        />,
+        />
       );
 
       expect(
-        container.querySelector(".results-display.custom-class"),
+        container.querySelector(".results-display.custom-class")
       ).toBeInTheDocument();
+    });
+
+    it("should render PrivacyScorecard when scorecard present", () => {
+      const resultWithScorecard = {
+        ...mockResult,
+        scorecard: { overallScore: 75 },
+      };
+
+      render(
+        <ResultsDisplay
+          result={resultWithScorecard}
+          onNewAnalysis={mockOnNewAnalysis}
+        />
+      );
+
+      expect(screen.getByTestId("privacy-scorecard")).toBeInTheDocument();
+    });
+
+    it("should NOT render PrivacyScorecard when scorecard absent", () => {
+      render(
+        <ResultsDisplay
+          result={mockResult}
+          onNewAnalysis={mockOnNewAnalysis}
+        />
+      );
+
+      expect(
+        screen.queryByTestId("privacy-scorecard")
+      ).not.toBeInTheDocument();
     });
   });
 
-  describe("Risk Score Calculation", () => {
-    it('should calculate "high" risk for critical risks', () => {
+  describe("Empty/Missing Result Handling", () => {
+    it("should render fallback message when result is null", () => {
+      render(
+        <ResultsDisplay result={null} onNewAnalysis={mockOnNewAnalysis} />
+      );
+
+      expect(
+        screen.getByText(/No analysis results available/i)
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /Start New Analysis/i })
+      ).toBeInTheDocument();
+    });
+
+    it("should render fallback message when result is undefined", () => {
+      render(
+        <ResultsDisplay result={undefined} onNewAnalysis={mockOnNewAnalysis} />
+      );
+
+      expect(
+        screen.getByText(/No analysis results available/i)
+      ).toBeInTheDocument();
+    });
+
+    it("should render fallback when documentMetadata is missing", () => {
+      const incompleteResult = { id: "1", summary: {} };
+
+      render(
+        <ResultsDisplay
+          result={incompleteResult}
+          onNewAnalysis={mockOnNewAnalysis}
+        />
+      );
+
+      expect(
+        screen.getByText(/No analysis results available/i)
+      ).toBeInTheDocument();
+    });
+
+    it("should call onNewAnalysis when Start New Analysis clicked in fallback", () => {
+      render(
+        <ResultsDisplay result={null} onNewAnalysis={mockOnNewAnalysis} />
+      );
+
+      const button = screen.getByRole("button", { name: /Start New Analysis/i });
+      fireEvent.click(button);
+
+      expect(mockOnNewAnalysis).toHaveBeenCalled();
+    });
+  });
+
+  describe("View Mode Switching", () => {
+    it("should default to summary view", () => {
+      render(
+        <ResultsDisplay
+          result={mockResult}
+          onNewAnalysis={mockOnNewAnalysis}
+        />
+      );
+
+      expect(screen.getByTestId("summary-view")).toBeInTheDocument();
+      expect(screen.queryByTestId("risk-highlights")).not.toBeInTheDocument();
+      expect(
+        screen.queryByTestId("key-terms-glossary")
+      ).not.toBeInTheDocument();
+    });
+
+    it("should show summary tab as active by default", () => {
+      render(
+        <ResultsDisplay
+          result={mockResult}
+          onNewAnalysis={mockOnNewAnalysis}
+        />
+      );
+
+      const summaryTab = screen.getByRole("tab", { name: /Summary/i });
+      expect(summaryTab).toHaveAttribute("aria-selected", "true");
+    });
+
+    it("should switch to risks view when risks tab clicked", () => {
+      render(
+        <ResultsDisplay
+          result={mockResult}
+          onNewAnalysis={mockOnNewAnalysis}
+        />
+      );
+
+      const risksTab = screen.getByRole("tab", { name: /Privacy Risks/i });
+      fireEvent.click(risksTab);
+
+      expect(screen.getByTestId("risk-highlights")).toBeInTheDocument();
+      expect(screen.queryByTestId("summary-view")).not.toBeInTheDocument();
+    });
+
+    it("should switch to terms view when terms tab clicked", () => {
+      render(
+        <ResultsDisplay
+          result={mockResult}
+          onNewAnalysis={mockOnNewAnalysis}
+        />
+      );
+
+      const termsTab = screen.getByRole("tab", { name: /Key Terms/i });
+      fireEvent.click(termsTab);
+
+      expect(screen.getByTestId("key-terms-glossary")).toBeInTheDocument();
+      expect(screen.queryByTestId("summary-view")).not.toBeInTheDocument();
+    });
+
+    it("should switch to all view when full report tab clicked", () => {
+      render(
+        <ResultsDisplay
+          result={mockResult}
+          onNewAnalysis={mockOnNewAnalysis}
+        />
+      );
+
+      const allTab = screen.getByRole("tab", { name: /Full Report/i });
+      fireEvent.click(allTab);
+
+      expect(screen.getByTestId("summary-view")).toBeInTheDocument();
+      expect(screen.getByTestId("risk-highlights")).toBeInTheDocument();
+      expect(screen.getByTestId("key-terms-glossary")).toBeInTheDocument();
+    });
+
+    it("should update aria-selected when switching tabs", () => {
+      render(
+        <ResultsDisplay
+          result={mockResult}
+          onNewAnalysis={mockOnNewAnalysis}
+        />
+      );
+
+      const risksTab = screen.getByRole("tab", { name: /Privacy Risks/i });
+      fireEvent.click(risksTab);
+
+      expect(risksTab).toHaveAttribute("aria-selected", "true");
+
+      const summaryTab = screen.getByRole("tab", { name: /Summary/i });
+      expect(summaryTab).toHaveAttribute("aria-selected", "false");
+    });
+  });
+
+  describe("User Interactions", () => {
+    it("should call onNewAnalysis when New Analysis button clicked", () => {
+      render(
+        <ResultsDisplay
+          result={mockResult}
+          onNewAnalysis={mockOnNewAnalysis}
+        />
+      );
+
+      const button = screen.getByRole("button", { name: /New Analysis/i });
+      fireEvent.click(button);
+
+      expect(mockOnNewAnalysis).toHaveBeenCalled();
+    });
+
+    it("should call onExport with result when Export button clicked", () => {
+      render(
+        <ResultsDisplay
+          result={mockResult}
+          onNewAnalysis={mockOnNewAnalysis}
+          onExport={mockOnExport}
+        />
+      );
+
+      const button = screen.getByRole("button", { name: /Export/i });
+      fireEvent.click(button);
+
+      expect(mockOnExport).toHaveBeenCalledWith(mockResult);
+    });
+
+    it("should copy results to clipboard when Copy button clicked", async () => {
+      render(
+        <ResultsDisplay
+          result={mockResult}
+          onNewAnalysis={mockOnNewAnalysis}
+        />
+      );
+
+      const button = screen.getByRole("button", { name: /Copy/i });
+      fireEvent.click(button);
+
+      expect(navigator.clipboard.writeText).toHaveBeenCalled();
+    });
+  });
+
+  describe("Accessibility", () => {
+    it("should have tablist role", () => {
+      render(
+        <ResultsDisplay
+          result={mockResult}
+          onNewAnalysis={mockOnNewAnalysis}
+        />
+      );
+
+      const tablist = screen.getByRole("tablist");
+      expect(tablist).toBeInTheDocument();
+      expect(tablist).toHaveAttribute("aria-label", "Results view mode");
+    });
+
+    it("should have tab roles", () => {
+      render(
+        <ResultsDisplay
+          result={mockResult}
+          onNewAnalysis={mockOnNewAnalysis}
+        />
+      );
+
+      const tabs = screen.getAllByRole("tab");
+      expect(tabs.length).toBe(4);
+    });
+
+    it("should have button types on tabs", () => {
+      render(
+        <ResultsDisplay
+          result={mockResult}
+          onNewAnalysis={mockOnNewAnalysis}
+        />
+      );
+
+      const tabs = screen.getAllByRole("tab");
+      tabs.forEach((tab) => {
+        expect(tab).toHaveAttribute("type", "button");
+      });
+    });
+
+    it("should have aria-hidden on decorative icons", () => {
+      render(
+        <ResultsDisplay
+          result={mockResult}
+          onNewAnalysis={mockOnNewAnalysis}
+        />
+      );
+
+      const hiddenElements = document.querySelectorAll('[aria-hidden="true"]');
+      expect(hiddenElements.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe("Risk Level Calculation", () => {
+    it("should show risk indicator on risks tab when risks present", () => {
+      const { container } = render(
+        <ResultsDisplay
+          result={mockResult}
+          onNewAnalysis={mockOnNewAnalysis}
+        />
+      );
+
+      // Should have risk indicator styling on tab
+      const risksTab = screen.getByRole("tab", { name: /Privacy Risks/i });
+      expect(risksTab.className).toContain("tab--risk");
+    });
+
+    it("should not show risk indicator when no risks", () => {
+      const noRisksResult = { ...mockResult, risks: [] };
+
+      render(
+        <ResultsDisplay
+          result={noRisksResult}
+          onNewAnalysis={mockOnNewAnalysis}
+        />
+      );
+
+      const risksTab = screen.getByRole("tab", { name: /Privacy Risks/i });
+      expect(risksTab.className).not.toContain("tab--risk-high");
+      expect(risksTab.className).not.toContain("tab--risk-medium");
+    });
+
+    it("should apply high risk class for high severity risks", () => {
       const highRiskResult = {
         ...mockResult,
         risks: [
@@ -229,88 +558,19 @@ describe("ResultsDisplay", () => {
         <ResultsDisplay
           result={highRiskResult}
           onNewAnalysis={mockOnNewAnalysis}
-        />,
+        />
       );
 
-      expect(screen.getByText("HIGH")).toBeInTheDocument();
+      const risksTab = screen.getByRole("tab", { name: /Privacy Risks/i });
+      expect(risksTab.className).toContain("tab--risk-high");
     });
 
-    it('should calculate "high" risk for 3+ high severity risks', () => {
-      const highRiskResult = {
-        ...mockResult,
-        risks: [
-          {
-            title: "Risk 1",
-            severity: "high",
-            description: "",
-            explanation: "",
-          },
-          {
-            title: "Risk 2",
-            severity: "high",
-            description: "",
-            explanation: "",
-          },
-          {
-            title: "Risk 3",
-            severity: "high",
-            description: "",
-            explanation: "",
-          },
-        ],
-      };
-
-      render(
-        <ResultsDisplay
-          result={highRiskResult}
-          onNewAnalysis={mockOnNewAnalysis}
-        />,
-      );
-
-      expect(screen.getByText("HIGH")).toBeInTheDocument();
-    });
-
-    it('should calculate "medium" risk for 1 high severity risk', () => {
+    it("should apply medium risk class for medium severity risks only", () => {
       const mediumRiskResult = {
         ...mockResult,
         risks: [
           {
-            title: "High Risk",
-            severity: "high",
-            description: "",
-            explanation: "",
-          },
-        ],
-      };
-
-      render(
-        <ResultsDisplay
-          result={mediumRiskResult}
-          onNewAnalysis={mockOnNewAnalysis}
-        />,
-      );
-
-      expect(screen.getByText("MEDIUM")).toBeInTheDocument();
-    });
-
-    it('should calculate "medium" risk for 3+ medium severity risks', () => {
-      const mediumRiskResult = {
-        ...mockResult,
-        risks: [
-          {
-            title: "Risk 1",
-            severity: "medium",
-            description: "",
-            explanation: "",
-          },
-          {
-            title: "Risk 2",
-            severity: "medium",
-            description: "",
-            explanation: "",
-          },
-          {
-            title: "Risk 3",
+            title: "Medium Risk",
             severity: "medium",
             description: "",
             explanation: "",
@@ -322,29 +582,14 @@ describe("ResultsDisplay", () => {
         <ResultsDisplay
           result={mediumRiskResult}
           onNewAnalysis={mockOnNewAnalysis}
-        />,
+        />
       );
 
-      expect(screen.getByText("MEDIUM")).toBeInTheDocument();
+      const risksTab = screen.getByRole("tab", { name: /Privacy Risks/i });
+      expect(risksTab.className).toContain("tab--risk-medium");
     });
 
-    it('should calculate "low" risk for no risks', () => {
-      const lowRiskResult = {
-        ...mockResult,
-        risks: [],
-      };
-
-      render(
-        <ResultsDisplay
-          result={lowRiskResult}
-          onNewAnalysis={mockOnNewAnalysis}
-        />,
-      );
-
-      expect(screen.getByText("LOW")).toBeInTheDocument();
-    });
-
-    it('should calculate "low" risk for only low severity risks', () => {
+    it("should apply low risk class for low severity risks only", () => {
       const lowRiskResult = {
         ...mockResult,
         risks: [
@@ -361,265 +606,84 @@ describe("ResultsDisplay", () => {
         <ResultsDisplay
           result={lowRiskResult}
           onNewAnalysis={mockOnNewAnalysis}
-        />,
-      );
-
-      expect(screen.getByText("LOW")).toBeInTheDocument();
-    });
-  });
-
-  describe("View Mode Switching", () => {
-    it("should default to summary view", () => {
-      render(
-        <ResultsDisplay
-          result={mockResult}
-          onNewAnalysis={mockOnNewAnalysis}
-        />,
-      );
-
-      expect(screen.getByTestId("summary-view")).toBeInTheDocument();
-      expect(screen.queryByTestId("risk-highlights")).not.toBeInTheDocument();
-      expect(
-        screen.queryByTestId("key-terms-glossary"),
-      ).not.toBeInTheDocument();
-    });
-
-    it("should show summary tab as active by default", () => {
-      render(
-        <ResultsDisplay
-          result={mockResult}
-          onNewAnalysis={mockOnNewAnalysis}
-        />,
-      );
-
-      const summaryTab = screen.getByRole("tab", { name: /Summary/i });
-      expect(summaryTab).toHaveAttribute("aria-selected", "true");
-    });
-
-    it("should switch to risks view when risks tab clicked", () => {
-      render(
-        <ResultsDisplay
-          result={mockResult}
-          onNewAnalysis={mockOnNewAnalysis}
-        />,
+        />
       );
 
       const risksTab = screen.getByRole("tab", { name: /Privacy Risks/i });
-      fireEvent.click(risksTab);
-
-      expect(screen.getByTestId("risk-highlights")).toBeInTheDocument();
-      expect(screen.queryByTestId("summary-view")).not.toBeInTheDocument();
-    });
-
-    it("should switch to terms view when terms tab clicked", () => {
-      render(
-        <ResultsDisplay
-          result={mockResult}
-          onNewAnalysis={mockOnNewAnalysis}
-        />,
-      );
-
-      const termsTab = screen.getByRole("tab", { name: /Key Terms/i });
-      fireEvent.click(termsTab);
-
-      expect(screen.getByTestId("key-terms-glossary")).toBeInTheDocument();
-      expect(screen.queryByTestId("summary-view")).not.toBeInTheDocument();
-    });
-
-    it("should switch to all view when full report tab clicked", () => {
-      render(
-        <ResultsDisplay
-          result={mockResult}
-          onNewAnalysis={mockOnNewAnalysis}
-        />,
-      );
-
-      const allTab = screen.getByRole("tab", { name: /Full Report/i });
-      fireEvent.click(allTab);
-
-      expect(screen.getByTestId("summary-view")).toBeInTheDocument();
-      expect(screen.getByTestId("risk-highlights")).toBeInTheDocument();
-      expect(screen.getByTestId("key-terms-glossary")).toBeInTheDocument();
-    });
-
-    it("should update aria-selected when switching tabs", () => {
-      render(
-        <ResultsDisplay
-          result={mockResult}
-          onNewAnalysis={mockOnNewAnalysis}
-        />,
-      );
-
-      const risksTab = screen.getByRole("tab", { name: /Privacy Risks/i });
-      fireEvent.click(risksTab);
-
-      expect(risksTab).toHaveAttribute("aria-selected", "true");
-
-      const summaryTab = screen.getByRole("tab", { name: /Summary/i });
-      expect(summaryTab).toHaveAttribute("aria-selected", "false");
+      expect(risksTab.className).toContain("tab--risk-low");
     });
   });
 
-  describe("User Interactions", () => {
-    it("should call onNewAnalysis when button clicked", () => {
+  describe("Document Title Generation", () => {
+    it("should extract company name from URL domain", () => {
       render(
         <ResultsDisplay
           result={mockResult}
           onNewAnalysis={mockOnNewAnalysis}
-        />,
+        />
       );
 
-      const button = screen.getByRole("button", {
-        name: /Analyze another document/i,
-      });
-      fireEvent.click(button);
-
-      expect(mockOnNewAnalysis).toHaveBeenCalled();
-    });
-
-    it("should call onExport with result when Export button clicked", () => {
-      render(
-        <ResultsDisplay
-          result={mockResult}
-          onNewAnalysis={mockOnNewAnalysis}
-          onExport={mockOnExport}
-        />,
+      expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+        "Example Privacy Policy Analysis"
       );
-
-      const button = screen.getByRole("button", { name: /Export results/i });
-      fireEvent.click(button);
-
-      expect(mockOnExport).toHaveBeenCalledWith(mockResult);
-    });
-  });
-
-  describe("Accessibility", () => {
-    it("should have tablist role", () => {
-      render(
-        <ResultsDisplay
-          result={mockResult}
-          onNewAnalysis={mockOnNewAnalysis}
-        />,
-      );
-
-      const tablist = screen.getByRole("tablist");
-      expect(tablist).toBeInTheDocument();
-      expect(tablist).toHaveAttribute("aria-label", "Results view mode");
     });
 
-    it("should have tab roles with aria-controls", () => {
-      render(
-        <ResultsDisplay
-          result={mockResult}
-          onNewAnalysis={mockOnNewAnalysis}
-        />,
-      );
-
-      const summaryTab = screen.getByRole("tab", { name: /Summary/i });
-      expect(summaryTab).toHaveAttribute("aria-controls", "summary-panel");
-
-      const risksTab = screen.getByRole("tab", { name: /Privacy Risks/i });
-      expect(risksTab).toHaveAttribute("aria-controls", "risks-panel");
-    });
-
-    it("should have tabpanel roles", () => {
-      render(
-        <ResultsDisplay
-          result={mockResult}
-          onNewAnalysis={mockOnNewAnalysis}
-        />,
-      );
-
-      const panel = screen.getByRole("tabpanel");
-      expect(panel).toBeInTheDocument();
-    });
-
-    it("should have proper aria-labelledby on panels", () => {
-      render(
-        <ResultsDisplay
-          result={mockResult}
-          onNewAnalysis={mockOnNewAnalysis}
-        />,
-      );
-
-      const panel = screen.getByRole("tabpanel");
-      expect(panel).toHaveAttribute("aria-labelledby", "summary-tab");
-    });
-
-    it("should have button types", () => {
-      render(
-        <ResultsDisplay
-          result={mockResult}
-          onNewAnalysis={mockOnNewAnalysis}
-        />,
-      );
-
-      const tabs = screen.getAllByRole("tab");
-      tabs.forEach((tab) => {
-        expect(tab).toHaveAttribute("type", "button");
-      });
-    });
-  });
-
-  describe("Risk Score Colors", () => {
-    it("should apply green background for low risk", () => {
-      const lowRiskResult = { ...mockResult, risks: [] };
-      const { container } = render(
-        <ResultsDisplay
-          result={lowRiskResult}
-          onNewAnalysis={mockOnNewAnalysis}
-        />,
-      );
-
-      const badge = container.querySelector(".results-display__risk-badge");
-      expect(badge).toHaveStyle({ backgroundColor: "#10b981" });
-    });
-
-    it("should apply amber background for medium risk", () => {
-      const { container } = render(
-        <ResultsDisplay
-          result={mockResult}
-          onNewAnalysis={mockOnNewAnalysis}
-        />,
-      );
-
-      const badge = container.querySelector(".results-display__risk-badge");
-      expect(badge).toHaveStyle({ backgroundColor: "#f59e0b" });
-    });
-
-    it("should apply red background for high risk", () => {
-      const highRiskResult = {
+    it("should handle PDF filename source", () => {
+      const pdfResult = {
         ...mockResult,
-        risks: [
-          {
-            title: "Critical",
-            severity: "critical",
-            description: "",
-            explanation: "",
-          },
-        ],
+        documentMetadata: {
+          ...mockResult.documentMetadata,
+          source: "privacy-policy.pdf",
+        },
       };
-      const { container } = render(
-        <ResultsDisplay
-          result={highRiskResult}
-          onNewAnalysis={mockOnNewAnalysis}
-        />,
+
+      render(
+        <ResultsDisplay result={pdfResult} onNewAnalysis={mockOnNewAnalysis} />
       );
 
-      const badge = container.querySelector(".results-display__risk-badge");
-      expect(badge).toHaveStyle({ backgroundColor: "#ef4444" });
+      expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+        "privacy-policy Analysis"
+      );
     });
 
-    it("should apply white text color", () => {
-      const { container } = render(
-        <ResultsDisplay
-          result={mockResult}
-          onNewAnalysis={mockOnNewAnalysis}
-        />,
+    it("should handle www prefix in URL", () => {
+      const wwwResult = {
+        ...mockResult,
+        documentMetadata: {
+          ...mockResult.documentMetadata,
+          source: "https://www.google.com/privacy",
+        },
+      };
+
+      render(
+        <ResultsDisplay result={wwwResult} onNewAnalysis={mockOnNewAnalysis} />
       );
 
-      const badge = container.querySelector(".results-display__risk-badge");
-      expect(badge).toHaveStyle({ color: "rgb(255, 255, 255)" });
+      expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+        "Google Privacy Policy Analysis"
+      );
+    });
+
+    it("should handle invalid URL gracefully", () => {
+      const invalidResult = {
+        ...mockResult,
+        documentMetadata: {
+          ...mockResult.documentMetadata,
+          source: "not-a-valid-url",
+        },
+      };
+
+      render(
+        <ResultsDisplay
+          result={invalidResult}
+          onNewAnalysis={mockOnNewAnalysis}
+        />
+      );
+
+      // Should fallback to treating it as filename
+      expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+        "not-a-valid-url Analysis"
+      );
     });
   });
 
@@ -630,11 +694,12 @@ describe("ResultsDisplay", () => {
         <ResultsDisplay
           result={noRisksResult}
           onNewAnalysis={mockOnNewAnalysis}
-        />,
+        />
       );
 
       const risksTab = screen.getByRole("tab", { name: /Privacy Risks/i });
-      expect(risksTab).not.toHaveTextContent(/\d+/);
+      // Should not have count badge when no risks
+      expect(risksTab.querySelector(".tab__count")).toBeNull();
     });
 
     it("should handle result with no key terms", () => {
@@ -643,11 +708,12 @@ describe("ResultsDisplay", () => {
         <ResultsDisplay
           result={noTermsResult}
           onNewAnalysis={mockOnNewAnalysis}
-        />,
+        />
       );
 
       const termsTab = screen.getByRole("tab", { name: /Key Terms/i });
-      expect(termsTab).not.toHaveTextContent(/\d+/);
+      // Should not have count badge when no terms
+      expect(termsTab.querySelector(".tab__count")).toBeNull();
     });
 
     it("should handle result with empty summary", () => {
@@ -660,26 +726,40 @@ describe("ResultsDisplay", () => {
         <ResultsDisplay
           result={emptySummaryResult}
           onNewAnalysis={mockOnNewAnalysis}
-        />,
+        />
       );
 
       expect(screen.getByTestId("summary-view")).toBeInTheDocument();
     });
 
-    it("should handle result with undefined documentMetadata.source", () => {
-      const noSourceResult = {
-        ...mockResult,
-        documentMetadata: { ...mockResult.documentMetadata, source: undefined },
-      };
+    it("should handle result with undefined risks", () => {
+      const undefinedRisksResult = { ...mockResult, risks: undefined };
 
       render(
         <ResultsDisplay
-          result={noSourceResult}
+          result={undefinedRisksResult}
           onNewAnalysis={mockOnNewAnalysis}
-        />,
+        />
       );
 
-      expect(screen.getByText("Document:")).toBeInTheDocument();
+      expect(
+        screen.getByRole("tab", { name: /Privacy Risks/i })
+      ).toBeInTheDocument();
+    });
+
+    it("should handle result with undefined keyTerms", () => {
+      const undefinedTermsResult = { ...mockResult, keyTerms: undefined };
+
+      render(
+        <ResultsDisplay
+          result={undefinedTermsResult}
+          onNewAnalysis={mockOnNewAnalysis}
+        />
+      );
+
+      expect(
+        screen.getByRole("tab", { name: /Key Terms/i })
+      ).toBeInTheDocument();
     });
 
     it("should handle rapid tab switching", () => {
@@ -687,7 +767,7 @@ describe("ResultsDisplay", () => {
         <ResultsDisplay
           result={mockResult}
           onNewAnalysis={mockOnNewAnalysis}
-        />,
+        />
       );
 
       const tabs = screen.getAllByRole("tab");
@@ -699,10 +779,85 @@ describe("ResultsDisplay", () => {
       // Should remain functional
       expect(screen.getByRole("tablist")).toBeInTheDocument();
     });
+
+    it("should handle empty source string", () => {
+      const emptySourceResult = {
+        ...mockResult,
+        documentMetadata: {
+          ...mockResult.documentMetadata,
+          source: "",
+        },
+      };
+
+      render(
+        <ResultsDisplay
+          result={emptySourceResult}
+          onNewAnalysis={mockOnNewAnalysis}
+        />
+      );
+
+      // Should still render without crashing
+      expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
+    });
   });
 
-  // Note: Removed "Component Props" tests that verified props passed to child components.
-  // These tests check implementation details (which child components receive which props)
-  // rather than user-facing behavior. The correct rendering of content is already tested
-  // by the child component tests themselves.
+  describe("CSS Classes", () => {
+    it("should have results-display root class", () => {
+      const { container } = render(
+        <ResultsDisplay
+          result={mockResult}
+          onNewAnalysis={mockOnNewAnalysis}
+        />
+      );
+
+      expect(container.querySelector(".results-display")).toBeInTheDocument();
+    });
+
+    it("should have results-header class", () => {
+      const { container } = render(
+        <ResultsDisplay
+          result={mockResult}
+          onNewAnalysis={mockOnNewAnalysis}
+        />
+      );
+
+      expect(container.querySelector(".results-header")).toBeInTheDocument();
+    });
+
+    it("should have results-tabs class", () => {
+      const { container } = render(
+        <ResultsDisplay
+          result={mockResult}
+          onNewAnalysis={mockOnNewAnalysis}
+        />
+      );
+
+      expect(container.querySelector(".results-tabs")).toBeInTheDocument();
+    });
+
+    it("should apply tab--active class to selected tab", () => {
+      render(
+        <ResultsDisplay
+          result={mockResult}
+          onNewAnalysis={mockOnNewAnalysis}
+        />
+      );
+
+      const summaryTab = screen.getByRole("tab", { name: /Summary/i });
+      expect(summaryTab.className).toContain("tab--active");
+    });
+
+    it("should have results-display__content class", () => {
+      const { container } = render(
+        <ResultsDisplay
+          result={mockResult}
+          onNewAnalysis={mockOnNewAnalysis}
+        />
+      );
+
+      expect(
+        container.querySelector(".results-display__content")
+      ).toBeInTheDocument();
+    });
+  });
 });

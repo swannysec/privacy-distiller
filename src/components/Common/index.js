@@ -7,3 +7,4 @@ export { Input } from './Input.jsx';
 export { Card } from './Card.jsx';
 export { LoadingSpinner } from './LoadingSpinner.jsx';
 export { ErrorBoundary } from './ErrorBoundary.jsx';
+export { TipsModal } from './TipsModal.jsx';

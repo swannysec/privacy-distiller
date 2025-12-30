@@ -1,0 +1,17 @@
+/*
+  # Security Headers for Privacy Policy Analyzer
+
+  # HSTS - Force HTTPS for 1 year including subdomains
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+
+  # Prevent MIME type sniffing
+  X-Content-Type-Options: nosniff
+
+  # Prevent clickjacking attacks
+  X-Frame-Options: DENY
+
+  # Control referrer information
+  Referrer-Policy: strict-origin-when-cross-origin
+
+  # Permissions Policy - Restrict browser features
+  Permissions-Policy: geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=()

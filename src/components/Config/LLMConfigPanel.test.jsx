@@ -49,18 +49,10 @@ vi.mock("./ModelSelector", () => ({
 }));
 
 vi.mock("../Common", () => ({
-  Card: ({ children, title, subtitle, className }) => (
-    <div className={className} data-testid="card">
-      <h2>{title}</h2>
-      <p>{subtitle}</p>
-      {children}
-    </div>
-  ),
-  Button: ({ children, variant, onClick, disabled, ariaLabel }) => (
+  Button: ({ children, variant, onClick, disabled }) => (
     <button
       onClick={onClick}
       disabled={disabled}
-      aria-label={ariaLabel}
       data-variant={variant}
     >
       {children}
@@ -89,7 +81,14 @@ vi.mock("../../utils/constants", () => ({
       baseUrl: "http://localhost:1234/v1",
     },
   },
+  DEFAULT_CONTEXT_WINDOWS: {
+    ollama: 8192,
+    lmstudio: 8192,
+  },
 }));
+
+// Mock fetch for connection tests
+global.fetch = vi.fn();
 
 // Mock context
 const mockUpdateConfig = vi.fn();
@@ -104,6 +103,7 @@ const mockContextValue = {
     model: "model1",
     temperature: 0.7,
     maxTokens: 4000,
+    baseUrl: "https://openrouter.ai/api/v1",
   },
   updateConfig: mockUpdateConfig,
   setProvider: mockSetProvider,
@@ -111,24 +111,26 @@ const mockContextValue = {
   resetConfig: mockResetConfig,
 };
 
+import { useLLMConfig } from "../../contexts";
+
 vi.mock("../../contexts", () => ({
-  useLLMConfig: vi.fn(() => mockContextValue),
+  useLLMConfig: vi.fn(),
 }));
 
 describe("LLMConfigPanel", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockValidateConfig.mockReturnValue({ isValid: true, errors: [] });
+    global.fetch.mockReset();
+    // Set default mock return value
+    vi.mocked(useLLMConfig).mockReturnValue(mockContextValue);
   });
 
   describe("Rendering", () => {
-    it("should render with title and subtitle", () => {
+    it("should render modal with title", () => {
       render(<LLMConfigPanel />);
 
-      expect(screen.getByText("LLM Configuration")).toBeInTheDocument();
-      expect(
-        screen.getByText("Configure your language model provider and settings"),
-      ).toBeInTheDocument();
+      expect(screen.getByText(/LLM Configuration/i)).toBeInTheDocument();
     });
 
     it("should render ProviderSelector", () => {
@@ -143,69 +145,65 @@ describe("LLMConfigPanel", () => {
       expect(screen.getByTestId("api-key-input")).toBeInTheDocument();
     });
 
-    // Note: Removed test that used dynamic require() causing module resolution error.
-    // The conditional rendering of APIKeyInput based on provider type is already
-    // covered by the component's visual tests and the "should render APIKeyInput
-    // when provider requires API key" test above.
-
     it("should render ModelSelector", () => {
       render(<LLMConfigPanel />);
 
       expect(screen.getByTestId("model-selector")).toBeInTheDocument();
     });
 
-    it("should render advanced settings in details element", () => {
+    it("should render form sections", () => {
       render(<LLMConfigPanel />);
 
-      const advancedToggle = screen.getByText("Advanced Settings");
-      expect(advancedToggle).toBeInTheDocument();
-      expect(advancedToggle.tagName).toBe("SUMMARY");
+      expect(screen.getByText("Provider")).toBeInTheDocument();
+      expect(screen.getByText("API Settings")).toBeInTheDocument();
+      expect(screen.getByText("Advanced")).toBeInTheDocument();
     });
 
-    it("should render temperature slider with current value", () => {
+    it("should render temperature input with current value", () => {
       render(<LLMConfigPanel />);
 
       const tempInput = screen.getByLabelText(/Temperature/i);
       expect(tempInput).toBeInTheDocument();
-      expect(tempInput).toHaveAttribute("type", "range");
-      expect(tempInput).toHaveValue("0.7");
-      expect(screen.getByText("(0.7)")).toBeInTheDocument();
+      expect(tempInput).toHaveAttribute("type", "number");
+      expect(tempInput).toHaveValue(0.7);
     });
 
-    it("should render max tokens slider with current value", () => {
+    it("should render max response length input with current value", () => {
       render(<LLMConfigPanel />);
 
-      const maxTokensInput = screen.getByLabelText(/Max Tokens/i);
+      const maxTokensInput = screen.getByLabelText(/Max Response Length/i);
       expect(maxTokensInput).toBeInTheDocument();
-      expect(maxTokensInput).toHaveAttribute("type", "range");
-      expect(maxTokensInput).toHaveValue("4000");
-      expect(screen.getByText("(4000)")).toBeInTheDocument();
+      expect(maxTokensInput).toHaveAttribute("type", "number");
+      expect(maxTokensInput).toHaveValue(4000);
     });
 
-    it("should render Save and Reset buttons", () => {
+    it("should render Save Configuration and Test Connection buttons", () => {
       render(<LLMConfigPanel />);
 
       expect(
-        screen.getByRole("button", { name: /Save configuration/i }),
+        screen.getByRole("button", { name: /Save Configuration/i }),
       ).toBeInTheDocument();
       expect(
-        screen.getByRole("button", { name: /Reset to default/i }),
+        screen.getByRole("button", { name: /Test Connection/i }),
       ).toBeInTheDocument();
     });
 
-    it("should render security note", () => {
-      render(<LLMConfigPanel />);
+    it("should render close button when onClose is provided", () => {
+      const onClose = vi.fn();
+      render(<LLMConfigPanel onClose={onClose} />);
 
-      expect(
-        screen.getByText(/API keys are stored securely in your browser/i),
-      ).toBeInTheDocument();
+      const closeButton = screen.getByLabelText(/Close configuration/i);
+      expect(closeButton).toBeInTheDocument();
+
+      fireEvent.click(closeButton);
+      expect(onClose).toHaveBeenCalled();
     });
 
     it("should apply custom className", () => {
       const { container } = render(<LLMConfigPanel className="custom-class" />);
 
-      const panel = container.querySelector(".llm-config-panel.custom-class");
-      expect(panel).toBeInTheDocument();
+      const modal = container.querySelector(".modal.custom-class");
+      expect(modal).toBeInTheDocument();
     });
   });
 
@@ -221,29 +219,28 @@ describe("LLMConfigPanel", () => {
       expect(mockSetProvider).toHaveBeenCalledWith("ollama");
     });
 
-    it("should mark as having changes when provider changes", () => {
+    it("should clear validation error when provider changes", () => {
+      mockValidateConfig.mockReturnValue({
+        isValid: false,
+        errors: ["Error"],
+      });
+
       render(<LLMConfigPanel />);
+
+      const saveButton = screen.getByRole("button", {
+        name: /Save Configuration/i,
+      });
+      fireEvent.click(saveButton);
+
+      expect(screen.getByText(/Error/i)).toBeInTheDocument();
 
       const providerSelect = screen
         .getByTestId("provider-selector")
         .querySelector("select");
-      const saveButton = screen.getByRole("button", {
-        name: /Save configuration/i,
-      });
-
-      // Initially disabled (no changes)
-      expect(saveButton).toBeDisabled();
-
       fireEvent.change(providerSelect, { target: { value: "ollama" } });
 
-      // Now enabled (has changes)
-      expect(saveButton).not.toBeDisabled();
+      expect(screen.queryByText(/Error/i)).not.toBeInTheDocument();
     });
-
-    // Note: Removed test expecting validation error to appear on Save button click.
-    // The test assumed clicking Save with invalid config would show an error alert,
-    // but the actual component behavior doesn't match this expectation. The component's
-    // validation flow is already tested by other tests that verify validateConfig is called.
   });
 
   describe("API Key Change", () => {
@@ -256,23 +253,6 @@ describe("LLMConfigPanel", () => {
       fireEvent.change(apiKeyInput, { target: { value: "new-key" } });
 
       expect(mockUpdateConfig).toHaveBeenCalledWith({ apiKey: "new-key" });
-    });
-
-    it("should mark as having changes when API key changes", () => {
-      render(<LLMConfigPanel />);
-
-      const apiKeyInput = screen
-        .getByTestId("api-key-input")
-        .querySelector("input");
-      const saveButton = screen.getByRole("button", {
-        name: /Save configuration/i,
-      });
-
-      expect(saveButton).toBeDisabled();
-
-      fireEvent.change(apiKeyInput, { target: { value: "new-key" } });
-
-      expect(saveButton).not.toBeDisabled();
     });
   });
 
@@ -287,23 +267,6 @@ describe("LLMConfigPanel", () => {
 
       expect(mockUpdateConfig).toHaveBeenCalledWith({ model: "model2" });
     });
-
-    it("should mark as having changes when model changes", () => {
-      render(<LLMConfigPanel />);
-
-      const modelSelect = screen
-        .getByTestId("model-selector")
-        .querySelector("select");
-      const saveButton = screen.getByRole("button", {
-        name: /Save configuration/i,
-      });
-
-      expect(saveButton).toBeDisabled();
-
-      fireEvent.change(modelSelect, { target: { value: "model2" } });
-
-      expect(saveButton).not.toBeDisabled();
-    });
   });
 
   describe("Temperature Change", () => {
@@ -316,22 +279,7 @@ describe("LLMConfigPanel", () => {
       expect(mockUpdateConfig).toHaveBeenCalledWith({ temperature: 1.2 });
     });
 
-    it("should mark as having changes when temperature changes", () => {
-      render(<LLMConfigPanel />);
-
-      const tempInput = screen.getByLabelText(/Temperature/i);
-      const saveButton = screen.getByRole("button", {
-        name: /Save configuration/i,
-      });
-
-      expect(saveButton).toBeDisabled();
-
-      fireEvent.change(tempInput, { target: { value: "1.2" } });
-
-      expect(saveButton).not.toBeDisabled();
-    });
-
-    it("should have correct range constraints", () => {
+    it("should have correct number input constraints", () => {
       render(<LLMConfigPanel />);
 
       const tempInput = screen.getByLabelText(/Temperature/i);
@@ -346,34 +294,19 @@ describe("LLMConfigPanel", () => {
     it("should call updateConfig when max tokens changes", () => {
       render(<LLMConfigPanel />);
 
-      const maxTokensInput = screen.getByLabelText(/Max Tokens/i);
+      const maxTokensInput = screen.getByLabelText(/Max Response Length/i);
       fireEvent.change(maxTokensInput, { target: { value: "8000" } });
 
       expect(mockUpdateConfig).toHaveBeenCalledWith({ maxTokens: 8000 });
     });
 
-    it("should mark as having changes when max tokens changes", () => {
+    it("should have correct number input constraints", () => {
       render(<LLMConfigPanel />);
 
-      const maxTokensInput = screen.getByLabelText(/Max Tokens/i);
-      const saveButton = screen.getByRole("button", {
-        name: /Save configuration/i,
-      });
-
-      expect(saveButton).toBeDisabled();
-
-      fireEvent.change(maxTokensInput, { target: { value: "8000" } });
-
-      expect(saveButton).not.toBeDisabled();
-    });
-
-    it("should have correct range constraints", () => {
-      render(<LLMConfigPanel />);
-
-      const maxTokensInput = screen.getByLabelText(/Max Tokens/i);
+      const maxTokensInput = screen.getByLabelText(/Max Response Length/i);
 
       expect(maxTokensInput).toHaveAttribute("min", "1000");
-      expect(maxTokensInput).toHaveAttribute("max", "16000");
+      expect(maxTokensInput).toHaveAttribute("max", "32000");
       expect(maxTokensInput).toHaveAttribute("step", "1000");
     });
   });
@@ -382,13 +315,8 @@ describe("LLMConfigPanel", () => {
     it("should validate config before saving", () => {
       render(<LLMConfigPanel />);
 
-      const providerSelect = screen
-        .getByTestId("provider-selector")
-        .querySelector("select");
-      fireEvent.change(providerSelect, { target: { value: "ollama" } });
-
       const saveButton = screen.getByRole("button", {
-        name: /Save configuration/i,
+        name: /Save Configuration/i,
       });
       fireEvent.click(saveButton);
 
@@ -403,33 +331,20 @@ describe("LLMConfigPanel", () => {
 
       render(<LLMConfigPanel />);
 
-      const providerSelect = screen
-        .getByTestId("provider-selector")
-        .querySelector("select");
-      fireEvent.change(providerSelect, { target: { value: "ollama" } });
-
       const saveButton = screen.getByRole("button", {
-        name: /Save configuration/i,
+        name: /Save Configuration/i,
       });
       fireEvent.click(saveButton);
 
-      const errorAlert = screen.getByRole("alert");
-      expect(errorAlert).toHaveTextContent(
-        "API key is required, Model not selected",
-      );
+      expect(screen.getByText(/API key is required, Model not selected/i)).toBeInTheDocument();
     });
 
     it("should call onSave callback if config is valid", () => {
       const onSave = vi.fn();
       render(<LLMConfigPanel onSave={onSave} />);
 
-      const providerSelect = screen
-        .getByTestId("provider-selector")
-        .querySelector("select");
-      fireEvent.change(providerSelect, { target: { value: "ollama" } });
-
       const saveButton = screen.getByRole("button", {
-        name: /Save configuration/i,
+        name: /Save Configuration/i,
       });
       fireEvent.click(saveButton);
 
@@ -445,101 +360,66 @@ describe("LLMConfigPanel", () => {
       fireEvent.change(providerSelect, { target: { value: "ollama" } });
 
       const saveButton = screen.getByRole("button", {
-        name: /Save configuration/i,
+        name: /Save Configuration/i,
       });
-      expect(saveButton).not.toBeDisabled();
 
       fireEvent.click(saveButton);
 
-      expect(saveButton).toBeDisabled();
-    });
-
-    it("should clear validation error after successful save", () => {
-      mockValidateConfig
-        .mockReturnValueOnce({ isValid: false, errors: ["Error"] })
-        .mockReturnValueOnce({ isValid: true, errors: [] });
-
-      render(<LLMConfigPanel />);
-
-      const providerSelect = screen
-        .getByTestId("provider-selector")
-        .querySelector("select");
-      fireEvent.change(providerSelect, { target: { value: "ollama" } });
-
-      const saveButton = screen.getByRole("button", {
-        name: /Save configuration/i,
-      });
-      fireEvent.click(saveButton);
-
-      expect(screen.getByRole("alert")).toBeInTheDocument();
-
-      fireEvent.click(saveButton);
-
-      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+      // After save, changing again should set hasChanges to true
+      fireEvent.change(providerSelect, { target: { value: "lmstudio" } });
+      expect(mockSetProvider).toHaveBeenCalledWith("lmstudio");
     });
   });
 
-  describe("Reset Functionality", () => {
-    it("should call resetConfig when Reset button clicked", () => {
+  describe("Test Connection", () => {
+    it("should test OpenRouter connection successfully", async () => {
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: [{}, {}] }),
+      });
+
       render(<LLMConfigPanel />);
 
-      const providerSelect = screen
-        .getByTestId("provider-selector")
-        .querySelector("select");
-      fireEvent.change(providerSelect, { target: { value: "ollama" } });
-
-      const resetButton = screen.getByRole("button", {
-        name: /Reset to default/i,
+      const testButton = screen.getByRole("button", {
+        name: /Test Connection/i,
       });
-      fireEvent.click(resetButton);
+      fireEvent.click(testButton);
 
-      expect(mockResetConfig).toHaveBeenCalled();
+      await waitFor(() => {
+        expect(screen.getByText(/Connected! 2 models available/i)).toBeInTheDocument();
+      });
     });
 
-    it("should clear hasChanges flag after reset", () => {
+    it("should handle OpenRouter connection failure", async () => {
+      global.fetch.mockRejectedValueOnce(new Error("Network error"));
+
       render(<LLMConfigPanel />);
 
-      const providerSelect = screen
-        .getByTestId("provider-selector")
-        .querySelector("select");
-      fireEvent.change(providerSelect, { target: { value: "ollama" } });
-
-      const resetButton = screen.getByRole("button", {
-        name: /Reset to default/i,
+      const testButton = screen.getByRole("button", {
+        name: /Test Connection/i,
       });
-      expect(resetButton).not.toBeDisabled();
+      fireEvent.click(testButton);
 
-      fireEvent.click(resetButton);
-
-      expect(resetButton).toBeDisabled();
+      await waitFor(() => {
+        expect(screen.getByText(/Connection failed: Network error/i)).toBeInTheDocument();
+      });
     });
 
-    it("should clear validation error after reset", () => {
+    it("should validate config before testing connection", () => {
       mockValidateConfig.mockReturnValue({
         isValid: false,
-        errors: ["Error"],
+        errors: ["API key required"],
       });
 
       render(<LLMConfigPanel />);
 
-      const providerSelect = screen
-        .getByTestId("provider-selector")
-        .querySelector("select");
-      fireEvent.change(providerSelect, { target: { value: "ollama" } });
-
-      const saveButton = screen.getByRole("button", {
-        name: /Save configuration/i,
+      const testButton = screen.getByRole("button", {
+        name: /Test Connection/i,
       });
-      fireEvent.click(saveButton);
+      fireEvent.click(testButton);
 
-      expect(screen.getByRole("alert")).toBeInTheDocument();
-
-      const resetButton = screen.getByRole("button", {
-        name: /Reset to default/i,
-      });
-      fireEvent.click(resetButton);
-
-      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+      expect(screen.getByText(/API key required/i)).toBeInTheDocument();
+      expect(global.fetch).not.toHaveBeenCalled();
     });
   });
 
@@ -554,7 +434,7 @@ describe("LLMConfigPanel", () => {
         .getByTestId("model-selector")
         .querySelector("select");
       const tempInput = screen.getByLabelText(/Temperature/i);
-      const maxTokensInput = screen.getByLabelText(/Max Tokens/i);
+      const maxTokensInput = screen.getByLabelText(/Max Response Length/i);
 
       expect(providerSelect).toBeDisabled();
       expect(modelSelect).toBeDisabled();
@@ -562,100 +442,93 @@ describe("LLMConfigPanel", () => {
       expect(maxTokensInput).toBeDisabled();
     });
 
-    it("should disable Save and Reset buttons when disabled prop is true", () => {
+    it("should disable buttons when disabled prop is true", () => {
       render(<LLMConfigPanel disabled />);
 
       const saveButton = screen.getByRole("button", {
-        name: /Save configuration/i,
+        name: /Save Configuration/i,
       });
-      const resetButton = screen.getByRole("button", {
-        name: /Reset to default/i,
+      const testButton = screen.getByRole("button", {
+        name: /Test Connection/i,
       });
 
       expect(saveButton).toBeDisabled();
-      expect(resetButton).toBeDisabled();
+      expect(testButton).toBeDisabled();
     });
   });
 
   describe("Accessibility", () => {
-    it("should have proper ARIA attributes on temperature input", () => {
-      render(<LLMConfigPanel />);
-
-      const tempInput = screen.getByLabelText(/Temperature/i);
-      expect(tempInput).toHaveAttribute(
-        "aria-describedby",
-        "temperature-description",
-      );
-    });
-
-    it("should have proper ARIA attributes on max tokens input", () => {
-      render(<LLMConfigPanel />);
-
-      const maxTokensInput = screen.getByLabelText(/Max Tokens/i);
-      expect(maxTokensInput).toHaveAttribute(
-        "aria-describedby",
-        "max-tokens-description",
-      );
-    });
-
-    it("should mark validation error as alert with aria-live", () => {
-      mockValidateConfig.mockReturnValue({
-        isValid: false,
-        errors: ["Error"],
-      });
-
-      render(<LLMConfigPanel />);
-
-      const providerSelect = screen
-        .getByTestId("provider-selector")
-        .querySelector("select");
-      fireEvent.change(providerSelect, { target: { value: "ollama" } });
-
-      const saveButton = screen.getByRole("button", {
-        name: /Save configuration/i,
-      });
-      fireEvent.click(saveButton);
-
-      const errorAlert = screen.getByRole("alert");
-      expect(errorAlert).toHaveAttribute("aria-live", "polite");
-    });
-
-    it("should have aria-hidden on error icon", () => {
-      mockValidateConfig.mockReturnValue({
-        isValid: false,
-        errors: ["Error"],
-      });
-
-      render(<LLMConfigPanel />);
-
-      const providerSelect = screen
-        .getByTestId("provider-selector")
-        .querySelector("select");
-      fireEvent.change(providerSelect, { target: { value: "ollama" } });
-
-      const saveButton = screen.getByRole("button", {
-        name: /Save configuration/i,
-      });
-      fireEvent.click(saveButton);
-
-      const errorIcon = screen.getByText("⚠️");
-      expect(errorIcon).toHaveAttribute("aria-hidden", "true");
-    });
-
-    it("should have proper labels for all inputs", () => {
+    it("should have proper labels on all inputs", () => {
       render(<LLMConfigPanel />);
 
       expect(screen.getByLabelText(/Temperature/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/Max Tokens/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/Max Response Length/i)).toBeInTheDocument();
     });
 
-    it("should have descriptions for sliders", () => {
+    it("should have descriptive button text", () => {
       render(<LLMConfigPanel />);
 
-      expect(screen.getByText(/Controls randomness/i)).toBeInTheDocument();
-      expect(
-        screen.getByText(/Maximum length of generated response/i),
-      ).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /Save Configuration/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /Test Connection/i })).toBeInTheDocument();
+    });
+
+    it("should have close button with aria-label when onClose provided", () => {
+      const onClose = vi.fn();
+      render(<LLMConfigPanel onClose={onClose} />);
+
+      expect(screen.getByLabelText(/Close configuration/i)).toBeInTheDocument();
+    });
+  });
+
+  describe("Local Provider Features", () => {
+    it("should render endpoint URL input for local providers", () => {
+      vi.mocked(useLLMConfig).mockReturnValue({
+        ...mockContextValue,
+        config: {
+          ...mockContextValue.config,
+          provider: "ollama",
+          baseUrl: "http://localhost:11434",
+        },
+      });
+
+      render(<LLMConfigPanel />);
+
+      expect(screen.getByLabelText(/Endpoint URL/i)).toBeInTheDocument();
+    });
+
+    it("should render context window input for local providers", () => {
+      vi.mocked(useLLMConfig).mockReturnValue({
+        ...mockContextValue,
+        config: {
+          ...mockContextValue.config,
+          provider: "ollama",
+          contextWindow: 8192,
+        },
+      });
+
+      render(<LLMConfigPanel />);
+
+      expect(screen.getByLabelText(/Model Context Window/i)).toBeInTheDocument();
+    });
+
+    it("should show local model warning for local providers", () => {
+      vi.mocked(useLLMConfig).mockReturnValue({
+        ...mockContextValue,
+        config: {
+          ...mockContextValue.config,
+          provider: "ollama",
+        },
+      });
+
+      render(<LLMConfigPanel />);
+
+      expect(screen.getByText(/Local Model Limitations/i)).toBeInTheDocument();
+    });
+
+    it("should show context window info for OpenRouter", () => {
+      render(<LLMConfigPanel />);
+
+      expect(screen.getByText(/Model context window.*automatically detected from OpenRouter/i)).toBeInTheDocument();
     });
   });
 });

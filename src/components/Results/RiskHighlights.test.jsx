@@ -2,26 +2,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { RiskHighlights } from "./RiskHighlights";
 
-vi.mock("../Common", () => ({
-  Card: ({ children, title, subtitle, className }) => (
-    <div className={className} data-testid="card">
-      {title && <h2>{title}</h2>}
-      {subtitle && <p>{subtitle}</p>}
-      {children}
-    </div>
-  ),
-}));
-
-vi.mock("../../utils/sanitization", () => ({
-  sanitizeHtml: vi.fn((html) => html),
+vi.mock("react-markdown", () => ({
+  default: ({ children }) => <div data-testid="markdown">{children}</div>,
 }));
 
 describe("RiskHighlights", () => {
-  const mockDocumentMetadata = {
-    source: "https://example.com/privacy",
-    title: "Privacy Policy",
-  };
-
   const mockRisks = [
     {
       title: "Data Collection",
@@ -51,130 +36,73 @@ describe("RiskHighlights", () => {
   });
 
   describe("Rendering with Risks", () => {
-    it("should render title and subtitle", () => {
-      render(
-        <RiskHighlights
-          risks={mockRisks}
-          documentMetadata={mockDocumentMetadata}
-        />,
-      );
+    it("should render title", () => {
+      render(<RiskHighlights risks={mockRisks} />);
 
-      expect(screen.getByText("Privacy Risks")).toBeInTheDocument();
       expect(
-        screen.getByText(/3 potential concerns identified/i),
+        screen.getByText("Privacy Risks Identified"),
       ).toBeInTheDocument();
     });
 
-    it('should render singular "concern" for single risk', () => {
-      render(
-        <RiskHighlights
-          risks={[mockRisks[0]]}
-          documentMetadata={mockDocumentMetadata}
-        />,
-      );
+    it("should render subtitle", () => {
+      render(<RiskHighlights risks={mockRisks} />);
 
       expect(
-        screen.getByText(/1 potential concern identified/i),
+        screen.getByText("Potential concerns ranked by severity"),
       ).toBeInTheDocument();
     });
 
-    it("should render filter buttons", () => {
-      render(
-        <RiskHighlights
-          risks={mockRisks}
-          documentMetadata={mockDocumentMetadata}
-        />,
-      );
-
-      expect(
-        screen.getByRole("button", { name: /All \(3\)/i }),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole("button", { name: /High \(1\)/i }),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole("button", { name: /Medium \(1\)/i }),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole("button", { name: /Low \(1\)/i }),
-      ).toBeInTheDocument();
-    });
-
-    it("should not render filter button for severity with 0 count", () => {
-      const singleRisk = [mockRisks[0]];
-      render(
-        <RiskHighlights
-          risks={singleRisk}
-          documentMetadata={mockDocumentMetadata}
-        />,
-      );
-
-      expect(
-        screen.queryByRole("button", { name: /Medium/i }),
-      ).not.toBeInTheDocument();
-      expect(
-        screen.queryByRole("button", { name: /Low/i }),
-      ).not.toBeInTheDocument();
-      expect(
-        screen.queryByRole("button", { name: /Critical/i }),
-      ).not.toBeInTheDocument();
-    });
-
-    it("should render all risk items collapsed by default", () => {
-      render(
-        <RiskHighlights
-          risks={mockRisks}
-          documentMetadata={mockDocumentMetadata}
-        />,
-      );
+    it("should render all risk titles", () => {
+      render(<RiskHighlights risks={mockRisks} />);
 
       expect(screen.getByText("Data Collection")).toBeInTheDocument();
       expect(screen.getByText("Third Party Sharing")).toBeInTheDocument();
       expect(screen.getByText("Data Retention")).toBeInTheDocument();
+    });
 
-      // Details should not be visible
+    it("should render all risk descriptions", () => {
+      render(<RiskHighlights risks={mockRisks} />);
+
       expect(
-        screen.queryByText("Collects extensive personal data"),
-      ).not.toBeInTheDocument();
+        screen.getByText("Collects extensive personal data"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("Shares data with third parties"),
+      ).toBeInTheDocument();
+      expect(screen.getByText("Retains data indefinitely")).toBeInTheDocument();
     });
 
-    it("should render severity badges", () => {
-      render(
-        <RiskHighlights
-          risks={mockRisks}
-          documentMetadata={mockDocumentMetadata}
-        />,
-      );
+    it("should render severity badges with correct labels", () => {
+      render(<RiskHighlights risks={mockRisks} />);
 
-      expect(screen.getByText("High")).toBeInTheDocument();
-      expect(screen.getByText("Medium")).toBeInTheDocument();
-      expect(screen.getByText("Low")).toBeInTheDocument();
+      expect(screen.getByText("Higher Risk")).toBeInTheDocument();
+      expect(screen.getByText("Medium Risk")).toBeInTheDocument();
+      expect(screen.getByText("Low Risk")).toBeInTheDocument();
     });
-
-    // Note: Removed test trying to find emoji icons as standalone text.
-    // Icons are rendered within badges with severity text, not as standalone elements.
-    // The severity badges are already tested by checking for severity text ("High", "Medium", "Low").
 
     it("should apply custom className", () => {
       const { container } = render(
-        <RiskHighlights
-          risks={mockRisks}
-          documentMetadata={mockDocumentMetadata}
-          className="custom-class"
-        />,
+        <RiskHighlights risks={mockRisks} className="custom-class" />,
       );
 
       expect(
         container.querySelector(".risk-highlights.custom-class"),
       ).toBeInTheDocument();
     });
+
+    it("should render Learn more buttons for risks with explanations", () => {
+      render(<RiskHighlights risks={mockRisks} />);
+
+      const learnMoreButtons = screen.getAllByRole("button", {
+        name: /Learn more/i,
+      });
+      expect(learnMoreButtons).toHaveLength(3);
+    });
   });
 
   describe("Empty State", () => {
     it("should render empty state when no risks", () => {
-      render(
-        <RiskHighlights risks={[]} documentMetadata={mockDocumentMetadata} />,
-      );
+      render(<RiskHighlights risks={[]} />);
 
       expect(
         screen.getByText(/No significant privacy risks were identified/i),
@@ -182,65 +110,61 @@ describe("RiskHighlights", () => {
     });
 
     it("should render checkmark icon in empty state", () => {
-      render(
-        <RiskHighlights risks={[]} documentMetadata={mockDocumentMetadata} />,
-      );
+      render(<RiskHighlights risks={[]} />);
 
       expect(screen.getByText("✅")).toBeInTheDocument();
     });
 
     it("should render disclaimer in empty state", () => {
-      render(
-        <RiskHighlights risks={[]} documentMetadata={mockDocumentMetadata} />,
-      );
+      render(<RiskHighlights risks={[]} />);
 
       expect(
         screen.getByText(/This doesn't guarantee the policy is perfect/i),
       ).toBeInTheDocument();
     });
 
-    it("should not render filter buttons in empty state", () => {
-      render(
-        <RiskHighlights risks={[]} documentMetadata={mockDocumentMetadata} />,
-      );
+    it("should render empty state subtext", () => {
+      render(<RiskHighlights risks={[]} />);
 
       expect(
-        screen.queryByRole("button", { name: /All/i }),
+        screen.getByText(/no major concerns were detected/i),
+      ).toBeInTheDocument();
+    });
+
+    it("should show title even in empty state", () => {
+      render(<RiskHighlights risks={[]} />);
+
+      expect(
+        screen.getByText("Privacy Risks Identified"),
+      ).toBeInTheDocument();
+    });
+
+    it("should not render Learn more buttons in empty state", () => {
+      render(<RiskHighlights risks={[]} />);
+
+      expect(
+        screen.queryByRole("button", { name: /Learn more/i }),
       ).not.toBeInTheDocument();
     });
   });
 
   describe("Risk Expansion", () => {
-    it("should expand risk when clicked", () => {
-      render(
-        <RiskHighlights
-          risks={mockRisks}
-          documentMetadata={mockDocumentMetadata}
-        />,
-      );
+    it("should not show explanation details by default", () => {
+      render(<RiskHighlights risks={mockRisks} />);
 
-      const riskButton = screen.getByRole("button", {
-        name: /Data Collection/i,
-      });
-      fireEvent.click(riskButton);
-
+      expect(screen.queryByText("Why this matters:")).not.toBeInTheDocument();
       expect(
-        screen.getByText("Collects extensive personal data"),
-      ).toBeInTheDocument();
+        screen.queryByText("This may include sensitive information"),
+      ).not.toBeInTheDocument();
     });
 
-    it("should show explanation when expanded", () => {
-      render(
-        <RiskHighlights
-          risks={mockRisks}
-          documentMetadata={mockDocumentMetadata}
-        />,
-      );
+    it("should expand risk when Learn more is clicked", () => {
+      render(<RiskHighlights risks={mockRisks} />);
 
-      const riskButton = screen.getByRole("button", {
-        name: /Data Collection/i,
+      const learnMoreButtons = screen.getAllByRole("button", {
+        name: /Learn more/i,
       });
-      fireEvent.click(riskButton);
+      fireEvent.click(learnMoreButtons[0]);
 
       expect(screen.getByText("Why this matters:")).toBeInTheDocument();
       expect(
@@ -249,17 +173,12 @@ describe("RiskHighlights", () => {
     });
 
     it("should show affected sections when expanded", () => {
-      render(
-        <RiskHighlights
-          risks={mockRisks}
-          documentMetadata={mockDocumentMetadata}
-        />,
-      );
+      render(<RiskHighlights risks={mockRisks} />);
 
-      const riskButton = screen.getByRole("button", {
-        name: /Data Collection/i,
+      const learnMoreButtons = screen.getAllByRole("button", {
+        name: /Learn more/i,
       });
-      fireEvent.click(riskButton);
+      fireEvent.click(learnMoreButtons[0]);
 
       expect(screen.getByText("Related sections:")).toBeInTheDocument();
       expect(screen.getByText("Section 1")).toBeInTheDocument();
@@ -267,349 +186,271 @@ describe("RiskHighlights", () => {
     });
 
     it("should not show affected sections if empty", () => {
-      render(
-        <RiskHighlights
-          risks={mockRisks}
-          documentMetadata={mockDocumentMetadata}
-        />,
-      );
+      render(<RiskHighlights risks={mockRisks} />);
 
-      const riskButton = screen.getByRole("button", {
-        name: /Data Retention/i,
+      // Click on Data Retention (which has empty affectedSections)
+      const learnMoreButtons = screen.getAllByRole("button", {
+        name: /Learn more/i,
       });
-      fireEvent.click(riskButton);
+      fireEvent.click(learnMoreButtons[2]);
 
       expect(screen.queryByText("Related sections:")).not.toBeInTheDocument();
     });
 
-    it("should collapse risk when clicked again", () => {
-      render(
-        <RiskHighlights
-          risks={mockRisks}
-          documentMetadata={mockDocumentMetadata}
-        />,
-      );
+    it("should collapse risk when Show less is clicked", () => {
+      render(<RiskHighlights risks={mockRisks} />);
 
-      const riskButton = screen.getByRole("button", {
-        name: /Data Collection/i,
+      const learnMoreButtons = screen.getAllByRole("button", {
+        name: /Learn more/i,
       });
-      fireEvent.click(riskButton);
+      fireEvent.click(learnMoreButtons[0]);
 
-      expect(
-        screen.getByText("Collects extensive personal data"),
-      ).toBeInTheDocument();
+      expect(screen.getByText("Why this matters:")).toBeInTheDocument();
 
-      fireEvent.click(riskButton);
+      const showLessButton = screen.getByRole("button", {
+        name: /Show less/i,
+      });
+      fireEvent.click(showLessButton);
 
-      expect(
-        screen.queryByText("Collects extensive personal data"),
-      ).not.toBeInTheDocument();
+      expect(screen.queryByText("Why this matters:")).not.toBeInTheDocument();
     });
 
     it("should update aria-expanded attribute", () => {
-      render(
-        <RiskHighlights
-          risks={mockRisks}
-          documentMetadata={mockDocumentMetadata}
-        />,
-      );
+      render(<RiskHighlights risks={mockRisks} />);
 
-      const riskButton = screen.getByRole("button", {
-        name: /Data Collection/i,
+      const learnMoreButtons = screen.getAllByRole("button", {
+        name: /Learn more/i,
       });
 
-      expect(riskButton).toHaveAttribute("aria-expanded", "false");
+      expect(learnMoreButtons[0]).toHaveAttribute("aria-expanded", "false");
 
-      fireEvent.click(riskButton);
+      fireEvent.click(learnMoreButtons[0]);
 
-      expect(riskButton).toHaveAttribute("aria-expanded", "true");
+      const showLessButton = screen.getByRole("button", {
+        name: /Show less/i,
+      });
+      expect(showLessButton).toHaveAttribute("aria-expanded", "true");
     });
 
     it("should allow multiple risks to be expanded simultaneously", () => {
-      render(
-        <RiskHighlights
-          risks={mockRisks}
-          documentMetadata={mockDocumentMetadata}
-        />,
-      );
+      render(<RiskHighlights risks={mockRisks} />);
 
-      const risk1Button = screen.getByRole("button", {
-        name: /Data Collection/i,
+      const learnMoreButtons = screen.getAllByRole("button", {
+        name: /Learn more/i,
       });
-      const risk2Button = screen.getByRole("button", {
-        name: /Third Party Sharing/i,
-      });
+      fireEvent.click(learnMoreButtons[0]);
+      fireEvent.click(learnMoreButtons[1]);
 
-      fireEvent.click(risk1Button);
-      fireEvent.click(risk2Button);
-
+      // Both explanations should be visible
       expect(
-        screen.getByText("Collects extensive personal data"),
+        screen.getByText("This may include sensitive information"),
       ).toBeInTheDocument();
       expect(
-        screen.getByText("Shares data with third parties"),
+        screen.getByText("Your data may be sold to advertisers"),
       ).toBeInTheDocument();
     });
-  });
 
-  describe("Severity Filtering", () => {
-    it("should show all risks by default", () => {
-      render(
-        <RiskHighlights
-          risks={mockRisks}
-          documentMetadata={mockDocumentMetadata}
-        />,
-      );
+    it("should change button text from Learn more to Show less when expanded", () => {
+      render(<RiskHighlights risks={mockRisks} />);
 
-      expect(screen.getByText("Data Collection")).toBeInTheDocument();
-      expect(screen.getByText("Third Party Sharing")).toBeInTheDocument();
-      expect(screen.getByText("Data Retention")).toBeInTheDocument();
-    });
+      const learnMoreButton = screen.getAllByRole("button", {
+        name: /Learn more/i,
+      })[0];
 
-    it("should filter to high severity risks only", () => {
-      render(
-        <RiskHighlights
-          risks={mockRisks}
-          documentMetadata={mockDocumentMetadata}
-        />,
-      );
+      expect(learnMoreButton).toHaveTextContent("Learn more →");
 
-      const highButton = screen.getByRole("button", { name: /High \(1\)/i });
-      fireEvent.click(highButton);
+      fireEvent.click(learnMoreButton);
 
-      expect(screen.getByText("Data Collection")).toBeInTheDocument();
-      expect(screen.queryByText("Third Party Sharing")).not.toBeInTheDocument();
-      expect(screen.queryByText("Data Retention")).not.toBeInTheDocument();
-    });
-
-    it("should filter to medium severity risks only", () => {
-      render(
-        <RiskHighlights
-          risks={mockRisks}
-          documentMetadata={mockDocumentMetadata}
-        />,
-      );
-
-      const mediumButton = screen.getByRole("button", {
-        name: /Medium \(1\)/i,
+      const showLessButton = screen.getByRole("button", {
+        name: /Show less/i,
       });
-      fireEvent.click(mediumButton);
-
-      expect(screen.queryByText("Data Collection")).not.toBeInTheDocument();
-      expect(screen.getByText("Third Party Sharing")).toBeInTheDocument();
-      expect(screen.queryByText("Data Retention")).not.toBeInTheDocument();
-    });
-
-    it("should return to all risks when All clicked", () => {
-      render(
-        <RiskHighlights
-          risks={mockRisks}
-          documentMetadata={mockDocumentMetadata}
-        />,
-      );
-
-      const highButton = screen.getByRole("button", { name: /High \(1\)/i });
-      fireEvent.click(highButton);
-
-      const allButton = screen.getByRole("button", { name: /All \(3\)/i });
-      fireEvent.click(allButton);
-
-      expect(screen.getByText("Data Collection")).toBeInTheDocument();
-      expect(screen.getByText("Third Party Sharing")).toBeInTheDocument();
-      expect(screen.getByText("Data Retention")).toBeInTheDocument();
-    });
-
-    it("should mark active filter button", () => {
-      const { container } = render(
-        <RiskHighlights
-          risks={mockRisks}
-          documentMetadata={mockDocumentMetadata}
-        />,
-      );
-
-      const allButton = screen.getByRole("button", { name: /All \(3\)/i });
-      expect(allButton.className).toContain(
-        "risk-highlights__filter-button--active",
-      );
-
-      const highButton = screen.getByRole("button", { name: /High \(1\)/i });
-      fireEvent.click(highButton);
-
-      expect(highButton.className).toContain(
-        "risk-highlights__filter-button--active",
-      );
-      expect(allButton.className).not.toContain(
-        "risk-highlights__filter-button--active",
-      );
+      expect(showLessButton).toHaveTextContent("Show less →");
     });
   });
 
   describe("Risk Sorting", () => {
-    it("should sort risks by severity (critical > high > medium > low)", () => {
+    it("should sort risks by severity (higher risks first, then medium, then low)", () => {
       const unsortedRisks = [
         {
-          title: "Low Risk",
+          title: "Low Severity Item",
           severity: "low",
-          description: "",
-          explanation: "",
+          description: "Low severity",
+          explanation: "Low explanation",
         },
         {
-          title: "Critical Risk",
-          severity: "critical",
-          description: "",
-          explanation: "",
-        },
-        {
-          title: "Medium Risk",
+          title: "Medium Severity Item",
           severity: "medium",
-          description: "",
-          explanation: "",
+          description: "Medium severity",
+          explanation: "Medium explanation",
         },
         {
-          title: "High Risk",
+          title: "High Severity Item",
           severity: "high",
-          description: "",
+          description: "High severity",
+          explanation: "High explanation",
+        },
+      ];
+
+      const { container } = render(<RiskHighlights risks={unsortedRisks} />);
+
+      // Query specifically for risk item titles using their class
+      const riskTitles = container.querySelectorAll(".risk-item__title");
+
+      // High/Critical risks should come first, then medium, then low
+      expect(riskTitles[0]).toHaveTextContent("High Severity Item");
+      expect(riskTitles[1]).toHaveTextContent("Medium Severity Item");
+      expect(riskTitles[2]).toHaveTextContent("Low Severity Item");
+    });
+  });
+
+  describe("Severity Styling", () => {
+    it("should apply severity class to risk items", () => {
+      const { container } = render(<RiskHighlights risks={mockRisks} />);
+
+      expect(
+        container.querySelector(".risk-item--high"),
+      ).toBeInTheDocument();
+      expect(
+        container.querySelector(".risk-item--medium"),
+      ).toBeInTheDocument();
+      expect(container.querySelector(".risk-item--low")).toBeInTheDocument();
+    });
+
+    it("should apply correct severity class to severity badges", () => {
+      const { container } = render(<RiskHighlights risks={mockRisks} />);
+
+      expect(
+        container.querySelector(".risk-item__severity--high"),
+      ).toBeInTheDocument();
+      expect(
+        container.querySelector(".risk-item__severity--medium"),
+      ).toBeInTheDocument();
+      expect(
+        container.querySelector(".risk-item__severity--low"),
+      ).toBeInTheDocument();
+    });
+
+    it("should apply CSS custom property for risk color", () => {
+      const { container } = render(<RiskHighlights risks={[mockRisks[0]]} />);
+
+      const riskItem = container.querySelector(".risk-item");
+      expect(riskItem).toHaveStyle({ "--risk-color": "var(--risk-high)" });
+    });
+  });
+
+  describe("ReactMarkdown Integration", () => {
+    it("should render explanation through ReactMarkdown", () => {
+      render(<RiskHighlights risks={mockRisks} />);
+
+      const learnMoreButtons = screen.getAllByRole("button", {
+        name: /Learn more/i,
+      });
+      fireEvent.click(learnMoreButtons[0]);
+
+      const markdown = screen.getByTestId("markdown");
+      expect(markdown).toBeInTheDocument();
+      expect(markdown).toHaveTextContent(
+        "This may include sensitive information",
+      );
+    });
+  });
+
+  describe("Edge Cases", () => {
+    it("should handle undefined risks prop", () => {
+      render(<RiskHighlights />);
+
+      expect(
+        screen.getByText(/No significant privacy risks were identified/i),
+      ).toBeInTheDocument();
+    });
+
+    it("should handle null risks prop", () => {
+      render(<RiskHighlights risks={null} />);
+
+      expect(
+        screen.getByText(/No significant privacy risks were identified/i),
+      ).toBeInTheDocument();
+    });
+
+    it("should handle risks without explanation", () => {
+      const riskWithoutExplanation = [
+        {
+          title: "Simple Risk",
+          severity: "low",
+          description: "Just a description",
+        },
+      ];
+
+      render(<RiskHighlights risks={riskWithoutExplanation} />);
+
+      expect(screen.getByText("Simple Risk")).toBeInTheDocument();
+      expect(screen.getByText("Just a description")).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: /Learn more/i }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("should handle unknown severity by defaulting to medium config", () => {
+      const unknownSeverityRisk = [
+        {
+          title: "Unknown Severity",
+          severity: "unknown",
+          description: "Unknown severity level",
+          explanation: "Test",
+        },
+      ];
+
+      const { container } = render(
+        <RiskHighlights risks={unknownSeverityRisk} />,
+      );
+
+      // Should default to medium severity styling
+      expect(
+        container.querySelector(".risk-item--unknown"),
+      ).toBeInTheDocument();
+      expect(
+        container.querySelector(".risk-item__severity--unknown"),
+      ).toBeInTheDocument();
+    });
+
+    it("should handle risk with empty string explanation", () => {
+      const riskWithEmptyExplanation = [
+        {
+          title: "Empty Explanation",
+          severity: "low",
+          description: "Has empty explanation",
           explanation: "",
         },
       ];
 
-      render(
-        <RiskHighlights
-          risks={unsortedRisks}
-          documentMetadata={mockDocumentMetadata}
-        />,
-      );
+      render(<RiskHighlights risks={riskWithEmptyExplanation} />);
 
-      const riskTitles = screen
-        .getAllByRole("button")
-        .filter((btn) =>
-          btn.className.includes("risk-highlights__item-header"),
-        );
-
-      expect(riskTitles[0]).toHaveTextContent("Critical Risk");
-      expect(riskTitles[1]).toHaveTextContent("High Risk");
-      expect(riskTitles[2]).toHaveTextContent("Medium Risk");
-      expect(riskTitles[3]).toHaveTextContent("Low Risk");
-    });
-  });
-
-  describe("Content Sanitization", () => {
-    // Note: Removed tests that checked if sanitizeHTML function was called.
-    // These test implementation details rather than actual sanitization behavior.
-
-    it("should render sanitized HTML with dangerouslySetInnerHTML", () => {
-      const { container } = render(
-        <RiskHighlights
-          risks={mockRisks}
-          documentMetadata={mockDocumentMetadata}
-        />,
-      );
-
-      const riskButton = screen.getByRole("button", {
-        name: /Data Collection/i,
-      });
-      fireEvent.click(riskButton);
-
-      const descriptionDiv = container.querySelector(
-        ".risk-highlights__description",
-      );
-      expect(descriptionDiv).toBeInTheDocument();
-    });
-  });
-
-  describe("Severity Colors", () => {
-    it("should apply correct colors for critical severity", () => {
-      const criticalRisk = [
-        {
-          title: "Critical Risk",
-          severity: "critical",
-          description: "Very dangerous",
-          explanation: "Explanation",
-        },
-      ];
-
-      const { container } = render(
-        <RiskHighlights
-          risks={criticalRisk}
-          documentMetadata={mockDocumentMetadata}
-        />,
-      );
-
-      const badge = container.querySelector(".risk-highlights__severity-badge");
-      expect(badge).toHaveStyle({
-        backgroundColor: "#fee2e2",
-        color: "#dc2626",
-      });
-    });
-
-    it("should apply correct colors for high severity", () => {
-      const { container } = render(
-        <RiskHighlights
-          risks={[mockRisks[0]]}
-          documentMetadata={mockDocumentMetadata}
-        />,
-      );
-
-      const badge = container.querySelector(".risk-highlights__severity-badge");
-      expect(badge).toHaveStyle({
-        backgroundColor: "#ffedd5",
-        color: "#ea580c",
-      });
-    });
-
-    it("should apply correct colors for medium severity", () => {
-      const { container } = render(
-        <RiskHighlights
-          risks={[mockRisks[1]]}
-          documentMetadata={mockDocumentMetadata}
-        />,
-      );
-
-      const badge = container.querySelector(".risk-highlights__severity-badge");
-      expect(badge).toHaveStyle({
-        backgroundColor: "#fef3c7",
-        color: "#d97706",
-      });
-    });
-
-    it("should apply correct colors for low severity", () => {
-      const { container } = render(
-        <RiskHighlights
-          risks={[mockRisks[2]]}
-          documentMetadata={mockDocumentMetadata}
-        />,
-      );
-
-      const badge = container.querySelector(".risk-highlights__severity-badge");
-      expect(badge).toHaveStyle({
-        backgroundColor: "#ecfccb",
-        color: "#65a30d",
-      });
+      expect(
+        screen.queryByRole("button", { name: /Learn more/i }),
+      ).not.toBeInTheDocument();
     });
   });
 
   describe("Accessibility", () => {
-    it('should have role="group" on filter buttons', () => {
-      render(
-        <RiskHighlights
-          risks={mockRisks}
-          documentMetadata={mockDocumentMetadata}
-        />,
-      );
+    it("should use semantic heading levels", () => {
+      render(<RiskHighlights risks={mockRisks} />);
 
-      const group = screen.getByRole("group", {
-        name: /Risk severity filter/i,
-      });
-      expect(group).toBeInTheDocument();
+      const mainTitle = screen.getByRole("heading", { level: 2 });
+      expect(mainTitle).toHaveTextContent("Privacy Risks Identified");
+
+      const riskTitles = screen.getAllByRole("heading", { level: 3 });
+      expect(riskTitles).toHaveLength(3);
     });
 
-    it('should have type="button" on all interactive buttons', () => {
-      render(
-        <RiskHighlights
-          risks={mockRisks}
-          documentMetadata={mockDocumentMetadata}
-        />,
-      );
+    it("should use aria-hidden for decorative icons", () => {
+      const { container } = render(<RiskHighlights risks={mockRisks} />);
+
+      const icons = container.querySelectorAll('[aria-hidden="true"]');
+      expect(icons.length).toBeGreaterThan(0);
+    });
+
+    it("should have proper button type attribute", () => {
+      render(<RiskHighlights risks={mockRisks} />);
 
       const buttons = screen.getAllByRole("button");
       buttons.forEach((button) => {
@@ -617,181 +458,106 @@ describe("RiskHighlights", () => {
       });
     });
 
-    it("should have aria-hidden on decorative icons", () => {
-      const { container } = render(
-        <RiskHighlights
-          risks={mockRisks}
-          documentMetadata={mockDocumentMetadata}
-        />,
-      );
+    it("should maintain aria-expanded state correctly", () => {
+      render(<RiskHighlights risks={mockRisks} />);
 
-      const icons = container.querySelectorAll(
-        '.risk-highlights__severity-badge [aria-hidden="true"]',
-      );
-      expect(icons.length).toBeGreaterThan(0);
-    });
+      const buttons = screen.getAllByRole("button", { name: /Learn more/i });
 
-    it("should have aria-hidden on expand icons", () => {
-      const { container } = render(
-        <RiskHighlights
-          risks={mockRisks}
-          documentMetadata={mockDocumentMetadata}
-        />,
-      );
-
-      const expandIcons = container.querySelectorAll(
-        ".risk-highlights__expand-icon",
-      );
-      expandIcons.forEach((icon) => {
-        expect(icon).toHaveAttribute("aria-hidden", "true");
-      });
-    });
-
-    it("should have aria-hidden on empty state icon", () => {
-      const { container } = render(
-        <RiskHighlights risks={[]} documentMetadata={mockDocumentMetadata} />,
-      );
-
-      const icon = container.querySelector(".risk-highlights__empty-icon");
-      expect(icon).toHaveAttribute("aria-hidden", "true");
-    });
-  });
-
-  describe("Edge Cases", () => {
-    it("should handle risk without explanation", () => {
-      const riskWithoutExplanation = [
-        {
-          title: "Risk",
-          severity: "medium",
-          description: "Description",
-          explanation: null,
-        },
-      ];
-
-      render(
-        <RiskHighlights
-          risks={riskWithoutExplanation}
-          documentMetadata={mockDocumentMetadata}
-        />,
-      );
-
-      const riskButton = screen.getByRole("button", { name: /Risk/i });
-      fireEvent.click(riskButton);
-
-      expect(screen.queryByText("Why this matters:")).not.toBeInTheDocument();
-    });
-
-    it("should handle risk without affected sections", () => {
-      const riskWithoutSections = [
-        {
-          title: "Risk",
-          severity: "medium",
-          description: "Description",
-          explanation: "Explanation",
-          affectedSections: null,
-        },
-      ];
-
-      render(
-        <RiskHighlights
-          risks={riskWithoutSections}
-          documentMetadata={mockDocumentMetadata}
-        />,
-      );
-
-      const riskButton = screen.getByRole("button", { name: /Risk/i });
-      fireEvent.click(riskButton);
-
-      expect(screen.queryByText("Related sections:")).not.toBeInTheDocument();
-    });
-
-    it("should handle rapid expansion/collapse", () => {
-      render(
-        <RiskHighlights
-          risks={mockRisks}
-          documentMetadata={mockDocumentMetadata}
-        />,
-      );
-
-      const riskButton = screen.getByRole("button", {
-        name: /Data Collection/i,
-      });
-
-      for (let i = 0; i < 10; i++) {
-        fireEvent.click(riskButton);
-      }
-
-      // Should remain functional
-      expect(screen.getByText("Data Collection")).toBeInTheDocument();
-    });
-
-    it("should handle rapid filter switching", () => {
-      render(
-        <RiskHighlights
-          risks={mockRisks}
-          documentMetadata={mockDocumentMetadata}
-        />,
-      );
-
-      const buttons = screen
-        .getAllByRole("button")
-        .filter((btn) => btn.textContent.match(/All|High|Medium|Low/));
-
+      // All should start collapsed
       buttons.forEach((button) => {
-        fireEvent.click(button);
+        expect(button).toHaveAttribute("aria-expanded", "false");
       });
 
-      // Should remain functional
-      expect(screen.getByText("Privacy Risks")).toBeInTheDocument();
-    });
-
-    it("should handle undefined documentMetadata", () => {
-      render(<RiskHighlights risks={mockRisks} documentMetadata={undefined} />);
-
-      expect(screen.getByText("Privacy Risks")).toBeInTheDocument();
-    });
-
-    it("should maintain expanded state when filtering", () => {
-      render(
-        <RiskHighlights
-          risks={mockRisks}
-          documentMetadata={mockDocumentMetadata}
-        />,
-      );
-
-      const riskButton = screen.getByRole("button", {
-        name: /Data Collection/i,
+      // Expand first risk
+      fireEvent.click(buttons[0]);
+      const showLessButton = screen.getByRole("button", {
+        name: /Show less/i,
       });
-      fireEvent.click(riskButton);
+      expect(showLessButton).toHaveAttribute("aria-expanded", "true");
 
-      expect(
-        screen.getByText("Collects extensive personal data"),
-      ).toBeInTheDocument();
-
-      const highButton = screen.getByRole("button", { name: /High \(1\)/i });
-      fireEvent.click(highButton);
-
-      // Should still be expanded after filtering
-      expect(
-        screen.getByText("Collects extensive personal data"),
-      ).toBeInTheDocument();
+      // Other risks should still be collapsed
+      const remainingLearnMore = screen.getAllByRole("button", {
+        name: /Learn more/i,
+      });
+      remainingLearnMore.forEach((button) => {
+        expect(button).toHaveAttribute("aria-expanded", "false");
+      });
     });
   });
 
-  describe("Severity Icons", () => {
-    // Note: Removed test trying to find emoji icon as standalone text.
-    // The icon is rendered within a badge with severity text, not standalone.
+  describe("CSS Class Structure", () => {
+    it("should use card class", () => {
+      const { container } = render(<RiskHighlights risks={mockRisks} />);
 
-    it("should show correct icon in filter button", () => {
-      render(
-        <RiskHighlights
-          risks={mockRisks}
-          documentMetadata={mockDocumentMetadata}
-        />,
-      );
+      expect(container.querySelector(".card")).toBeInTheDocument();
+    });
 
-      const highButton = screen.getByRole("button", { name: /High \(1\)/i });
-      expect(highButton).toHaveTextContent("⚠️");
+    it("should use risk-highlights class", () => {
+      const { container } = render(<RiskHighlights risks={mockRisks} />);
+
+      expect(
+        container.querySelector(".risk-highlights"),
+      ).toBeInTheDocument();
+    });
+
+    it("should use card__header class", () => {
+      const { container } = render(<RiskHighlights risks={mockRisks} />);
+
+      expect(container.querySelector(".card__header")).toBeInTheDocument();
+    });
+
+    it("should use card__title class", () => {
+      const { container } = render(<RiskHighlights risks={mockRisks} />);
+
+      expect(container.querySelector(".card__title")).toBeInTheDocument();
+    });
+
+    it("should use card__subtitle class", () => {
+      const { container } = render(<RiskHighlights risks={mockRisks} />);
+
+      expect(container.querySelector(".card__subtitle")).toBeInTheDocument();
+    });
+
+    it("should use risk-list class", () => {
+      const { container } = render(<RiskHighlights risks={mockRisks} />);
+
+      expect(container.querySelector(".risk-list")).toBeInTheDocument();
+    });
+
+    it("should use risk-item classes", () => {
+      const { container } = render(<RiskHighlights risks={mockRisks} />);
+
+      expect(container.querySelector(".risk-item")).toBeInTheDocument();
+      expect(
+        container.querySelector(".risk-item__header"),
+      ).toBeInTheDocument();
+      expect(container.querySelector(".risk-item__title")).toBeInTheDocument();
+      expect(
+        container.querySelector(".risk-item__severity"),
+      ).toBeInTheDocument();
+      expect(
+        container.querySelector(".risk-item__description"),
+      ).toBeInTheDocument();
+      expect(
+        container.querySelector(".risk-item__expand"),
+      ).toBeInTheDocument();
+    });
+
+    it("should use empty state classes", () => {
+      const { container } = render(<RiskHighlights risks={[]} />);
+
+      expect(
+        container.querySelector(".risk-highlights__empty"),
+      ).toBeInTheDocument();
+      expect(
+        container.querySelector(".risk-highlights__empty-icon"),
+      ).toBeInTheDocument();
+      expect(
+        container.querySelector(".risk-highlights__empty-text"),
+      ).toBeInTheDocument();
+      expect(
+        container.querySelector(".risk-highlights__empty-subtext"),
+      ).toBeInTheDocument();
     });
   });
 });

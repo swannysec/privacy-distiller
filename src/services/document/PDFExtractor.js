@@ -6,6 +6,53 @@
 import { validateFile, validateDocumentText } from '../../utils/validation.js';
 import { ERROR_CODES, ERROR_MESSAGES } from '../../utils/constants.js';
 
+/**
+ * PDF.js worker configuration with SRI verification
+ */
+const PDFJS_WORKER_CONFIG = {
+  version: '5.4.449',
+  url: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/5.4.449/pdf.worker.min.js',
+  integrity: 'sha384-ZSs6LKr2GoUPDyHrN+rCQgyHL1yUyok5xMniSrgeRG7rUvA6vTmxronM1eZOfjgz'
+};
+
+// Cache for the verified worker blob URL
+let workerBlobUrl = null;
+
+/**
+ * Fetches and verifies the PDF.js worker script with SRI
+ * @returns {Promise<string>} Blob URL of the verified worker script
+ */
+async function getVerifiedWorkerUrl() {
+  // Return cached URL if available
+  if (workerBlobUrl) {
+    return workerBlobUrl;
+  }
+
+  try {
+    // Fetch worker script with integrity check
+    const response = await fetch(PDFJS_WORKER_CONFIG.url, {
+      integrity: PDFJS_WORKER_CONFIG.integrity,
+      mode: 'cors',
+      cache: 'default'
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch worker: ${response.status} ${response.statusText}`);
+    }
+
+    // Create blob from verified content
+    const blob = await response.blob();
+    workerBlobUrl = URL.createObjectURL(blob);
+    
+    return workerBlobUrl;
+  } catch (err) {
+    // Log warning and fall back to direct CDN URL (without SRI protection)
+    console.warn('Failed to fetch worker with SRI verification:', err.message);
+    console.warn('Falling back to direct CDN URL (less secure)');
+    return PDFJS_WORKER_CONFIG.url;
+  }
+}
+
 export class PDFExtractor {
   /**
    * Extracts text from a PDF file
@@ -23,8 +70,8 @@ export class PDFExtractor {
       // Dynamic import of PDF.js
       const pdfjsLib = await import('pdfjs-dist');
 
-      // Set worker source for security isolation
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+      // Set worker source with SRI verification
+      pdfjsLib.GlobalWorkerOptions.workerSrc = await getVerifiedWorkerUrl();
 
       // Read file as array buffer
       const arrayBuffer = await file.arrayBuffer();
@@ -78,7 +125,7 @@ export class PDFExtractor {
   static async getMetadata(file) {
     try {
       const pdfjsLib = await import('pdfjs-dist');
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+      pdfjsLib.GlobalWorkerOptions.workerSrc = await getVerifiedWorkerUrl();
 
       const arrayBuffer = await file.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
