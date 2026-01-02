@@ -1,12 +1,12 @@
 import { useState, useCallback } from "react";
-import { exportToPDF } from "./utils/pdfExport";
+import { exportToPDF } from "./utils/pdfExport.js";
 import {
   LLMConfigProvider,
   AnalysisProvider,
   useLLMConfig,
   useAnalysis,
 } from "./contexts";
-import { ThemeProvider } from "./contexts/ThemeContext";
+import { ThemeProvider } from "./contexts/ThemeContext.jsx";
 import { useAnalysisOrchestrator } from "./hooks";
 import {
   Header,
@@ -21,13 +21,17 @@ import {
   TipsModal,
   LegalDocumentModal,
 } from "./components";
-import { ANALYSIS_STATUS } from "./utils/constants";
+import { ANALYSIS_STATUS } from "./utils/constants.js";
+import type {
+  DocumentInput as DocumentInputType,
+  AnalysisResult,
+} from "./types";
 import "./globals.css";
 
 /**
  * AppContent - Main application content (must be inside providers)
  */
-function AppContent() {
+function AppContent(): JSX.Element {
   const { config, validateConfig } = useLLMConfig();
   const {
     status,
@@ -41,15 +45,15 @@ function AppContent() {
   } = useAnalysis();
   const { startAnalysis } = useAnalysisOrchestrator();
 
-  const [showConfig, setShowConfig] = useState(false);
-  const [showAbout, setShowAbout] = useState(false);
-  const [showTips, setShowTips] = useState(false);
-  const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
-  const [showTermsOfService, setShowTermsOfService] = useState(false);
-  const [configError, setConfigError] = useState(null);
+  const [showConfig, setShowConfig] = useState<boolean>(false);
+  const [showAbout, setShowAbout] = useState<boolean>(false);
+  const [showTips, setShowTips] = useState<boolean>(false);
+  const [showPrivacyPolicy, setShowPrivacyPolicy] = useState<boolean>(false);
+  const [showTermsOfService, setShowTermsOfService] = useState<boolean>(false);
+  const [configError, setConfigError] = useState<string | null>(null);
 
   // Track if user has seen the config banner (stored in localStorage)
-  const [showConfigBanner, setShowConfigBanner] = useState(() => {
+  const [showConfigBanner, setShowConfigBanner] = useState<boolean>(() => {
     try {
       const hasSeenBanner = localStorage.getItem("hasSeenConfigBanner");
       return !hasSeenBanner;
@@ -62,7 +66,7 @@ function AppContent() {
   /**
    * Dismiss the configuration banner
    */
-  const dismissConfigBanner = useCallback(() => {
+  const dismissConfigBanner = useCallback((): void => {
     try {
       localStorage.setItem("hasSeenConfigBanner", "true");
     } catch {
@@ -75,7 +79,7 @@ function AppContent() {
    * Handle document selection and start analysis
    */
   const handleDocumentSelected = useCallback(
-    async (documentInput) => {
+    async (documentInput: DocumentInputType): Promise<void> => {
       setConfigError(null);
 
       // Validate LLM configuration before starting
@@ -101,7 +105,7 @@ function AppContent() {
   /**
    * Handle retry analysis - re-run with same document
    */
-  const handleRetryAnalysis = useCallback(async () => {
+  const handleRetryAnalysis = useCallback(async (): Promise<void> => {
     if (!document) {
       // No document to retry, just clear error
       clearError();
@@ -120,7 +124,7 @@ function AppContent() {
   /**
    * Handle new analysis
    */
-  const handleNewAnalysis = useCallback(() => {
+  const handleNewAnalysis = useCallback((): void => {
     // Analysis context will reset state
     // Just scroll to top
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -129,9 +133,12 @@ function AppContent() {
   /**
    * Handle export results - generates a PDF formatted like the full report
    */
-  const handleExportResults = useCallback(async (result) => {
-    await exportToPDF(result);
-  }, []);
+  const handleExportResults = useCallback(
+    async (result: AnalysisResult): Promise<void> => {
+      await exportToPDF(result);
+    },
+    [],
+  );
 
   const isAnalyzing =
     status === ANALYSIS_STATUS.EXTRACTING ||
@@ -396,7 +403,7 @@ function AppContent() {
 /**
  * App - Root component with providers
  */
-function App() {
+function App(): JSX.Element {
   return (
     <ErrorBoundary>
       <ThemeProvider>
