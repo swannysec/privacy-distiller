@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { type ReactNode, type ReactElement } from "react";
 
 /**
  * Props for Main component
@@ -13,12 +13,10 @@ interface MainProps {
 /**
  * Main - Main content container with semantic HTML
  */
-export function Main({ children, className = '' }: MainProps): JSX.Element {
+export function Main({ children, className = "" }: MainProps): ReactElement {
   return (
     <main className={`main ${className}`} role="main" id="main-content">
-      <div className="main__container">
-        {children}
-      </div>
+      <div className="main__container">{children}</div>
     </main>
   );
 }

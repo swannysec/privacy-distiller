@@ -1,5 +1,5 @@
-import React from 'react';
-import { Button } from './Button';
+import type { ReactElement } from "react";
+import { Button } from "./Button";
 
 export interface TipsModalProps {
   onClose: () => void;
@@ -9,7 +9,10 @@ export interface TipsModalProps {
 /**
  * TipsModal - Modal displaying usage tips for optimal privacy policy analysis
  */
-export function TipsModal({ onClose, className = '' }: TipsModalProps): JSX.Element {
+export function TipsModal({
+  onClose,
+  className = "",
+}: TipsModalProps): ReactElement {
   return (
     <div className={`modal ${className}`} onClick={(e) => e.stopPropagation()}>
       <div className="modal__header">
@@ -27,42 +30,52 @@ export function TipsModal({ onClose, className = '' }: TipsModalProps): JSX.Elem
       <div className="modal__body">
         <div className="tips-content">
           <p className="tips-intro">
-            Get the most out of your privacy policy analysis with these expert tips:
+            Get the most out of your privacy policy analysis with these expert
+            tips:
           </p>
 
           <div className="tips-list">
             <div className="tip-item">
               <h3 className="tip-item__title">🔄 Comparing Documents</h3>
               <p className="tip-item__text">
-                If comparing documents, use the same model for consistency. Different models may have varying interpretations and risk scoring methods.
+                If comparing documents, use the same model for consistency.
+                Different models may have varying interpretations and risk
+                scoring methods.
               </p>
             </div>
 
             <div className="tip-item">
               <h3 className="tip-item__title">🎯 Find Your Model</h3>
               <p className="tip-item__text">
-                Experiment with models to identify the style and risk posture that best suits you, then stick with it. Each model has a unique approach to privacy analysis.
+                Experiment with models to identify the style and risk posture
+                that best suits you, then stick with it. Each model has a unique
+                approach to privacy analysis.
               </p>
             </div>
 
             <div className="tip-item">
               <h3 className="tip-item__title">⭐ Gemini 3 Flash</h3>
               <p className="tip-item__text">
-                Gemini 3 Flash is very consistent and produces balanced results. It's an excellent starting point for most users.
+                Gemini 3 Flash is very consistent and produces balanced results.
+                It's an excellent starting point for most users.
               </p>
             </div>
 
             <div className="tip-item">
               <h3 className="tip-item__title">🔍 Stringent Analysis</h3>
               <p className="tip-item__text">
-                gpt-oss:120b and Nemotron 3 are more variable between runs and generally more stringent, returning lower scores on average. Consider these if you want a more critical assessment.
+                gpt-oss:120b and Nemotron 3 are more variable between runs and
+                generally more stringent, returning lower scores on average.
+                Consider these if you want a more critical assessment.
               </p>
             </div>
 
             <div className="tip-item">
               <h3 className="tip-item__title">📊 ChatGPT Models</h3>
               <p className="tip-item__text">
-                ChatGPT models appear to vary quite a bit from run to run. They may provide different perspectives on the same policy with each analysis.
+                ChatGPT models appear to vary quite a bit from run to run. They
+                may provide different perspectives on the same policy with each
+                analysis.
               </p>
             </div>
           </div>

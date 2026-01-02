@@ -1,8 +1,10 @@
-import { useAnalysis } from '../../contexts';
-import { ProgressIndicator } from './ProgressIndicator';
-import { ResultsDisplay } from '../Results';
-import { Card } from '../Common';
-import { ANALYSIS_STATUS } from '../../utils/constants';
+import { useAnalysis } from "../../contexts";
+import { ProgressIndicator } from "./ProgressIndicator";
+import { ResultsDisplay } from "../Results";
+import { Card } from "../Common";
+import { ANALYSIS_STATUS } from "../../utils/constants";
+
+import type { AnalysisResult } from "../../types";
 
 /**
  * Props for AnalysisSection component
@@ -11,7 +13,7 @@ interface AnalysisSectionProps {
   /** Callback to start new analysis */
   onNewAnalysis?: () => void;
   /** Optional callback to export results */
-  onExportResults?: () => void;
+  onExportResults?: (result: AnalysisResult) => void | Promise<void>;
   /** Additional CSS classes */
   className?: string;
 }
@@ -22,9 +24,10 @@ interface AnalysisSectionProps {
 export function AnalysisSection({
   onNewAnalysis,
   onExportResults,
-  className = ''
+  className = "",
 }: AnalysisSectionProps) {
-  const { status, result, error, progress, currentStep, resetAnalysis } = useAnalysis();
+  const { status, result, progress, currentStep, resetAnalysis } =
+    useAnalysis();
 
   /**
    * Handle retry
@@ -50,14 +53,17 @@ export function AnalysisSection({
   }
 
   // Show progress indicator for active analysis
-  if (status === ANALYSIS_STATUS.EXTRACTING || status === ANALYSIS_STATUS.ANALYZING) {
+  if (
+    status === ANALYSIS_STATUS.EXTRACTING ||
+    status === ANALYSIS_STATUS.ANALYZING
+  ) {
     return (
       <div className={`analysis-section ${className}`}>
         <Card className="analysis-section__progress-card">
           <ProgressIndicator
             status={status}
             progress={progress}
-            currentStep={currentStep}
+            currentStep={currentStep ?? undefined}
           />
 
           <div className="analysis-section__info">
@@ -66,8 +72,8 @@ export function AnalysisSection({
               {status === ANALYSIS_STATUS.EXTRACTING && (
                 <>
                   <p>
-                    Extracting text content from your document. This may take a moment
-                    for large files or complex web pages.
+                    Extracting text content from your document. This may take a
+                    moment for large files or complex web pages.
                   </p>
                   <ul className="analysis-section__info-list">
                     <li>For PDFs: Reading each page and extracting text</li>
@@ -79,11 +85,13 @@ export function AnalysisSection({
               {status === ANALYSIS_STATUS.ANALYZING && (
                 <>
                   <p>
-                    Analyzing the privacy policy with AI. This involves multiple steps
-                    to ensure comprehensive coverage:
+                    Analyzing the privacy policy with AI. This involves multiple
+                    steps to ensure comprehensive coverage:
                   </p>
                   <ul className="analysis-section__info-list">
-                    <li>Generating layered summaries (brief, detailed, full)</li>
+                    <li>
+                      Generating layered summaries (brief, detailed, full)
+                    </li>
                     <li>Identifying privacy risks and concerns</li>
                     <li>Extracting and explaining key terms</li>
                     <li>Assessing overall privacy impact</li>
@@ -93,8 +101,9 @@ export function AnalysisSection({
             </div>
 
             <p className="analysis-section__info-note">
-              <strong>Please wait:</strong> Analysis typically takes 30-60 seconds
-              depending on document length and LLM provider response time.
+              <strong>Please wait:</strong> Analysis typically takes 30-60
+              seconds depending on document length and LLM provider response
+              time.
             </p>
           </div>
         </Card>

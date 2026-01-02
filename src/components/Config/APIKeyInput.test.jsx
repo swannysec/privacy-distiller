@@ -13,7 +13,7 @@ describe("APIKeyInput", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockValidateApiKey.mockReturnValue({ isValid: true, errors: [] });
+    mockValidateApiKey.mockReturnValue({ valid: true, errors: [] });
   });
 
   describe("Rendering", () => {
@@ -184,8 +184,14 @@ describe("APIKeyInput", () => {
 
     it("should clear error when value changes", () => {
       mockValidateApiKey.mockReturnValue({
-        isValid: false,
-        errors: ["Invalid API key"],
+        valid: false,
+        errors: [
+          {
+            field: "apiKey",
+            message: "Invalid API key",
+            code: "INVALID_API_KEY",
+          },
+        ],
       });
 
       render(
@@ -220,7 +226,7 @@ describe("APIKeyInput", () => {
       const input = screen.getByLabelText("API Key");
       fireEvent.blur(input);
 
-      expect(mockValidateApiKey).toHaveBeenCalledWith("test-key", "openrouter");
+      expect(mockValidateApiKey).toHaveBeenCalledWith("test-key");
     });
 
     it("should not validate when value is empty", () => {
@@ -236,8 +242,19 @@ describe("APIKeyInput", () => {
 
     it("should show validation error when invalid", () => {
       mockValidateApiKey.mockReturnValue({
-        isValid: false,
-        errors: ["API key must start with sk-", "API key is too short"],
+        valid: false,
+        errors: [
+          {
+            field: "apiKey",
+            message: "API key must start with sk-",
+            code: "INVALID_API_KEY",
+          },
+          {
+            field: "apiKey",
+            message: "API key is too short",
+            code: "INVALID_API_KEY",
+          },
+        ],
       });
 
       render(
@@ -259,7 +276,7 @@ describe("APIKeyInput", () => {
     });
 
     it("should not show error when validation passes", () => {
-      mockValidateApiKey.mockReturnValue({ isValid: true, errors: [] });
+      mockValidateApiKey.mockReturnValue({ valid: true, errors: [] });
 
       render(
         <APIKeyInput
@@ -277,8 +294,10 @@ describe("APIKeyInput", () => {
 
     it("should apply error class to input when error exists", () => {
       mockValidateApiKey.mockReturnValue({
-        isValid: false,
-        errors: ["Invalid"],
+        valid: false,
+        errors: [
+          { field: "apiKey", message: "Invalid", code: "INVALID_API_KEY" },
+        ],
       });
 
       render(
@@ -432,7 +451,7 @@ describe("APIKeyInput", () => {
       const input = screen.getByLabelText("API Key");
       fireEvent.blur(input);
 
-      expect(mockValidateApiKey).toHaveBeenCalledWith("test-key", "openrouter");
+      expect(mockValidateApiKey).toHaveBeenCalledWith("test-key");
 
       mockValidateApiKey.mockClear();
 
@@ -446,13 +465,15 @@ describe("APIKeyInput", () => {
 
       fireEvent.blur(input);
 
-      expect(mockValidateApiKey).toHaveBeenCalledWith("test-key", "anthropic");
+      expect(mockValidateApiKey).toHaveBeenCalledWith("test-key");
     });
 
     it("should clear validation error when toggling visibility", () => {
       mockValidateApiKey.mockReturnValue({
-        isValid: false,
-        errors: ["Invalid"],
+        valid: false,
+        errors: [
+          { field: "apiKey", message: "Invalid", code: "INVALID_API_KEY" },
+        ],
       });
 
       render(
@@ -490,8 +511,14 @@ describe("APIKeyInput", () => {
 
     it("should replace help text with error when validation fails", () => {
       mockValidateApiKey.mockReturnValue({
-        isValid: false,
-        errors: ["Invalid API key"],
+        valid: false,
+        errors: [
+          {
+            field: "apiKey",
+            message: "Invalid API key",
+            code: "INVALID_API_KEY",
+          },
+        ],
       });
 
       render(
@@ -513,8 +540,14 @@ describe("APIKeyInput", () => {
 
     it("should restore help text after error is cleared", () => {
       mockValidateApiKey.mockReturnValue({
-        isValid: false,
-        errors: ["Invalid API key"],
+        valid: false,
+        errors: [
+          {
+            field: "apiKey",
+            message: "Invalid API key",
+            code: "INVALID_API_KEY",
+          },
+        ],
       });
 
       render(
@@ -553,9 +586,7 @@ describe("APIKeyInput", () => {
         <APIKeyInput value="" onChange={mockOnChange} provider="openrouter" />,
       );
 
-      expect(
-        container.querySelector(".input-with-button"),
-      ).toBeInTheDocument();
+      expect(container.querySelector(".input-with-button")).toBeInTheDocument();
     });
 
     it("should render button with correct classes", () => {
@@ -568,7 +599,12 @@ describe("APIKeyInput", () => {
       );
 
       const button = screen.getByLabelText("Show API key");
-      expect(button).toHaveClass("btn", "btn--ghost", "btn--sm", "input-toggle-btn");
+      expect(button).toHaveClass(
+        "btn",
+        "btn--ghost",
+        "btn--sm",
+        "input-toggle-btn",
+      );
     });
 
     it("should render label with correct for attribute", () => {

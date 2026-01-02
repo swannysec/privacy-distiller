@@ -8,27 +8,44 @@ import { PromptTemplates } from "./PromptTemplates.js";
 import { ResponseParser } from "./ResponseParser.js";
 import { TextPreprocessor } from "../document/TextPreprocessor.js";
 import { generateId } from "../../utils/helpers.js";
-import type { LLMConfig, AnalysisResult, DocumentInput } from '../../types';
+import type {
+  LLMConfig,
+  AnalysisResult,
+  PrivacyScorecard,
+  PartialFailure,
+} from "../../types";
 
-interface PartialFailure {
-  section: string;
-  error: string;
-}
-
-interface AnalysisResultInternal extends AnalysisResult {
-  partialFailures?: PartialFailure[];
-  hasPartialFailures?: boolean;
+/**
+ * Internal result structure before transformation
+ */
+interface PolicyAnalyzerResult {
+  id: string;
+  summaries: Array<{
+    type: "brief" | "detailed" | "full";
+    content: string;
+    keyPoints: string[];
+  }>;
+  risks: AnalysisResult["risks"];
+  keyTerms: AnalysisResult["keyTerms"];
+  scorecard: PrivacyScorecard | null;
+  timestamp: Date;
+  llmConfig: LLMConfig;
+  partialFailures: PartialFailure[];
+  hasPartialFailures: boolean;
 }
 
 export class PolicyAnalyzer {
-  private provider: any;
+  private provider: ReturnType<typeof LLMProviderFactory.createProvider>;
   private config: LLMConfig;
 
   /**
    * @param config - LLM configuration
    * @param provider - Optional pre-configured LLM provider (for dependency injection)
    */
-  constructor(config: LLMConfig, provider: any = null) {
+  constructor(
+    config: LLMConfig,
+    provider?: ReturnType<typeof LLMProviderFactory.createProvider>,
+  ) {
     this.provider = provider || LLMProviderFactory.createProvider(config);
     this.config = config;
   }
@@ -39,7 +56,10 @@ export class PolicyAnalyzer {
    * @param config - LLM configuration
    * @returns Configured PolicyAnalyzer instance
    */
-  static withProvider(provider: any, config: LLMConfig): PolicyAnalyzer {
+  static withProvider(
+    provider: ReturnType<typeof LLMProviderFactory.createProvider>,
+    config: LLMConfig,
+  ): PolicyAnalyzer {
     return new PolicyAnalyzer(config, provider);
   }
 
@@ -48,25 +68,26 @@ export class PolicyAnalyzer {
    * @param text - Policy text
    * @param progressCallback - Progress callback
    * @param useParallel - Whether to use parallel analysis
-   * @returns Analysis result
+   * @returns Analysis result (internal format, transformed by orchestrator)
    */
   async analyze(
     text: string,
     progressCallback?: (progress: number, step: string) => void,
-    useParallel: boolean = true
-  ): Promise<AnalysisResult> {
+    useParallel: boolean = true,
+  ): Promise<PolicyAnalyzerResult> {
     // Preprocess text
     const processedText = TextPreprocessor.preprocess(text);
     const truncatedText = TextPreprocessor.truncate(processedText);
 
     try {
       if (useParallel) {
-        return await this._analyzeParallel(truncatedText, processedText, progressCallback);
+        return await this._analyzeParallel(truncatedText, progressCallback);
       } else {
-        return await this._analyzeSequential(truncatedText, processedText, progressCallback);
+        return await this._analyzeSequential(truncatedText, progressCallback);
       }
-    } catch (error: any) {
-      throw new Error(`Analysis failed: ${error.message}`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      throw new Error(`Analysis failed: ${message}`);
     }
   }
 
@@ -76,9 +97,8 @@ export class PolicyAnalyzer {
    */
   private async _analyzeParallel(
     truncatedText: string,
-    processedText: string,
-    progressCallback?: (progress: number, step: string) => void
-  ): Promise<AnalysisResultInternal> {
+    progressCallback?: (progress: number, step: string) => void,
+  ): Promise<PolicyAnalyzerResult> {
     if (progressCallback) {
       progressCallback(40, "Analyzing policy in parallel...");
     }
@@ -106,47 +126,58 @@ export class PolicyAnalyzer {
     }
 
     // Process results with graceful degradation
-    const briefSummary = results[0].status === 'fulfilled'
-      ? ResponseParser.cleanResponse(results[0].value)
-      : "Brief summary unavailable due to an error.";
+    const briefSummary =
+      results[0].status === "fulfilled"
+        ? ResponseParser.cleanResponse(results[0].value)
+        : "Brief summary unavailable due to an error.";
 
-    const detailedSummary = results[1].status === 'fulfilled'
-      ? ResponseParser.cleanResponse(results[1].value)
-      : "Detailed summary unavailable due to an error.";
+    const detailedSummary =
+      results[1].status === "fulfilled"
+        ? ResponseParser.cleanResponse(results[1].value)
+        : "Detailed summary unavailable due to an error.";
 
-    const fullAnalysis = results[2].status === 'fulfilled'
-      ? ResponseParser.cleanResponse(results[2].value)
-      : "Full analysis unavailable due to an error.";
+    const fullAnalysis =
+      results[2].status === "fulfilled"
+        ? ResponseParser.cleanResponse(results[2].value)
+        : "Full analysis unavailable due to an error.";
 
-    const risks = results[3].status === 'fulfilled'
-      ? ResponseParser.parseRisks(results[3].value)
-      : [];
+    const risks =
+      results[3].status === "fulfilled"
+        ? ResponseParser.parseRisks(results[3].value)
+        : [];
 
-    const keyTerms = results[4].status === 'fulfilled'
-      ? ResponseParser.parseKeyTerms(results[4].value)
-      : [];
+    const keyTerms =
+      results[4].status === "fulfilled"
+        ? ResponseParser.parseKeyTerms(results[4].value)
+        : [];
 
-    const scorecard = results[5].status === 'fulfilled'
-      ? ResponseParser.parseScorecard(results[5].value)
-      : null;
+    const scorecard =
+      results[5].status === "fulfilled"
+        ? ResponseParser.parseScorecard(results[5].value)
+        : null;
 
     // Track partial failures
     const partialFailures: PartialFailure[] = [];
-    const sectionNames = ['brief summary', 'detailed summary', 'full analysis', 'privacy risks', 'key terms', 'privacy scorecard'];
+    const sectionNames = [
+      "brief summary",
+      "detailed summary",
+      "full analysis",
+      "privacy risks",
+      "key terms",
+      "privacy scorecard",
+    ];
     results.forEach((result, index) => {
-      if (result.status === 'rejected') {
+      if (result.status === "rejected") {
         partialFailures.push({
           section: sectionNames[index],
-          error: result.reason?.message || 'Unknown error',
+          error: result.reason?.message || "Unknown error",
         });
       }
     });
 
-    // Build result - need to include document property but we don't have it in this scope
-    // This will be added by the caller or we need to pass it as parameter
+    // Build result
     return {
       id: generateId(),
-      document: {} as DocumentInput, // Placeholder - will be set by caller
       summaries: [
         {
           type: "brief",
@@ -180,9 +211,8 @@ export class PolicyAnalyzer {
    */
   private async _analyzeSequential(
     truncatedText: string,
-    processedText: string,
-    progressCallback?: (progress: number, step: string) => void
-  ): Promise<AnalysisResult> {
+    progressCallback?: (progress: number, step: string) => void,
+  ): Promise<PolicyAnalyzerResult> {
     // Generate brief summary
     if (progressCallback) {
       progressCallback(35, "Generating brief summary...");
@@ -234,7 +264,6 @@ export class PolicyAnalyzer {
     // Build result
     return {
       id: generateId(),
-      document: {} as DocumentInput, // Placeholder - will be set by caller
       summaries: [
         {
           type: "brief",
@@ -257,6 +286,8 @@ export class PolicyAnalyzer {
       scorecard,
       timestamp: new Date(),
       llmConfig: this.config,
+      partialFailures: [],
+      hasPartialFailures: false,
     };
   }
 
@@ -266,7 +297,10 @@ export class PolicyAnalyzer {
    * @param aspects - Aspects to analyze (e.g., ['data_collection', 'data_sharing'])
    * @returns Aspect-specific analysis
    */
-  async analyzeAspects(text: string, aspects: string[]): Promise<Record<string, string>> {
+  async analyzeAspects(
+    text: string,
+    aspects: string[],
+  ): Promise<Record<string, string>> {
     const processedText = TextPreprocessor.preprocess(text);
     const truncatedText = TextPreprocessor.truncate(processedText);
     const results: Record<string, string> = {};

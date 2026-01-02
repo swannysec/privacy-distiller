@@ -1,7 +1,7 @@
-import { useMemo, useState, useEffect } from 'react';
-import { LoadingSpinner } from '../Common';
-import { ANALYSIS_STATUS } from '../../utils/constants';
-import type { AnalysisStatus } from '../../types';
+import { useMemo, useState, useEffect } from "react";
+import { LoadingSpinner } from "../Common";
+import { ANALYSIS_STATUS } from "../../utils/constants";
+import type { AnalysisStatus } from "../../types";
 
 /**
  * Props for ProgressIndicator component
@@ -61,21 +61,23 @@ function formatElapsedTime(seconds: number): string {
 export function ProgressIndicator({
   status,
   progress = 0,
-  currentStep = '',
+  currentStep = "",
   error = null,
-  className = ''
+  className = "",
 }: ProgressIndicatorProps) {
   // Track elapsed time
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   // Reset and start timer when analysis becomes active
   useEffect(() => {
-    const isActive = status === ANALYSIS_STATUS.EXTRACTING || status === ANALYSIS_STATUS.ANALYZING;
+    const isActive =
+      status === ANALYSIS_STATUS.EXTRACTING ||
+      status === ANALYSIS_STATUS.ANALYZING;
 
     if (isActive) {
       setElapsedSeconds(0);
       const interval = setInterval(() => {
-        setElapsedSeconds(prev => prev + 1);
+        setElapsedSeconds((prev) => prev + 1);
       }, 1000);
       return () => clearInterval(interval);
     }
@@ -87,46 +89,54 @@ export function ProgressIndicator({
   const statusConfig = useMemo((): StatusConfig => {
     const configs: Record<AnalysisStatus, StatusConfig> = {
       [ANALYSIS_STATUS.IDLE]: {
-        icon: '⏸️',
-        label: 'Ready',
-        color: '#6b7280',
-        showProgress: false
+        icon: "⏸️",
+        label: "Ready",
+        color: "#6b7280",
+        showProgress: false,
       },
       [ANALYSIS_STATUS.EXTRACTING]: {
-        icon: '📄',
-        label: 'Extracting Text',
-        color: '#3b82f6',
-        showProgress: true
+        icon: "📄",
+        label: "Extracting Text",
+        color: "#3b82f6",
+        showProgress: true,
       },
       [ANALYSIS_STATUS.ANALYZING]: {
-        icon: '🔍',
-        label: 'Analyzing Policy',
-        color: '#8b5cf6',
-        showProgress: true
+        icon: "🔍",
+        label: "Analyzing Policy",
+        color: "#8b5cf6",
+        showProgress: true,
       },
       [ANALYSIS_STATUS.COMPLETED]: {
-        icon: '✅',
-        label: 'Analysis Complete',
-        color: '#10b981',
-        showProgress: false
+        icon: "✅",
+        label: "Analysis Complete",
+        color: "#10b981",
+        showProgress: false,
       },
       [ANALYSIS_STATUS.FAILED]: {
-        icon: '❌',
-        label: 'Analysis Failed',
-        color: '#ef4444',
-        showProgress: false
-      }
+        icon: "❌",
+        label: "Analysis Failed",
+        color: "#ef4444",
+        showProgress: false,
+      },
+      [ANALYSIS_STATUS.ERROR]: {
+        icon: "❌",
+        label: "Error",
+        color: "#ef4444",
+        showProgress: false,
+      },
     };
 
     return configs[status] || configs[ANALYSIS_STATUS.IDLE];
   }, [status]);
 
-  const isActive = status === ANALYSIS_STATUS.EXTRACTING || status === ANALYSIS_STATUS.ANALYZING;
+  const isActive =
+    status === ANALYSIS_STATUS.EXTRACTING ||
+    status === ANALYSIS_STATUS.ANALYZING;
   const showProgressBar = statusConfig.showProgress && isActive;
 
   return (
     <div
-      className={`progress-indicator ${isActive ? 'progress-indicator--active' : ''} ${className}`}
+      className={`progress-indicator ${isActive ? "progress-indicator--active" : ""} ${className}`}
       role="status"
       aria-live="polite"
       aria-label={`Analysis ${statusConfig.label.toLowerCase()}`}
@@ -134,7 +144,7 @@ export function ProgressIndicator({
       <div className="progress-indicator__header">
         {/* Status icon */}
         <div
-          className={`progress-indicator__icon ${isActive ? 'progress-indicator__icon--pulse' : ''}`}
+          className={`progress-indicator__icon ${isActive ? "progress-indicator__icon--pulse" : ""}`}
           style={{ color: statusConfig.color }}
           aria-hidden="true"
         >
@@ -189,7 +199,7 @@ export function ProgressIndicator({
             className="progress-indicator__bar progress-indicator__bar--shimmer"
             style={{
               width: `${progress}%`,
-              backgroundColor: statusConfig.color
+              backgroundColor: statusConfig.color,
             }}
           />
         </div>
@@ -239,19 +249,19 @@ export function ProgressIndicator({
  */
 function StepItem({ label, completed, active }: StepItemProps) {
   const className = [
-    'progress-indicator__step-item',
-    completed && 'progress-indicator__step-item--completed',
-    active && 'progress-indicator__step-item--active'
-  ].filter(Boolean).join(' ');
+    "progress-indicator__step-item",
+    completed && "progress-indicator__step-item--completed",
+    active && "progress-indicator__step-item--active",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <div className={className}>
       <span className="progress-indicator__step-icon" aria-hidden="true">
-        {completed ? '✓' : active ? '⋯' : '○'}
+        {completed ? "✓" : active ? "⋯" : "○"}
       </span>
-      <span className="progress-indicator__step-label">
-        {label}
-      </span>
+      <span className="progress-indicator__step-label">{label}</span>
     </div>
   );
 }

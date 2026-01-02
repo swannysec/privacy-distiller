@@ -6,7 +6,7 @@
 /**
  * Supported LLM providers
  */
-export type LLMProvider = 'openrouter' | 'ollama' | 'lmstudio';
+export type LLMProvider = "openrouter" | "ollama" | "lmstudio";
 
 /**
  * Configuration for LLM provider
@@ -24,36 +24,66 @@ export interface LLMConfig {
   temperature: number;
   /** Maximum tokens in response */
   maxTokens: number;
+  /** Optional context window override (in tokens). null = auto-detect */
+  contextWindow?: number | null;
 }
 
 /**
  * Source type for document input
  */
-export type DocumentSource = 'url' | 'pdf';
+export type DocumentSourceType = "url" | "pdf" | "file";
+
+/**
+ * Metadata for document input
+ */
+export interface DocumentMetadata {
+  /** Original filename for file inputs */
+  fileName?: string;
+  /** File size in bytes */
+  fileSize?: number;
+  /** MIME type */
+  mimeType?: string;
+  /** Fetch timestamp */
+  fetchedAt?: Date;
+  /** Input mode (url or file) */
+  inputMode?: string;
+  /** Timestamp as ISO string */
+  timestamp?: string;
+}
 
 /**
  * Input document information
  */
 export interface DocumentInput {
-  /** Source type of the document */
-  source: DocumentSource;
+  /** Type of the document source */
+  type: DocumentSourceType;
+  /** Source of the document (URL string or File) */
+  source: string | File;
   /** URL of the policy document (for url source) */
   url?: string;
   /** PDF file (for pdf source) */
   file?: File;
   /** Extracted text content */
   rawText?: string;
+  /** Optional metadata */
+  metadata?: DocumentMetadata;
 }
 
 /**
  * Status of the analysis process
  */
-export type AnalysisStatus = 'idle' | 'extracting' | 'analyzing' | 'completed' | 'error';
+export type AnalysisStatus =
+  | "idle"
+  | "extracting"
+  | "analyzing"
+  | "completed"
+  | "error"
+  | "failed";
 
 /**
  * Severity level for privacy risks
  */
-export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
+export type RiskLevel = "low" | "medium" | "high" | "critical";
 
 /**
  * Identified privacy risk
@@ -82,13 +112,13 @@ export interface KeyTerm {
   /** Plain language definition */
   definition: string;
   /** Location in the document */
-  location: string;
+  location?: string;
 }
 
 /**
  * Type of summary
  */
-export type SummaryType = 'brief' | 'detailed' | 'full';
+export type SummaryType = "brief" | "detailed" | "full";
 
 /**
  * Policy summary at a specific detail level
@@ -103,9 +133,93 @@ export interface PolicySummary {
 }
 
 /**
- * Complete analysis result
+ * Scorecard category with score, weight, and summary
+ */
+export interface ScorecardCategory {
+  score: number;
+  weight: number;
+  summary: string;
+}
+
+/**
+ * Privacy scorecard from analysis
+ */
+export interface PrivacyScorecard {
+  thirdPartySharing: ScorecardCategory;
+  userRights: ScorecardCategory;
+  dataCollection: ScorecardCategory;
+  dataRetention: ScorecardCategory;
+  purposeClarity: ScorecardCategory;
+  securityMeasures: ScorecardCategory;
+  policyTransparency: ScorecardCategory;
+  topConcerns: string[];
+  positiveAspects: string[];
+  overallScore?: number;
+  overallGrade?: string;
+}
+
+/**
+ * Partial failure from Promise.allSettled analysis
+ */
+export interface PartialFailure {
+  section: string;
+  error: string;
+}
+
+/**
+ * Document metadata in analysis result
+ */
+export interface AnalysisDocumentMetadata {
+  source: string;
+  type: "url" | "pdf";
+  rawText: string;
+  file?: {
+    name: string;
+    size: number;
+    type: string;
+  };
+}
+
+/**
+ * Summary object with brief, detailed, and full versions
+ */
+export interface AnalysisSummary {
+  brief: string;
+  detailed: string;
+  full: string;
+}
+
+/**
+ * Complete analysis result from orchestrator
  */
 export interface AnalysisResult {
+  /** Unique identifier for the analysis */
+  id: string;
+  /** Document metadata */
+  documentMetadata: AnalysisDocumentMetadata;
+  /** Summary with brief, detailed, and full versions */
+  summary: AnalysisSummary;
+  /** Identified privacy risks */
+  risks: PrivacyRisk[];
+  /** Important terms and definitions */
+  keyTerms: KeyTerm[];
+  /** Privacy scorecard with scores per category (null if unavailable) */
+  scorecard?: PrivacyScorecard | null;
+  /** When the analysis was completed */
+  timestamp: Date;
+  /** LLM configuration used */
+  llmConfig: LLMConfig;
+  /** Partial failures from parallel analysis */
+  partialFailures: PartialFailure[];
+  /** Whether there were any partial failures */
+  hasPartialFailures: boolean;
+}
+
+/**
+ * Legacy analysis result structure (used internally by PolicyAnalyzer)
+ * @deprecated Use AnalysisResult instead
+ */
+export interface LegacyAnalysisResult {
   /** Unique identifier for the analysis */
   id: string;
   /** Source document information */

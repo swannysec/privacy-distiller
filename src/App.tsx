@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, type ReactElement } from "react";
 import { exportToPDF } from "./utils/pdfExport.js";
 import {
   LLMConfigProvider,
@@ -31,18 +31,9 @@ import "./globals.css";
 /**
  * AppContent - Main application content (must be inside providers)
  */
-function AppContent(): JSX.Element {
+function AppContent(): ReactElement {
   const { config, validateConfig } = useLLMConfig();
-  const {
-    status,
-    result,
-    error,
-    progress,
-    currentStep,
-    resetAnalysis,
-    clearError,
-    document,
-  } = useAnalysis();
+  const { status, result, error, clearError, document } = useAnalysis();
   const { startAnalysis } = useAnalysisOrchestrator();
 
   const [showConfig, setShowConfig] = useState<boolean>(false);
@@ -403,7 +394,7 @@ function AppContent(): JSX.Element {
 /**
  * App - Root component with providers
  */
-function App(): JSX.Element {
+function App(): ReactElement {
   return (
     <ErrorBoundary>
       <ThemeProvider>

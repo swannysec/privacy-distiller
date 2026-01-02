@@ -10,13 +10,17 @@ import DOMPurify from "dompurify";
  * @param options - DOMPurify options
  * @returns Sanitized HTML
  */
-export function sanitizeHtml(html: string, options: DOMPurify.Config = {}): string {
+export function sanitizeHtml(
+  html: string,
+  options: DOMPurify.Config = {},
+): string {
   if (!html || typeof html !== "string") {
     return "";
   }
 
-  const defaultOptions: DOMPurify.Config = {
-    ALLOWED_TAGS: [
+  // Build config with explicit defaults - avoid spreading which can cause type issues
+  const config = {
+    ALLOWED_TAGS: options.ALLOWED_TAGS ?? [
       "p",
       "br",
       "strong",
@@ -38,13 +42,17 @@ export function sanitizeHtml(html: string, options: DOMPurify.Config = {}): stri
       "code",
       "pre",
     ],
-    ALLOWED_ATTR: ["href", "class", "id", "target", "rel"],
-    ALLOW_DATA_ATTR: false,
-    ALLOWED_URI_REGEXP: /^(?:(?:https?):\/\/)/i,
-  };
+    ALLOWED_ATTR: options.ALLOWED_ATTR ?? [
+      "href",
+      "class",
+      "id",
+      "target",
+      "rel",
+    ],
+    ALLOW_DATA_ATTR: options.ALLOW_DATA_ATTR ?? false,
+  } satisfies DOMPurify.Config;
 
-  const mergedOptions = { ...defaultOptions, ...options };
-  return DOMPurify.sanitize(html, mergedOptions);
+  return DOMPurify.sanitize(html, config);
 }
 
 /**

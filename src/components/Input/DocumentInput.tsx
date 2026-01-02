@@ -1,19 +1,20 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, type ReactElement } from "react";
 import { URLInput } from "./URLInput";
 import { FileUpload } from "./FileUpload";
 import { Card } from "../Common";
 import { validateUrl, validateFile } from "../../utils/validation";
+import type { DocumentSourceType } from "../../types";
 
 /**
  * Type of input mode
  */
-type InputMode = 'url' | 'file';
+type InputMode = "url" | "file";
 
 /**
  * Document selection data passed to parent
  */
-interface DocumentSelection {
-  type: 'url' | 'file';
+export interface DocumentSelection {
+  type: DocumentSourceType;
   source: string | File;
   metadata: {
     inputMode: InputMode;
@@ -51,7 +52,7 @@ export function DocumentInput({
   analysisError = null,
   onClearAnalysisError = null,
   onTipsOpen = null,
-}: DocumentInputProps): JSX.Element {
+}: DocumentInputProps): ReactElement {
   const [inputMode, setInputMode] = useState<InputMode>("url");
   const [error, setError] = useState<string | null>(null);
 
@@ -119,16 +120,14 @@ export function DocumentInput({
     <Card className={`document-input ${className}`}>
       <div className="card__header">
         <h2 className="card__title">Analyze a Privacy Policy</h2>
-        <p className="card__subtitle">Paste a URL or upload a PDF document to get started</p>
+        <p className="card__subtitle">
+          Paste a URL or upload a PDF document to get started
+        </p>
       </div>
 
       <div className="document-input__container">
         {/* Tab toggle */}
-        <div
-          className="tabs"
-          role="tablist"
-          aria-label="Document input method"
-        >
+        <div className="tabs" role="tablist" aria-label="Document input method">
           <button
             type="button"
             role="tab"
@@ -138,7 +137,9 @@ export function DocumentInput({
             onClick={() => handleModeChange("url")}
             disabled={disabled}
           >
-            <span className="icon" aria-hidden="true">🔗</span>
+            <span className="icon" aria-hidden="true">
+              🔗
+            </span>
             URL
           </button>
 
@@ -151,18 +152,16 @@ export function DocumentInput({
             onClick={() => handleModeChange("file")}
             disabled={disabled}
           >
-            <span className="icon" aria-hidden="true">📄</span>
+            <span className="icon" aria-hidden="true">
+              📄
+            </span>
             PDF Upload
           </button>
         </div>
 
         {/* Input panels */}
         {inputMode === "url" && (
-          <div
-            id="tab-url"
-            role="tabpanel"
-            aria-labelledby="url-tab"
-          >
+          <div id="tab-url" role="tabpanel" aria-labelledby="url-tab">
             <URLInput
               onSubmit={handleUrlSubmit}
               disabled={disabled}
@@ -175,11 +174,7 @@ export function DocumentInput({
         )}
 
         {inputMode === "file" && (
-          <div
-            id="tab-pdf"
-            role="tabpanel"
-            aria-labelledby="file-tab"
-          >
+          <div id="tab-pdf" role="tabpanel" aria-labelledby="file-tab">
             <FileUpload
               onFileSelect={handleFileSelect}
               disabled={disabled}
@@ -191,7 +186,9 @@ export function DocumentInput({
         {/* Tips hint */}
         {onTipsOpen && (
           <div className="document-input__tip-hint">
-            <span className="tip-hint__icon" aria-hidden="true">💡</span>
+            <span className="tip-hint__icon" aria-hidden="true">
+              💡
+            </span>
             <span className="tip-hint__text">
               <button
                 type="button"
@@ -200,12 +197,11 @@ export function DocumentInput({
                 disabled={disabled}
               >
                 Check out our Tips
-              </button>
-              {" "}for best results.
+              </button>{" "}
+              for best results.
             </span>
           </div>
         )}
-
       </div>
     </Card>
   );

@@ -3,7 +3,7 @@
  * @description Manages LLM provider configuration and API keys
  */
 
-import React, {
+import {
   createContext,
   useContext,
   useState,
@@ -19,7 +19,11 @@ import {
   getLLMConfig,
   removeLLMConfig,
 } from "../utils/storage.js";
-import type { LLMConfig, LLMProvider, ValidationError } from "../types/index.js";
+import type {
+  LLMConfig,
+  LLMProvider,
+  ValidationError,
+} from "../types/index.js";
 
 /**
  * Validation result with simplified structure
@@ -57,14 +61,17 @@ interface LLMConfigComputed {
 /**
  * Complete context value type
  */
-interface LLMConfigContextValue extends LLMConfigStateValues, LLMConfigActions, LLMConfigComputed {
+interface LLMConfigContextValue
+  extends LLMConfigStateValues, LLMConfigActions, LLMConfigComputed {
   // Grouped structure (preferred)
   state: LLMConfigStateValues;
   actions: LLMConfigActions;
   computed: LLMConfigComputed;
 }
 
-const LLMConfigContext = createContext<LLMConfigContextValue | undefined>(undefined);
+const LLMConfigContext = createContext<LLMConfigContextValue | undefined>(
+  undefined,
+);
 
 /**
  * LLM Configuration Provider Component Props
@@ -82,7 +89,9 @@ export function LLMConfigProvider({ children }: LLMConfigProviderProps) {
     return saved || DEFAULT_LLM_CONFIG;
   });
 
-  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>(
+    [],
+  );
 
   // Persist config to sessionStorage whenever it changes
   useEffect(() => {
@@ -186,7 +195,14 @@ export function LLMConfigProvider({ children }: LLMConfigProviderProps) {
       ...actions,
       ...computed,
     };
-  }, [config, validationErrors, updateConfig, setProvider, validateConfig, resetConfig]);
+  }, [
+    config,
+    validationErrors,
+    updateConfig,
+    setProvider,
+    validateConfig,
+    resetConfig,
+  ]);
 
   return (
     <LLMConfigContext.Provider value={value}>

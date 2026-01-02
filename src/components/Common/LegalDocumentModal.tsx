@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import { Button } from './Button';
+import { useState, useEffect, type ReactElement } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { Button } from "./Button";
 
 export interface LegalDocumentModalProps {
   documentPath: string;
@@ -12,8 +12,12 @@ export interface LegalDocumentModalProps {
 /**
  * LegalDocumentModal - Displays legal documents (Privacy Policy, ToS) in a modal
  */
-export function LegalDocumentModal({ documentPath, title, onClose }: LegalDocumentModalProps): JSX.Element {
-  const [content, setContent] = useState<string>('');
+export function LegalDocumentModal({
+  documentPath,
+  title,
+  onClose,
+}: LegalDocumentModalProps): ReactElement {
+  const [content, setContent] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,8 +37,8 @@ export function LegalDocumentModal({ documentPath, title, onClose }: LegalDocume
         const text = await response.text();
         setContent(text);
       } catch (err) {
-        console.error('Error fetching legal document:', err);
-        setError(err instanceof Error ? err.message : 'Unknown error');
+        console.error("Error fetching legal document:", err);
+        setError(err instanceof Error ? err.message : "Unknown error");
       } finally {
         setLoading(false);
       }
@@ -46,13 +50,13 @@ export function LegalDocumentModal({ documentPath, title, onClose }: LegalDocume
   // Handle escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         onClose();
       }
     };
 
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
   }, [onClose]);
 
   return (
@@ -65,7 +69,9 @@ export function LegalDocumentModal({ documentPath, title, onClose }: LegalDocume
         aria-labelledby="legal-modal-title"
       >
         <div className="modal__header">
-          <h2 className="modal__title" id="legal-modal-title">{title}</h2>
+          <h2 className="modal__title" id="legal-modal-title">
+            {title}
+          </h2>
           <button
             type="button"
             className="modal__close"

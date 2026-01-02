@@ -2,7 +2,7 @@
  * @file Card Component
  */
 
-import React from 'react';
+import React from "react";
 
 export interface CardProps {
   children: React.ReactNode;
@@ -12,7 +12,13 @@ export interface CardProps {
   [key: string]: unknown;
 }
 
-export function Card({ children, className = '', title, subtitle, ...props }: CardProps): JSX.Element {
+export function Card({
+  children,
+  className = "",
+  title,
+  subtitle,
+  ...props
+}: CardProps): React.ReactElement {
   return (
     <div className={`card ${className}`} {...props}>
       {(title || subtitle) && (

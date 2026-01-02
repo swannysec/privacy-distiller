@@ -1,7 +1,7 @@
-import { useState, useCallback, useRef } from 'react';
-import { Button } from '../Common';
-import { formatFileSize } from '../../utils/formatting';
-import { FILE_CONSTRAINTS } from '../../utils/constants';
+import { useState, useCallback, useRef, type ReactElement } from "react";
+import { Button } from "../Common";
+import { formatFileSize } from "../../utils/formatting";
+import { FILE_CONSTRAINTS } from "../../utils/constants";
 
 /**
  * Props for FileUpload component
@@ -24,8 +24,8 @@ export function FileUpload({
   onFileSelect,
   disabled = false,
   error = null,
-  className = ''
-}: FileUploadProps): JSX.Element {
+  className = "",
+}: FileUploadProps): ReactElement {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -33,24 +33,30 @@ export function FileUpload({
   /**
    * Handle file selection from input
    */
-  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      onFileSelect(file);
-    }
-  }, [onFileSelect]);
+  const handleFileChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        setSelectedFile(file);
+        onFileSelect(file);
+      }
+    },
+    [onFileSelect],
+  );
 
   /**
    * Handle drag over
    */
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!disabled) {
-      setIsDragging(true);
-    }
-  }, [disabled]);
+  const handleDragOver = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!disabled) {
+        setIsDragging(true);
+      }
+    },
+    [disabled],
+  );
 
   /**
    * Handle drag leave
@@ -64,21 +70,24 @@ export function FileUpload({
   /**
    * Handle file drop
    */
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragging(false);
 
-    if (disabled) {
-      return;
-    }
+      if (disabled) {
+        return;
+      }
 
-    const file = e.dataTransfer.files?.[0];
-    if (file && file.type === 'application/pdf') {
-      setSelectedFile(file);
-      onFileSelect(file);
-    }
-  }, [disabled, onFileSelect]);
+      const file = e.dataTransfer.files?.[0];
+      if (file && file.type === "application/pdf") {
+        setSelectedFile(file);
+        onFileSelect(file);
+      }
+    },
+    [disabled, onFileSelect],
+  );
 
   /**
    * Handle browse button click
@@ -93,17 +102,19 @@ export function FileUpload({
   const handleClear = useCallback(() => {
     setSelectedFile(null);
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
   }, []);
 
   const uploadZoneClasses = [
-    'upload-zone',
-    isDragging && 'upload-zone--dragging',
-    selectedFile && 'upload-zone--has-file',
-    disabled && 'upload-zone--disabled',
-    error && 'upload-zone--error'
-  ].filter(Boolean).join(' ');
+    "upload-zone",
+    isDragging && "upload-zone--dragging",
+    selectedFile && "upload-zone--has-file",
+    disabled && "upload-zone--disabled",
+    error && "upload-zone--error",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <div className={`file-upload ${className}`}>
@@ -134,7 +145,7 @@ export function FileUpload({
               📄
             </div>
             <div className="upload-zone__text">
-              Drop a PDF here, or{' '}
+              Drop a PDF here, or{" "}
               <button
                 type="button"
                 className="upload-zone__link"
@@ -145,7 +156,8 @@ export function FileUpload({
               </button>
             </div>
             <p className="upload-zone__hint" id="file-upload-description">
-              Maximum file size: {formatFileSize(FILE_CONSTRAINTS.MAX_SIZE_BYTES)}
+              Maximum file size:{" "}
+              {formatFileSize(FILE_CONSTRAINTS.MAX_SIZE_BYTES)}
             </p>
           </>
         ) : (
@@ -182,7 +194,7 @@ export function FileUpload({
       )}
 
       {/* Requirements hint */}
-      <p className="input-hint" style={{ marginTop: 'var(--space-3)' }}>
+      <p className="input-hint" style={{ marginTop: "var(--space-3)" }}>
         PDF format only • Text-based PDF (scanned images not supported)
       </p>
     </div>

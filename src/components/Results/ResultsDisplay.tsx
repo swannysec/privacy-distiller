@@ -5,52 +5,7 @@ import { KeyTermsGlossary } from "./KeyTermsGlossary";
 import { PrivacyScorecard } from "./PrivacyScorecard";
 import { Button } from "../Common";
 import { formatDate } from "../../utils/formatting";
-import type { PrivacyRisk } from "../../types";
-
-/**
- * Analysis result structure used by ResultsDisplay
- */
-interface AnalysisResult {
-  id: string;
-  documentMetadata: {
-    source: string;
-    type: string;
-    rawText?: string;
-    file?: {
-      name: string;
-      size: number;
-      type: string;
-    };
-  };
-  summary: {
-    brief: string;
-    detailed: string;
-    full: string;
-  };
-  risks: PrivacyRisk[];
-  keyTerms: Array<{
-    term: string;
-    definition: string;
-    location?: string;
-  }>;
-  scorecard?: {
-    overallScore?: number;
-    overallGrade?: string;
-    thirdPartySharing?: { score: number; summary?: string };
-    userRights?: { score: number; summary?: string };
-    dataCollection?: { score: number; summary?: string };
-    dataRetention?: { score: number; summary?: string };
-    purposeClarity?: { score: number; summary?: string };
-    securityMeasures?: { score: number; summary?: string };
-    policyTransparency?: { score: number; summary?: string };
-    topConcerns?: string[];
-    positiveAspects?: string[];
-  };
-  timestamp: Date;
-  llmConfig?: unknown;
-  partialFailures?: unknown[];
-  hasPartialFailures?: boolean;
-}
+import type { AnalysisResult, PrivacyRisk } from "../../types";
 
 interface ResultsDisplayProps {
   result: AnalysisResult;
@@ -59,7 +14,7 @@ interface ResultsDisplayProps {
   className?: string;
 }
 
-type ViewMode = 'summary' | 'risks' | 'terms' | 'all';
+type ViewMode = "summary" | "risks" | "terms" | "all";
 
 interface RiskCounts {
   critical: number;
@@ -234,15 +189,19 @@ ${result.keyTerms?.map((t) => `- ${t.term}: ${t.definition}`).join("\n") || "No 
         </div>
 
         <div className="results-actions">
-          <Button variant="ghost" size="sm" onClick={handleCopy}>
+          <Button variant="ghost" size="small" onClick={handleCopy}>
             <span aria-hidden="true">📋</span> Copy
           </Button>
           {onExport && (
-            <Button variant="ghost" size="sm" onClick={() => onExport(result)}>
+            <Button
+              variant="ghost"
+              size="small"
+              onClick={() => onExport(result)}
+            >
               <span aria-hidden="true">💾</span> Export
             </Button>
           )}
-          <Button variant="primary" size="sm" onClick={onNewAnalysis}>
+          <Button variant="primary" size="small" onClick={onNewAnalysis}>
             <span aria-hidden="true">🔄</span> New Analysis
           </Button>
         </div>

@@ -2,14 +2,17 @@
  * @file Loading Spinner Component
  */
 
-import React from 'react';
+import type { ReactElement } from "react";
 
 export interface LoadingSpinnerProps {
-  size?: 'small' | 'medium' | 'large';
+  size?: "small" | "medium" | "large";
   message?: string;
 }
 
-export function LoadingSpinner({ size = 'medium', message }: LoadingSpinnerProps): JSX.Element {
+export function LoadingSpinner({
+  size = "medium",
+  message,
+}: LoadingSpinnerProps): ReactElement {
   return (
     <div className="loading-spinner" role="status">
       <div className={`spinner spinner--${size}`} aria-hidden="true">

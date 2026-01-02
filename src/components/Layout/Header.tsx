@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { useTheme } from '../../contexts/ThemeContext';
-import logo from '../../assets/logo.png';
+import { useState, type ReactElement } from "react";
+import { useTheme } from "../../contexts/ThemeContext";
+import logo from "../../assets/logo.png";
 
 /**
  * Props for Header component
@@ -23,13 +23,13 @@ export function Header({
   onConfigOpen,
   onAboutOpen,
   onTipsOpen,
-  className = ''
-}: HeaderProps): JSX.Element {
+  className = "",
+}: HeaderProps): ReactElement {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { isDarkTheme, toggleTheme } = useTheme();
 
   const toggleMobileMenu = () => {
-    setMobileMenuOpen(prev => !prev);
+    setMobileMenuOpen((prev) => !prev);
   };
 
   return (
@@ -80,11 +80,11 @@ export function Header({
           <button
             type="button"
             className="theme-toggle"
-            onClick={toggleTheme}
+            onClick={() => toggleTheme()}
             aria-label="Toggle dark/light theme"
             title="Toggle theme"
           >
-            {isDarkTheme ? '🌙' : '☀️'}
+            {isDarkTheme ? "🌙" : "☀️"}
           </button>
         </nav>
 
@@ -96,13 +96,17 @@ export function Header({
           aria-expanded={mobileMenuOpen}
           aria-label="Toggle mobile menu"
         >
-          {mobileMenuOpen ? '✕' : '☰'}
+          {mobileMenuOpen ? "✕" : "☰"}
         </button>
       </div>
 
       {/* Mobile menu */}
       {mobileMenuOpen && (
-        <div className="header__mobile-menu" role="navigation" aria-label="Mobile navigation">
+        <div
+          className="header__mobile-menu"
+          role="navigation"
+          aria-label="Mobile navigation"
+        >
           <button
             type="button"
             className="header__mobile-menu-item"
@@ -147,8 +151,8 @@ export function Header({
               setMobileMenuOpen(false);
             }}
           >
-            <span aria-hidden="true">{isDarkTheme ? '🌙' : '☀️'}</span>
-            {isDarkTheme ? 'Dark Mode' : 'Light Mode'}
+            <span aria-hidden="true">{isDarkTheme ? "🌙" : "☀️"}</span>
+            {isDarkTheme ? "Dark Mode" : "Light Mode"}
           </button>
         </div>
       )}

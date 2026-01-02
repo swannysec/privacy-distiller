@@ -7,7 +7,7 @@ import { Button } from "../Common";
 import { LLM_PROVIDERS, DEFAULT_CONTEXT_WINDOWS } from "../../utils/constants";
 import type { LLMConfig, LLMProvider } from "../../types";
 
-type TestStatus = 'testing' | 'success' | 'error';
+type TestStatus = "testing" | "success" | "error";
 
 interface TestStatusConfig {
   badge: string;
@@ -35,7 +35,7 @@ export function LLMConfigPanel({
   className = "",
 }: LLMConfigPanelProps) {
   const { config, updateConfig, setProvider, validateConfig } = useLLMConfig();
-  const [hasChanges, setHasChanges] = useState(false);
+  const [, setHasChanges] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [testStatus, setTestStatus] = useState<TestStatus | null>(null);
   const [testMessage, setTestMessage] = useState("");
@@ -97,7 +97,9 @@ export function LLMConfigPanel({
   const handleContextWindowChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const value = e.target.value;
-      updateConfig({ contextWindow: value === "" ? null : parseInt(value) });
+      updateConfig({
+        contextWindow: value === "" ? undefined : parseInt(value),
+      });
       setHasChanges(true);
     },
     [updateConfig],
@@ -171,7 +173,9 @@ export function LLMConfigPanel({
       }
     } catch (error) {
       setTestStatus("error");
-      setTestMessage(`Connection failed: ${error instanceof Error ? error.message : String(error)}`);
+      setTestMessage(
+        `Connection failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }, [config, validateConfig]);
 

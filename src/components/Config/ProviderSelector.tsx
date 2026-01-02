@@ -1,5 +1,5 @@
-import { LLM_PROVIDERS } from '../../utils/constants';
-import type { LLMProvider } from '../../types';
+import { LLM_PROVIDERS } from "../../utils/constants";
+import type { LLMProvider } from "../../types";
 
 interface ProviderSelectorProps {
   value: LLMProvider;
@@ -12,7 +12,7 @@ export function ProviderSelector({
   value,
   onChange,
   disabled = false,
-  className = ''
+  className = "",
 }: ProviderSelectorProps) {
   const providers = Object.values(LLM_PROVIDERS);
 
@@ -37,18 +37,23 @@ export function ProviderSelector({
         onChange={handleChange}
         disabled={disabled}
       >
-        {providers.map((provider) => (
-          <option key={provider.id} value={provider.id}>
-            {provider.name}{provider.requiresApiKey ? '' : ' (Local)'}
-          </option>
-        ))}
+        {providers
+          .filter((p): p is NonNullable<typeof p> => p != null)
+          .map((providerOption) => (
+            <option key={providerOption.id} value={providerOption.id}>
+              {providerOption.name}
+              {providerOption.requiresApiKey ? "" : " (Local)"}
+            </option>
+          ))}
       </select>
 
       {currentProvider && (
         <p className="input-hint">
-          {value === 'openrouter' && (
+          {value === "openrouter" && (
             <>
-              <strong>Recommended for large documents.</strong> Access Claude, GPT-4, Gemini and more with 100K+ token contexts. Get your API key at{' '}
+              <strong>Recommended for large documents.</strong> Access Claude,
+              GPT-4, Gemini and more with 100K+ token contexts. Get your API key
+              at{" "}
               <a
                 href="https://openrouter.ai/keys"
                 target="_blank"
@@ -58,9 +63,10 @@ export function ProviderSelector({
               </a>
             </>
           )}
-          {value === 'ollama' && (
+          {value === "ollama" && (
             <>
-              Runs models locally. Limited context windows may not handle large documents. Install from{' '}
+              Runs models locally. Limited context windows may not handle large
+              documents. Install from{" "}
               <a
                 href="https://ollama.ai"
                 target="_blank"
@@ -70,9 +76,10 @@ export function ProviderSelector({
               </a>
             </>
           )}
-          {value === 'lmstudio' && (
+          {value === "lmstudio" && (
             <>
-              Desktop app for local models. Limited context windows may not handle large documents. Download from{' '}
+              Desktop app for local models. Limited context windows may not
+              handle large documents. Download from{" "}
               <a
                 href="https://lmstudio.ai"
                 target="_blank"

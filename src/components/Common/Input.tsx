@@ -2,9 +2,12 @@
  * @file Input Component
  */
 
-import React from 'react';
+import React from "react";
 
-export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
+export interface InputProps extends Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  "onChange"
+> {
   type?: string;
   value?: string;
   onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -19,7 +22,7 @@ export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElem
 }
 
 export function Input({
-  type = 'text',
+  type = "text",
   value,
   onChange,
   placeholder,
@@ -29,17 +32,22 @@ export function Input({
   id,
   name,
   required = false,
-  className = '',
+  className = "",
   ...props
-}: InputProps): JSX.Element {
-  const inputId = id || name || `input-${Math.random().toString(36).substr(2, 9)}`;
+}: InputProps): React.ReactElement {
+  const inputId =
+    id || name || `input-${Math.random().toString(36).substr(2, 9)}`;
 
   return (
     <div className={`input-wrapper ${className}`}>
       {label && (
         <label htmlFor={inputId} className="input-label">
           {label}
-          {required && <span className="input-required" aria-label="required">*</span>}
+          {required && (
+            <span className="input-required" aria-label="required">
+              *
+            </span>
+          )}
         </label>
       )}
       <input
@@ -51,7 +59,7 @@ export function Input({
         placeholder={placeholder}
         disabled={disabled}
         required={required}
-        className={`input ${error ? 'input--error' : ''}`}
+        className={`input ${error ? "input--error" : ""}`}
         aria-invalid={!!error}
         aria-describedby={error ? `${inputId}-error` : undefined}
         {...props}

@@ -1,6 +1,6 @@
-import { useState, useCallback } from 'react';
-import { validateApiKey } from '../../utils/validation';
-import type { LLMProvider } from '../../types';
+import { useState, useCallback } from "react";
+import { validateApiKey } from "../../utils/validation";
+import type { LLMProvider } from "../../types";
 
 interface APIKeyInputProps {
   value: string;
@@ -13,30 +13,33 @@ interface APIKeyInputProps {
 export function APIKeyInput({
   value,
   onChange,
-  provider,
+  provider: _provider,
   disabled = false,
-  className = ''
+  className = "",
 }: APIKeyInputProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-    setError(null);
-    onChange(newValue);
-  }, [onChange]);
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const newValue = e.target.value;
+      setError(null);
+      onChange(newValue);
+    },
+    [onChange],
+  );
 
   const handleBlur = useCallback(() => {
     if (value) {
-      const validation = validateApiKey(value, provider);
-      if (!validation.isValid) {
-        setError(validation.errors.join(', '));
+      const validation = validateApiKey(value);
+      if (!validation.valid) {
+        setError(validation.errors.map((e) => e.message).join(", "));
       }
     }
-  }, [value, provider]);
+  }, [value]);
 
   const toggleVisibility = useCallback(() => {
-    setIsVisible(prev => !prev);
+    setIsVisible((prev) => !prev);
   }, []);
 
   const hasValue = value && value.length > 0;
@@ -49,9 +52,9 @@ export function APIKeyInput({
 
       <div className="input-with-button">
         <input
-          type={isVisible ? 'text' : 'password'}
+          type={isVisible ? "text" : "password"}
           id="api-key"
-          className={`input-field ${error ? 'input-field--error' : ''}`}
+          className={`input-field ${error ? "input-field--error" : ""}`}
           value={value}
           onChange={handleChange}
           onBlur={handleBlur}
@@ -65,9 +68,9 @@ export function APIKeyInput({
           className="btn btn--ghost btn--sm input-toggle-btn"
           onClick={toggleVisibility}
           disabled={disabled || !hasValue}
-          aria-label={isVisible ? 'Hide API key' : 'Show API key'}
+          aria-label={isVisible ? "Hide API key" : "Show API key"}
         >
-          {isVisible ? '🙈' : '👁️'}
+          {isVisible ? "🙈" : "👁️"}
         </button>
       </div>
 

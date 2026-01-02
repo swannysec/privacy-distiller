@@ -2,13 +2,13 @@
  * @file Button Component
  */
 
-import React from 'react';
+import React from "react";
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode;
-  type?: 'button' | 'submit' | 'reset';
-  variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
-  size?: 'small' | 'medium' | 'large';
+  type?: "button" | "submit" | "reset";
+  variant?: "primary" | "secondary" | "danger" | "ghost";
+  size?: "small" | "medium" | "large";
   disabled?: boolean;
   loading?: boolean;
   onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
@@ -19,30 +19,43 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 
 export function Button({
   children,
-  type = 'button',
-  variant = 'primary',
-  size = 'medium',
+  type = "button",
+  variant = "primary",
+  size = "medium",
   disabled = false,
   loading = false,
   onClick,
-  className = '',
+  className = "",
   ariaLabel,
   style,
   ...props
-}: ButtonProps): JSX.Element {
-  const baseClasses = 'btn';
-  const variantClass = variant === 'primary' ? 'btn--primary' :
-                       variant === 'secondary' ? 'btn--secondary' :
-                       variant === 'danger' ? 'btn--danger' :
-                       variant === 'ghost' ? 'btn--ghost' : '';
-  const sizeClass = size === 'small' ? 'btn--small' :
-                    size === 'large' ? 'btn--large' : '';
-  const disabledClass = disabled || loading ? 'btn--disabled' : '';
-  const loadingClass = loading ? 'btn--loading' : '';
+}: ButtonProps): React.ReactElement {
+  const baseClasses = "btn";
+  const variantClass =
+    variant === "primary"
+      ? "btn--primary"
+      : variant === "secondary"
+        ? "btn--secondary"
+        : variant === "danger"
+          ? "btn--danger"
+          : variant === "ghost"
+            ? "btn--ghost"
+            : "";
+  const sizeClass =
+    size === "small" ? "btn--small" : size === "large" ? "btn--large" : "";
+  const disabledClass = disabled || loading ? "btn--disabled" : "";
+  const loadingClass = loading ? "btn--loading" : "";
 
-  const classes = [baseClasses, variantClass, sizeClass, disabledClass, loadingClass, className]
+  const classes = [
+    baseClasses,
+    variantClass,
+    sizeClass,
+    disabledClass,
+    loadingClass,
+    className,
+  ]
     .filter(Boolean)
-    .join(' ');
+    .join(" ");
 
   return (
     <button

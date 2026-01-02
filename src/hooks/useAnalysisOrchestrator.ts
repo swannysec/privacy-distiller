@@ -8,72 +8,13 @@ import { useAnalysis } from "../contexts/AnalysisContext.jsx";
 import { useDocumentExtractor } from "./useDocumentExtractor";
 import { useLLMProvider } from "./useLLMProvider";
 import { PolicyAnalyzer } from "../services/analysis/PolicyAnalyzer";
-import type { LLMConfig, PrivacyRisk, KeyTerm } from "../types";
+import type { LLMConfig, DocumentInput, AnalysisResult } from "../types";
 
 /**
- * Document input for analysis
+ * Extended LLM config with optional contextWindow
  */
-interface DocumentInput {
-  /** Type of document input */
-  type: "url" | "file";
-  /** Source - URL string or File object */
-  source: string | File;
-}
-
-/**
- * Scorecard from PolicyAnalyzer
- */
-interface Scorecard {
-  overallGrade: string;
-  overallScore: number;
-  categories: Array<{
-    name: string;
-    score: number;
-    grade: string;
-    findings: string[];
-  }>;
-}
-
-/**
- * Partial failure from Promise.allSettled analysis
- */
-interface PartialFailure {
-  stage: string;
-  error: string;
-}
-
-/**
- * Document metadata in analysis result
- */
-interface DocumentMetadata {
-  source: string;
-  type: "url" | "pdf";
-  rawText: string;
-  file?: {
-    name: string;
-    size: number;
-    type: string;
-  };
-}
-
-/**
- * Analysis result from orchestrator
- */
-interface OrchestratorAnalysisResult {
-  id: string;
-  documentMetadata: DocumentMetadata;
-  summary: {
-    brief: string;
-    detailed: string;
-    full: string;
-  };
-  risks: PrivacyRisk[];
-  keyTerms: KeyTerm[];
-  scorecard: Scorecard;
-  timestamp: Date;
-  llmConfig: LLMConfig;
-  partialFailures: PartialFailure[];
-  hasPartialFailures: boolean;
+interface ExtendedLLMConfig extends LLMConfig {
+  contextWindow?: number;
 }
 
 /**
@@ -87,13 +28,6 @@ interface ContextWindowValidation {
 }
 
 /**
- * Extended LLM config with optional contextWindow
- */
-interface ExtendedLLMConfig extends LLMConfig {
-  contextWindow?: number;
-}
-
-/**
  * Return type for useAnalysisOrchestrator hook
  */
 export interface UseAnalysisOrchestratorReturn {
@@ -102,11 +36,14 @@ export interface UseAnalysisOrchestratorReturn {
   /** Analyze a PDF file */
   analyzePdf: (file: File) => Promise<void>;
   /** Unified analysis entry point */
-  startAnalysis: (documentInput: DocumentInput, config?: LLMConfig) => Promise<void>;
+  startAnalysis: (
+    documentInput: DocumentInput,
+    config?: LLMConfig,
+  ) => Promise<void>;
   /** Current analysis status */
   status: string;
   /** Analysis result if completed */
-  result: OrchestratorAnalysisResult | null;
+  result: AnalysisResult | null;
   /** Error message if status is 'error' */
   error: string | null;
   /** Progress percentage (0-100) */
@@ -122,7 +59,7 @@ export interface UseAnalysisOrchestratorReturn {
   /** Set status to analyzing */
   setAnalyzing: () => void;
   /** Complete analysis with results */
-  completeAnalysis: (result: OrchestratorAnalysisResult) => void;
+  completeAnalysis: (result: AnalysisResult) => void;
   /** Set error state */
   setError: (error: string) => void;
   /** Reset analysis state */
@@ -165,7 +102,7 @@ const RESERVED_TOKENS = 8000;
  */
 async function fetchOpenRouterModelContextLength(
   modelId: string,
-  apiKey: string
+  apiKey: string,
 ): Promise<number | null> {
   try {
     const response = await fetch("https://openrouter.ai/api/v1/models", {
@@ -176,7 +113,7 @@ async function fetchOpenRouterModelContextLength(
 
     const data = await response.json();
     const model = data.data?.find(
-      (m: { id: string; context_length?: number }) => m.id === modelId
+      (m: { id: string; context_length?: number }) => m.id === modelId,
     );
 
     return model?.context_length || null;
@@ -193,7 +130,7 @@ async function fetchOpenRouterModelContextLength(
  */
 async function validateContextWindow(
   text: string,
-  config: ExtendedLLMConfig
+  config: ExtendedLLMConfig,
 ): Promise<ContextWindowValidation> {
   const charCount = text.length;
   const estimatedTokens = Math.ceil(charCount / CHARS_PER_TOKEN);
@@ -212,7 +149,7 @@ async function validateContextWindow(
     // For OpenRouter, auto-detect from API
     contextLength = await fetchOpenRouterModelContextLength(
       config.model,
-      config.apiKey
+      config.apiKey,
     );
   } else if (config.provider === "ollama" || config.provider === "lmstudio") {
     // For local providers, use conservative defaults
@@ -267,7 +204,7 @@ export function useAnalysisOrchestrator(): UseAnalysisOrchestratorReturn {
 
   // Ref to hold simulated progress interval
   const simulatedProgressRef = useRef<ReturnType<typeof setInterval> | null>(
-    null
+    null,
   );
 
   /**
@@ -291,7 +228,7 @@ export function useAnalysisOrchestrator(): UseAnalysisOrchestratorReturn {
         analysis.updateProgress(currentProgress, message);
       }, 800);
     },
-    [analysis]
+    [analysis],
   );
 
   /**
@@ -343,7 +280,7 @@ export function useAnalysisOrchestrator(): UseAnalysisOrchestratorReturn {
         analysis.updateProgress(32, "Checking model context limits...");
         const contextValidation = await validateContextWindow(
           rawText,
-          llm.config as ExtendedLLMConfig
+          llm.config as ExtendedLLMConfig,
         );
         if (!contextValidation.valid) {
           throw new Error(contextValidation.error);
@@ -363,12 +300,12 @@ export function useAnalysisOrchestrator(): UseAnalysisOrchestratorReturn {
             stopSimulatedProgress();
             analysis.updateProgress(progress, message);
           },
-          true // useParallel = true for Promise.allSettled
+          true, // useParallel = true for Promise.allSettled
         );
         stopSimulatedProgress();
 
         // Transform PolicyAnalyzer result format to orchestrator format
-        const result: OrchestratorAnalysisResult = {
+        const result: AnalysisResult = {
           id: analysisResult.id,
           documentMetadata: {
             source: url,
@@ -395,11 +332,11 @@ export function useAnalysisOrchestrator(): UseAnalysisOrchestratorReturn {
         stopSimulatedProgress();
         analysis.setError(
           (err instanceof Error ? err.message : null) ||
-            "Failed to analyze document"
+            "Failed to analyze document",
         );
       }
     },
-    [analysis, extractor, llm, startSimulatedProgress, stopSimulatedProgress]
+    [analysis, extractor, llm, startSimulatedProgress, stopSimulatedProgress],
   );
 
   /**
@@ -432,7 +369,7 @@ export function useAnalysisOrchestrator(): UseAnalysisOrchestratorReturn {
         analysis.updateProgress(32, "Checking model context limits...");
         const contextValidation = await validateContextWindow(
           rawText,
-          llm.config as ExtendedLLMConfig
+          llm.config as ExtendedLLMConfig,
         );
         if (!contextValidation.valid) {
           throw new Error(contextValidation.error);
@@ -452,12 +389,12 @@ export function useAnalysisOrchestrator(): UseAnalysisOrchestratorReturn {
             stopSimulatedProgress();
             analysis.updateProgress(progress, message);
           },
-          true // useParallel = true for Promise.allSettled
+          true, // useParallel = true for Promise.allSettled
         );
         stopSimulatedProgress();
 
         // Transform PolicyAnalyzer result format to orchestrator format
-        const result: OrchestratorAnalysisResult = {
+        const result: AnalysisResult = {
           id: analysisResult.id,
           documentMetadata: {
             source: file.name,
@@ -484,11 +421,12 @@ export function useAnalysisOrchestrator(): UseAnalysisOrchestratorReturn {
       } catch (err) {
         stopSimulatedProgress();
         analysis.setError(
-          (err instanceof Error ? err.message : null) || "Failed to analyze PDF"
+          (err instanceof Error ? err.message : null) ||
+            "Failed to analyze PDF",
         );
       }
     },
-    [analysis, extractor, llm, startSimulatedProgress, stopSimulatedProgress]
+    [analysis, extractor, llm, startSimulatedProgress, stopSimulatedProgress],
   );
 
   /**
@@ -497,16 +435,21 @@ export function useAnalysisOrchestrator(): UseAnalysisOrchestratorReturn {
    * @param _config - LLM config (unused, llm hook gets config from context)
    */
   const startAnalysis = useCallback(
-    async (documentInput: DocumentInput, _config?: LLMConfig): Promise<void> => {
+    async (
+      documentInput: DocumentInput,
+      _config?: LLMConfig,
+    ): Promise<void> => {
       if (documentInput.type === "url") {
         return analyzeUrl(documentInput.source as string);
       } else if (documentInput.type === "file") {
         return analyzePdf(documentInput.source as File);
       } else {
-        throw new Error(`Unknown document type: ${(documentInput as DocumentInput).type}`);
+        throw new Error(
+          `Unknown document type: ${(documentInput as DocumentInput).type}`,
+        );
       }
     },
-    [analyzeUrl, analyzePdf]
+    [analyzeUrl, analyzePdf],
   );
 
   return {

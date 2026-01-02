@@ -3,7 +3,7 @@
  * @description Manages document analysis state and results
  */
 
-import React, {
+import {
   createContext,
   useContext,
   useState,
@@ -14,7 +14,11 @@ import React, {
 import { ANALYSIS_STATUS } from "../utils/constants.js";
 import { generateId } from "../utils/helpers.js";
 import { saveAnalysisToHistory } from "../utils/storage.js";
-import type { DocumentInput, AnalysisResult, AnalysisStatus } from "../types/index.js";
+import type {
+  DocumentInput,
+  AnalysisResult,
+  AnalysisStatus,
+} from "../types/index.js";
 
 /**
  * Internal state shape for analysis
@@ -64,14 +68,17 @@ interface AnalysisComputed {
 /**
  * Complete context value type
  */
-interface AnalysisContextValue extends AnalysisStateValues, AnalysisActions, AnalysisComputed {
+interface AnalysisContextValue
+  extends AnalysisStateValues, AnalysisActions, AnalysisComputed {
   // Grouped structure (preferred)
   state: AnalysisStateValues;
   actions: AnalysisActions;
   computed: AnalysisComputed;
 }
 
-const AnalysisContext = createContext<AnalysisContextValue | undefined>(undefined);
+const AnalysisContext = createContext<AnalysisContextValue | undefined>(
+  undefined,
+);
 
 /**
  * Analysis Provider Component Props
@@ -125,13 +132,16 @@ export function AnalysisProvider({ children }: AnalysisProviderProps) {
   /**
    * Updates analysis progress
    */
-  const updateProgress = useCallback((progress: number, currentStep: string) => {
-    setState((prev) => ({
-      ...prev,
-      progress,
-      currentStep,
-    }));
-  }, []);
+  const updateProgress = useCallback(
+    (progress: number, currentStep: string) => {
+      setState((prev) => ({
+        ...prev,
+        progress,
+        currentStep,
+      }));
+    },
+    [],
+  );
 
   /**
    * Sets status to analyzing

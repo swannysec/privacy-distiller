@@ -1,4 +1,10 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import {
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+  type ReactElement,
+} from "react";
 import { Button } from "../Common";
 
 /**
@@ -44,7 +50,7 @@ export function URLInput({
   onClearAnalysisError = null,
   placeholder = "https://example.com/privacy-policy",
   className = "",
-}: URLInputProps): JSX.Element {
+}: URLInputProps): ReactElement {
   const [url, setUrl] = useState("");
   const [isValidating, setIsValidating] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -59,13 +65,16 @@ export function URLInput({
   /**
    * Handle URL input change
    */
-  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setUrl(e.target.value);
-    // Clear error when user starts typing
-    if (error && onClearError) {
-      onClearError();
-    }
-  }, [error, onClearError]);
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setUrl(e.target.value);
+      // Clear error when user starts typing
+      if (error && onClearError) {
+        onClearError();
+      }
+    },
+    [error, onClearError],
+  );
 
   /**
    * Handle form submission
@@ -104,12 +113,15 @@ export function URLInput({
   /**
    * Handle example click
    */
-  const handleExampleClick = useCallback((exampleUrl: string) => {
-    setUrl(exampleUrl);
-    if (onClearError) {
-      onClearError();
-    }
-  }, [onClearError]);
+  const handleExampleClick = useCallback(
+    (exampleUrl: string) => {
+      setUrl(exampleUrl);
+      if (onClearError) {
+        onClearError();
+      }
+    },
+    [onClearError],
+  );
 
   const isDisabled = disabled || isValidating;
   const hasValue = url.trim().length > 0;
@@ -117,9 +129,15 @@ export function URLInput({
   const examples: ExampleUrl[] = [
     { label: "Google", url: "https://policies.google.com/privacy" },
     { label: "Facebook", url: "https://www.facebook.com/privacy/policy/" },
-    { label: "Amazon", url: "https://www.amazon.com/gp/help/customer/display.html?nodeId=468496" },
+    {
+      label: "Amazon",
+      url: "https://www.amazon.com/gp/help/customer/display.html?nodeId=468496",
+    },
     { label: "Apple", url: "https://www.apple.com/legal/privacy/en-ww/" },
-    { label: "Microsoft", url: "https://privacy.microsoft.com/en-us/privacystatement" },
+    {
+      label: "Microsoft",
+      url: "https://privacy.microsoft.com/en-us/privacystatement",
+    },
   ];
 
   return (
@@ -174,7 +192,9 @@ export function URLInput({
       {analysisError && (
         <div className="analysis-error" role="alert">
           <div className="analysis-error__content">
-            <span className="analysis-error__icon" aria-hidden="true">⚠️</span>
+            <span className="analysis-error__icon" aria-hidden="true">
+              ⚠️
+            </span>
             <div className="analysis-error__text">
               <strong className="analysis-error__title">Analysis Failed</strong>
               <p className="analysis-error__message">{analysisError}</p>

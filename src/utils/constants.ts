@@ -2,7 +2,7 @@
  * @file Application constants
  */
 
-import type { LLMProvider } from '../types';
+import type { LLMProvider } from "../types";
 
 interface ProviderConfig {
   id: LLMProvider;
@@ -16,6 +16,7 @@ interface LLMProviders {
   OPENROUTER: ProviderConfig;
   OLLAMA: ProviderConfig;
   LMSTUDIO: ProviderConfig;
+  [key: string]: ProviderConfig | undefined;
 }
 
 interface DefaultLLMConfig {
@@ -78,13 +79,13 @@ interface RiskLevels {
   CRITICAL: RiskLevelConfig;
 }
 
-interface AnalysisStatus {
-  IDLE: string;
-  EXTRACTING: string;
-  ANALYZING: string;
-  COMPLETED: string;
-  ERROR: string;
-  FAILED: string;
+interface AnalysisStatusConstants {
+  IDLE: "idle";
+  EXTRACTING: "extracting";
+  ANALYZING: "analyzing";
+  COMPLETED: "completed";
+  ERROR: "error";
+  FAILED: "failed";
 }
 
 interface SummaryTypeConfig {
@@ -258,14 +259,14 @@ export const RISK_LEVELS: RiskLevels = {
 };
 
 // Analysis statuses
-export const ANALYSIS_STATUS: AnalysisStatus = {
+export const ANALYSIS_STATUS: AnalysisStatusConstants = {
   IDLE: "idle",
   EXTRACTING: "extracting",
   ANALYZING: "analyzing",
   COMPLETED: "completed",
   ERROR: "error",
   FAILED: "failed",
-};
+} as const;
 
 // Summary types
 export const SUMMARY_TYPES: SummaryTypes = {
@@ -351,7 +352,8 @@ export const ERROR_MESSAGES: ErrorMessages = {
 
 // CORS proxy configuration
 // Cloudflare Worker proxies requests to bypass CORS restrictions
-export const CLOUDFLARE_WORKER_URL: string = "https://proxy.privacydistiller.com";
+export const CLOUDFLARE_WORKER_URL: string =
+  "https://proxy.privacydistiller.com";
 
 // CORS proxy fallback chain
 // When CLOUDFLARE_WORKER_URL is set, it will be used exclusively

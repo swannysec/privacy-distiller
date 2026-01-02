@@ -1,3 +1,5 @@
+import type { ReactElement } from "react";
+
 /**
  * Props for Footer component
  */
@@ -20,7 +22,7 @@ export function Footer({
   onPrivacyPolicyOpen,
   onTermsOfServiceOpen,
   className = "",
-}: FooterProps): JSX.Element {
+}: FooterProps): ReactElement {
   const currentYear = new Date().getFullYear();
 
   return (
