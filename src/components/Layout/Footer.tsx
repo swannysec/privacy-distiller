@@ -1,18 +1,26 @@
 /**
+ * Props for Footer component
+ */
+interface FooterProps {
+  /** Callback to open about modal */
+  onAboutOpen?: () => void;
+  /** Callback to open privacy policy modal */
+  onPrivacyPolicyOpen?: () => void;
+  /** Callback to open terms of service modal */
+  onTermsOfServiceOpen?: () => void;
+  /** Additional CSS classes */
+  className?: string;
+}
+
+/**
  * Footer - Application footer with legal info and links
- * @param {Object} props
- * @param {Function} props.onAboutOpen - Callback to open about modal
- * @param {Function} props.onPrivacyPolicyOpen - Callback to open privacy policy modal
- * @param {Function} props.onTermsOfServiceOpen - Callback to open terms of service modal
- * @param {string} props.className - Additional CSS classes
- * @returns {JSX.Element}
  */
 export function Footer({
   onAboutOpen,
   onPrivacyPolicyOpen,
   onTermsOfServiceOpen,
   className = "",
-}) {
+}: FooterProps): JSX.Element {
   const currentYear = new Date().getFullYear();
 
   return (

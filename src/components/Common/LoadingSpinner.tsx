@@ -4,7 +4,12 @@
 
 import React from 'react';
 
-export function LoadingSpinner({ size = 'medium', message }) {
+export interface LoadingSpinnerProps {
+  size?: 'small' | 'medium' | 'large';
+  message?: string;
+}
+
+export function LoadingSpinner({ size = 'medium', message }: LoadingSpinnerProps): JSX.Element {
   return (
     <div className="loading-spinner" role="status">
       <div className={`spinner spinner--${size}`} aria-hidden="true">

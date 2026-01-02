@@ -5,18 +5,27 @@
 
 import React from 'react';
 
-export class ErrorBoundary extends React.Component {
-  constructor(props) {
+export interface ErrorBoundaryProps {
+  children: React.ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, error: null };
     this.handleReset = this.handleReset.bind(this);
   }
 
-  static getDerivedStateFromError(error) {
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error, errorInfo) {
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
     // Only log in development to avoid exposing details in production
     if (import.meta.env.DEV) {
       console.error('Error boundary caught:', error, errorInfo);
@@ -26,11 +35,11 @@ export class ErrorBoundary extends React.Component {
   /**
    * Resets error state to allow recovery without page refresh
    */
-  handleReset() {
+  handleReset(): void {
     this.setState({ hasError: false, error: null });
   }
 
-  render() {
+  render(): React.ReactNode {
     if (this.state.hasError) {
       return (
         <div className="error-boundary" role="alert">

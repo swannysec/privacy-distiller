@@ -14,20 +14,25 @@ const sanitizeSchema = {
   },
 };
 
-/**
- * @typedef {'brief' | 'detailed' | 'full'} SummaryLevel
- */
+type SummaryLevel = 'brief' | 'detailed' | 'full';
+
+interface PolicySummary {
+  brief: string;
+  detailed: string;
+  full: string;
+}
+
+interface SummaryViewProps {
+  summary?: PolicySummary;
+  className?: string;
+}
 
 /**
  * SummaryView - Component for displaying layered policy summaries
  * Uses simple underlined tabs matching the mockup design
- * @param {Object} props
- * @param {import('../../types').PolicySummary} props.summary - Summary data
- * @param {string} props.className - Additional CSS classes
- * @returns {JSX.Element}
  */
-export function SummaryView({ summary = {}, className = '' }) {
-  const [level, setLevel] = useState(/** @type {SummaryLevel} */ ('brief'));
+export function SummaryView({ summary = { brief: '', detailed: '', full: '' }, className = '' }: SummaryViewProps) {
+  const [level, setLevel] = useState<SummaryLevel>('brief');
 
   // Ensure summary has safe defaults
   const safeSummary = {
@@ -39,7 +44,7 @@ export function SummaryView({ summary = {}, className = '' }) {
   /**
    * Get content for current level
    */
-  const getCurrentContent = () => {
+  const getCurrentContent = (): string => {
     switch (level) {
       case 'brief':
         return safeSummary.brief;

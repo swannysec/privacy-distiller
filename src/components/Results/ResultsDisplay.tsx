@@ -5,13 +5,78 @@ import { KeyTermsGlossary } from "./KeyTermsGlossary";
 import { PrivacyScorecard } from "./PrivacyScorecard";
 import { Button } from "../Common";
 import { formatDate } from "../../utils/formatting";
+import type { PrivacyRisk } from "../../types";
+
+/**
+ * Analysis result structure used by ResultsDisplay
+ */
+interface AnalysisResult {
+  id: string;
+  documentMetadata: {
+    source: string;
+    type: string;
+    rawText?: string;
+    file?: {
+      name: string;
+      size: number;
+      type: string;
+    };
+  };
+  summary: {
+    brief: string;
+    detailed: string;
+    full: string;
+  };
+  risks: PrivacyRisk[];
+  keyTerms: Array<{
+    term: string;
+    definition: string;
+    location?: string;
+  }>;
+  scorecard?: {
+    overallScore?: number;
+    overallGrade?: string;
+    thirdPartySharing?: { score: number; summary?: string };
+    userRights?: { score: number; summary?: string };
+    dataCollection?: { score: number; summary?: string };
+    dataRetention?: { score: number; summary?: string };
+    purposeClarity?: { score: number; summary?: string };
+    securityMeasures?: { score: number; summary?: string };
+    policyTransparency?: { score: number; summary?: string };
+    topConcerns?: string[];
+    positiveAspects?: string[];
+  };
+  timestamp: Date;
+  llmConfig?: unknown;
+  partialFailures?: unknown[];
+  hasPartialFailures?: boolean;
+}
+
+interface ResultsDisplayProps {
+  result: AnalysisResult;
+  onNewAnalysis: () => void;
+  onExport?: (result: AnalysisResult) => void;
+  className?: string;
+}
+
+type ViewMode = 'summary' | 'risks' | 'terms' | 'all';
+
+interface RiskCounts {
+  critical: number;
+  high: number;
+  medium: number;
+  low: number;
+}
+
+interface RiskLevelResult {
+  level: string;
+  counts: RiskCounts;
+}
 
 /**
  * Calculate overall risk level from risks array
- * @param {Array} risks - Array of risk objects with severity
- * @returns {{level: string, counts: Object}} Risk level and severity counts
  */
-function calculateRiskLevel(risks) {
+function calculateRiskLevel(risks: PrivacyRisk[] | undefined): RiskLevelResult {
   if (!risks || risks.length === 0) {
     return {
       level: "none",
@@ -19,7 +84,7 @@ function calculateRiskLevel(risks) {
     };
   }
 
-  const counts = { critical: 0, high: 0, medium: 0, low: 0 };
+  const counts: RiskCounts = { critical: 0, high: 0, medium: 0, low: 0 };
 
   risks.forEach((risk) => {
     const severity = (risk.severity || "low").toLowerCase();
@@ -45,26 +110,16 @@ function calculateRiskLevel(risks) {
 }
 
 /**
- * @typedef {'summary' | 'risks' | 'terms' | 'all'} ViewMode
- */
-
-/**
  * ResultsDisplay - Main component for displaying analysis results
  * Matches the mockup design with proper header, metadata, and action buttons
- * @param {Object} props
- * @param {import('../../types').AnalysisResult} props.result - Analysis result data
- * @param {Function} props.onNewAnalysis - Callback to start new analysis
- * @param {Function} props.onExport - Optional callback to export results
- * @param {string} props.className - Additional CSS classes
- * @returns {JSX.Element}
  */
 export function ResultsDisplay({
   result,
   onNewAnalysis,
   onExport,
   className = "",
-}) {
-  const [viewMode, setViewMode] = useState(/** @type {ViewMode} */ ("summary"));
+}: ResultsDisplayProps) {
+  const [viewMode, setViewMode] = useState<ViewMode>("summary");
 
   // Guard against missing or incomplete result data
   if (!result || !result.documentMetadata) {

@@ -1,24 +1,24 @@
 import { LLM_PROVIDERS } from '../../utils/constants';
+import type { LLMProvider } from '../../types';
 
-/**
- * ProviderSelector - Dropdown component for selecting LLM provider
- * @param {Object} props
- * @param {string} props.value - Currently selected provider ID
- * @param {Function} props.onChange - Callback when provider changes
- * @param {boolean} props.disabled - Whether selector is disabled
- * @param {string} props.className - Additional CSS classes
- * @returns {JSX.Element}
- */
-export function ProviderSelector({ value, onChange, disabled = false, className = '' }) {
+interface ProviderSelectorProps {
+  value: LLMProvider;
+  onChange: (provider: LLMProvider) => void;
+  disabled?: boolean;
+  className?: string;
+}
+
+export function ProviderSelector({
+  value,
+  onChange,
+  disabled = false,
+  className = ''
+}: ProviderSelectorProps) {
   const providers = Object.values(LLM_PROVIDERS);
 
-  /**
-   * Handle provider selection change
-   * @param {React.ChangeEvent<HTMLSelectElement>} e
-   */
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     if (!disabled) {
-      onChange(e.target.value);
+      onChange(e.target.value as LLMProvider);
     }
   };
 
@@ -44,7 +44,6 @@ export function ProviderSelector({ value, onChange, disabled = false, className 
         ))}
       </select>
 
-      {/* Provider info hint */}
       {currentProvider && (
         <p className="input-hint">
           {value === 'openrouter' && (

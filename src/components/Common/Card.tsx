@@ -4,7 +4,15 @@
 
 import React from 'react';
 
-export function Card({ children, className = '', title, subtitle, ...props }) {
+export interface CardProps {
+  children: React.ReactNode;
+  className?: string;
+  title?: string;
+  subtitle?: string;
+  [key: string]: unknown;
+}
+
+export function Card({ children, className = '', title, subtitle, ...props }: CardProps): JSX.Element {
   return (
     <div className={`card ${className}`} {...props}>
       {(title || subtitle) && (

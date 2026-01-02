@@ -5,19 +5,44 @@ import { Card } from "../Common";
 import { validateUrl, validateFile } from "../../utils/validation";
 
 /**
- * @typedef {'url' | 'file'} InputMode
+ * Type of input mode
  */
+type InputMode = 'url' | 'file';
+
+/**
+ * Document selection data passed to parent
+ */
+interface DocumentSelection {
+  type: 'url' | 'file';
+  source: string | File;
+  metadata: {
+    inputMode: InputMode;
+    timestamp: string;
+    fileName?: string;
+    fileSize?: number;
+  };
+}
+
+/**
+ * Props for DocumentInput component
+ */
+interface DocumentInputProps {
+  /** Callback when document is selected (url or file) */
+  onDocumentSelected: (selection: DocumentSelection) => void;
+  /** Whether input is disabled */
+  disabled?: boolean;
+  /** Additional CSS classes */
+  className?: string;
+  /** Analysis error message to display */
+  analysisError?: string | null;
+  /** Callback to clear analysis error */
+  onClearAnalysisError?: (() => void) | null;
+  /** Callback to open Tips modal */
+  onTipsOpen?: (() => void) | null;
+}
 
 /**
  * DocumentInput - Main input component for selecting and providing document source
- * @param {Object} props
- * @param {Function} props.onDocumentSelected - Callback when document is selected (url or file)
- * @param {boolean} props.disabled - Whether input is disabled
- * @param {string} props.className - Additional CSS classes
- * @param {string} props.analysisError - Analysis error message to display
- * @param {Function} props.onClearAnalysisError - Callback to clear analysis error
- * @param {Function} props.onTipsOpen - Callback to open Tips modal
- * @returns {JSX.Element}
  */
 export function DocumentInput({
   onDocumentSelected,
@@ -26,16 +51,15 @@ export function DocumentInput({
   analysisError = null,
   onClearAnalysisError = null,
   onTipsOpen = null,
-}) {
-  const [inputMode, setInputMode] = useState(/** @type {InputMode} */ ("url"));
-  const [error, setError] = useState(null);
+}: DocumentInputProps): JSX.Element {
+  const [inputMode, setInputMode] = useState<InputMode>("url");
+  const [error, setError] = useState<string | null>(null);
 
   /**
    * Handle URL submission
-   * @param {string} url
    */
   const handleUrlSubmit = useCallback(
-    (url) => {
+    (url: string) => {
       setError(null);
       const validation = validateUrl(url);
 
@@ -58,10 +82,9 @@ export function DocumentInput({
 
   /**
    * Handle file selection
-   * @param {File} file
    */
   const handleFileSelect = useCallback(
-    (file) => {
+    (file: File) => {
       setError(null);
       const validation = validateFile(file);
 
@@ -86,9 +109,8 @@ export function DocumentInput({
 
   /**
    * Handle mode toggle
-   * @param {InputMode} mode
    */
-  const handleModeChange = useCallback((mode) => {
+  const handleModeChange = useCallback((mode: InputMode) => {
     setInputMode(mode);
     setError(null);
   }, []);

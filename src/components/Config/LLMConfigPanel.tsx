@@ -5,37 +5,43 @@ import { APIKeyInput } from "./APIKeyInput";
 import { ModelSelector } from "./ModelSelector";
 import { Button } from "../Common";
 import { LLM_PROVIDERS, DEFAULT_CONTEXT_WINDOWS } from "../../utils/constants";
+import type { LLMConfig, LLMProvider } from "../../types";
 
-// Status configuration for test status badge
-const TEST_STATUS_CONFIG = {
+type TestStatus = 'testing' | 'success' | 'error';
+
+interface TestStatusConfig {
+  badge: string;
+  icon: string;
+  label: string;
+}
+
+const TEST_STATUS_CONFIG: Record<TestStatus, TestStatusConfig> = {
   success: { badge: "success", icon: "●", label: "Connected" },
   error: { badge: "error", icon: "✕", label: "Failed" },
   testing: { badge: "warning", icon: "...", label: "Testing" },
 };
 
-/**
- * LLMConfigPanel - Panel for configuring LLM provider settings
- * Uses form-section layout matching the mockup design
- * @param {Object} props
- * @param {boolean} props.disabled - Whether panel is disabled
- * @param {Function} props.onSave - Optional callback when config is saved
- * @param {string} props.className - Additional CSS classes
- * @returns {JSX.Element}
- */
+interface LLMConfigPanelProps {
+  disabled?: boolean;
+  onSave?: (config: LLMConfig) => void;
+  onClose?: () => void;
+  className?: string;
+}
+
 export function LLMConfigPanel({
   disabled = false,
   onSave,
   onClose,
   className = "",
-}) {
+}: LLMConfigPanelProps) {
   const { config, updateConfig, setProvider, validateConfig } = useLLMConfig();
   const [hasChanges, setHasChanges] = useState(false);
-  const [validationError, setValidationError] = useState(null);
-  const [testStatus, setTestStatus] = useState(null); // 'testing', 'success', 'error'
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const [testStatus, setTestStatus] = useState<TestStatus | null>(null);
   const [testMessage, setTestMessage] = useState("");
 
   const handleProviderChange = useCallback(
-    (providerId) => {
+    (providerId: LLMProvider) => {
       setProvider(providerId);
       setHasChanges(true);
       setValidationError(null);
@@ -45,7 +51,7 @@ export function LLMConfigPanel({
   );
 
   const handleApiKeyChange = useCallback(
-    (apiKey) => {
+    (apiKey: string) => {
       updateConfig({ apiKey });
       setHasChanges(true);
       setValidationError(null);
@@ -54,7 +60,7 @@ export function LLMConfigPanel({
   );
 
   const handleModelChange = useCallback(
-    (model) => {
+    (model: string) => {
       updateConfig({ model });
       setHasChanges(true);
       setValidationError(null);
@@ -63,7 +69,7 @@ export function LLMConfigPanel({
   );
 
   const handleEndpointChange = useCallback(
-    (e) => {
+    (e: React.ChangeEvent<HTMLInputElement>) => {
       updateConfig({ baseUrl: e.target.value });
       setHasChanges(true);
       setValidationError(null);
@@ -73,7 +79,7 @@ export function LLMConfigPanel({
   );
 
   const handleTemperatureChange = useCallback(
-    (e) => {
+    (e: React.ChangeEvent<HTMLInputElement>) => {
       updateConfig({ temperature: parseFloat(e.target.value) });
       setHasChanges(true);
     },
@@ -81,7 +87,7 @@ export function LLMConfigPanel({
   );
 
   const handleMaxTokensChange = useCallback(
-    (e) => {
+    (e: React.ChangeEvent<HTMLInputElement>) => {
       updateConfig({ maxTokens: parseInt(e.target.value) });
       setHasChanges(true);
     },
@@ -89,9 +95,8 @@ export function LLMConfigPanel({
   );
 
   const handleContextWindowChange = useCallback(
-    (e) => {
+    (e: React.ChangeEvent<HTMLInputElement>) => {
       const value = e.target.value;
-      // Allow empty string to reset to default, otherwise parse as integer
       updateConfig({ contextWindow: value === "" ? null : parseInt(value) });
       setHasChanges(true);
     },
@@ -166,7 +171,7 @@ export function LLMConfigPanel({
       }
     } catch (error) {
       setTestStatus("error");
-      setTestMessage(`Connection failed: ${error.message}`);
+      setTestMessage(`Connection failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }, [config, validateConfig]);
 
@@ -190,7 +195,6 @@ export function LLMConfigPanel({
       </div>
 
       <div className="modal__body">
-        {/* Provider Section */}
         <div className="form-section">
           <h3 className="form-section__title">Provider</h3>
           <ProviderSelector
@@ -200,7 +204,6 @@ export function LLMConfigPanel({
           />
         </div>
 
-        {/* API Settings Section */}
         <div className="form-section">
           <h3 className="form-section__title">API Settings</h3>
 
@@ -213,7 +216,6 @@ export function LLMConfigPanel({
             />
           )}
 
-          {/* Endpoint URL for local providers */}
           {!requiresApiKey && (
             <div className="input-group">
               <label htmlFor="endpoint-url" className="input-label">
@@ -242,7 +244,6 @@ export function LLMConfigPanel({
           />
         </div>
 
-        {/* Advanced Section */}
         <div className="form-section">
           <h3 className="form-section__title">Advanced</h3>
 
@@ -289,7 +290,6 @@ export function LLMConfigPanel({
             </div>
           </div>
 
-          {/* Context Window - Local Models Only */}
           {!requiresApiKey && (
             <div className="input-group" style={{ marginTop: "1rem" }}>
               <label htmlFor="context-window" className="input-label">
@@ -319,7 +319,6 @@ export function LLMConfigPanel({
             </div>
           )}
 
-          {/* Context Window Info - OpenRouter */}
           {requiresApiKey && config.provider === "openrouter" && (
             <div className="config-info" style={{ marginTop: "1rem" }}>
               <span className="config-info__icon">ℹ️</span>
@@ -331,7 +330,6 @@ export function LLMConfigPanel({
           )}
         </div>
 
-        {/* Local Model Warning */}
         {!requiresApiKey && (
           <div className="config-alert config-alert--warning">
             <span>⚠️</span>
@@ -378,14 +376,12 @@ export function LLMConfigPanel({
           </div>
         )}
 
-        {/* Validation Error */}
         {validationError && (
           <div className="config-alert config-alert--error">
             <span>⚠️</span> {validationError}
           </div>
         )}
 
-        {/* Connection Status */}
         {testStatus && (
           <div className="config-status">
             <span

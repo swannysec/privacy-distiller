@@ -1,11 +1,27 @@
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import { useLLMConfig } from '../../contexts';
-import { LLM_PROVIDERS } from '../../utils/constants.js';
+import { LLM_PROVIDERS } from '../../utils/constants';
+import type { LLMProvider } from '../../types';
 
-/**
- * Recommended models for OpenRouter with descriptions
- */
-const OPENROUTER_RECOMMENDED_MODELS = [
+interface RecommendedModel {
+  id: string;
+  name: string;
+}
+
+interface FetchedModel {
+  id: string;
+  name: string;
+  size?: string;
+}
+
+interface ModelInfo {
+  name: string;
+  contextLength?: number;
+  promptPrice?: number;
+  completionPrice?: number;
+}
+
+const OPENROUTER_RECOMMENDED_MODELS: RecommendedModel[] = [
   { id: 'nvidia/nemotron-3-nano-30b-a3b', name: 'Nvidia Nemotron 3 Nano 30B' },
   { id: 'google/gemini-3-flash-preview', name: 'Google Gemini 3 Flash Preview' },
   { id: 'openai/gpt-oss-120b', name: 'OpenAI GPT-OSS 120B' },
@@ -13,72 +29,58 @@ const OPENROUTER_RECOMMENDED_MODELS = [
   { id: 'minimax/minimax-m2.1', name: 'MiniMax M2.1' },
   { id: 'anthropic/claude-haiku-4.5', name: 'Anthropic Claude Haiku 4.5' },
   { id: 'openai/gpt-5-mini', name: 'OpenAI GPT-5 Mini' },
-];;
+];
 
-/**
- * Validate OpenRouter model ID format (provider/model-name)
- * @param {string} modelId
- * @returns {boolean}
- */
-function isValidOpenRouterModelFormat(modelId) {
+function isValidOpenRouterModelFormat(modelId: string): boolean {
   if (!modelId || typeof modelId !== 'string') return false;
-  // Must match pattern: provider/model-name (alphanumeric, hyphens, dots, underscores)
   return /^[a-z0-9_-]+\/[a-z0-9._-]+$/i.test(modelId.trim());
 }
 
-/**
- * Format price for display
- * @param {number} price - Price per token
- * @returns {string}
- */
-function formatPrice(price) {
+function formatPrice(price: number): string {
   if (price === 0) return 'Free';
   if (price < 0.000001) return '<$0.01/M';
-  // Convert to per-million tokens
   const perMillion = price * 1000000;
   if (perMillion < 0.01) return '<$0.01/M';
   if (perMillion < 1) return `$${perMillion.toFixed(2)}/M`;
   return `$${perMillion.toFixed(2)}/M`;
 }
 
-/**
- * ModelSelector - Editable combobox for selecting or entering LLM model
- * @param {Object} props
- * @param {string} props.provider - Current provider ID
- * @param {string} props.value - Currently selected model ID
- * @param {Function} props.onChange - Callback when model changes
- * @param {boolean} props.disabled - Whether selector is disabled
- * @param {string} props.className - Additional CSS classes
- * @returns {JSX.Element}
- */
-export function ModelSelector({ provider, value, onChange, disabled = false, className = '' }) {
+interface ModelSelectorProps {
+  provider: LLMProvider;
+  value: string;
+  onChange: (model: string) => void;
+  disabled?: boolean;
+  className?: string;
+}
+
+export function ModelSelector({
+  provider,
+  value,
+  onChange,
+  disabled = false,
+  className = ''
+}: ModelSelectorProps) {
   const { config } = useLLMConfig();
 
-  // Local state
   const [inputValue, setInputValue] = useState(value || '');
   const [isCustom, setIsCustom] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
 
-  // API-fetched models for Ollama/LM Studio
-  const [fetchedModels, setFetchedModels] = useState([]);
+  const [fetchedModels, setFetchedModels] = useState<FetchedModel[]>([]);
   const [fetchLoading, setFetchLoading] = useState(false);
-  const [fetchError, setFetchError] = useState(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
-  // OpenRouter model validation and pricing
-  const [modelInfo, setModelInfo] = useState(null);
-  const [validationStatus, setValidationStatus] = useState(null); // 'valid', 'invalid', 'checking'
+  const [modelInfo, setModelInfo] = useState<ModelInfo | null>(null);
+  const [validationStatus, setValidationStatus] = useState<'valid' | 'invalid' | 'checking' | null>(null);
 
-  // Sync input value with prop value
   useEffect(() => {
     setInputValue(value || '');
-    // Check if current value is a recommended model
     if (provider === 'openrouter') {
       const isRecommended = OPENROUTER_RECOMMENDED_MODELS.some(m => m.id === value);
       setIsCustom(!isRecommended && value !== '');
     }
   }, [value, provider]);
 
-  // Fetch models for Ollama/LM Studio
   useEffect(() => {
     if (provider !== 'ollama' && provider !== 'lmstudio') {
       setFetchedModels([]);
@@ -91,7 +93,6 @@ export function ModelSelector({ provider, value, onChange, disabled = false, cla
       setFetchError(null);
       setFetchedModels([]);
 
-      // Use baseUrl from config, fall back to provider defaults
       const baseUrl = config.baseUrl || LLM_PROVIDERS[provider.toUpperCase()]?.baseUrl;
 
       try {
@@ -101,15 +102,14 @@ export function ModelSelector({ provider, value, onChange, disabled = false, cla
             throw new Error('Cannot connect to Ollama');
           }
           const data = await response.json();
-          const models = (data.models || []).map(model => ({
+          const models = (data.models || []).map((model: any) => ({
             id: model.name,
             name: model.name,
-            size: model.size ? `${(model.size / 1e9).toFixed(1)}GB` : null
+            size: model.size ? `${(model.size / 1e9).toFixed(1)}GB` : undefined
           }));
           setFetchedModels(models);
 
-          // Auto-select first model if current value is empty or not in list
-          if (models.length > 0 && (!value || !models.find(m => m.id === value))) {
+          if (models.length > 0 && (!value || !models.find((m: FetchedModel) => m.id === value))) {
             onChange(models[0].id);
           }
         } else if (provider === 'lmstudio') {
@@ -118,13 +118,13 @@ export function ModelSelector({ provider, value, onChange, disabled = false, cla
             throw new Error('Cannot connect to LM Studio');
           }
           const data = await response.json();
-          const models = (data.data || []).map(model => ({
+          const models = (data.data || []).map((model: any) => ({
             id: model.id,
             name: model.id
           }));
           setFetchedModels(models);
 
-          if (models.length > 0 && (!value || !models.find(m => m.id === value))) {
+          if (models.length > 0 && (!value || !models.find((m: FetchedModel) => m.id === value))) {
             onChange(models[0].id);
           }
         }
@@ -139,7 +139,6 @@ export function ModelSelector({ provider, value, onChange, disabled = false, cla
     fetchModels();
   }, [provider, onChange, value, config.baseUrl]);
 
-  // Validate and fetch pricing for OpenRouter models
   useEffect(() => {
     if (provider !== 'openrouter' || !inputValue || !config.apiKey) {
       setModelInfo(null);
@@ -147,20 +146,17 @@ export function ModelSelector({ provider, value, onChange, disabled = false, cla
       return;
     }
 
-    // Skip validation if empty
     if (!inputValue.trim()) {
       setValidationStatus(null);
       return;
     }
 
-    // Check format first
     if (!isValidOpenRouterModelFormat(inputValue)) {
       setValidationStatus('invalid');
       setModelInfo(null);
       return;
     }
 
-    // Debounce API validation
     const timeoutId = setTimeout(async () => {
       setValidationStatus('checking');
 
@@ -176,7 +172,7 @@ export function ModelSelector({ provider, value, onChange, disabled = false, cla
         }
 
         const data = await response.json();
-        const model = data.data?.find(m => m.id === inputValue.trim());
+        const model = data.data?.find((m: any) => m.id === inputValue.trim());
 
         if (model) {
           setValidationStatus('valid');
@@ -192,7 +188,6 @@ export function ModelSelector({ provider, value, onChange, disabled = false, cla
         }
       } catch (err) {
         console.error('Failed to validate model:', err);
-        // Don't mark as invalid on network error, just clear status
         setValidationStatus(null);
         setModelInfo(null);
       }
@@ -201,10 +196,7 @@ export function ModelSelector({ provider, value, onChange, disabled = false, cla
     return () => clearTimeout(timeoutId);
   }, [provider, inputValue, config.apiKey]);
 
-  /**
-   * Handle input change (for custom model entry)
-   */
-  const handleInputChange = useCallback((e) => {
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setInputValue(newValue);
     setIsCustom(true);
@@ -212,33 +204,23 @@ export function ModelSelector({ provider, value, onChange, disabled = false, cla
     onChange(newValue);
   }, [onChange]);
 
-  /**
-   * Handle selecting a model from dropdown
-   */
-  const handleSelectModel = useCallback((modelId) => {
+  const handleSelectModel = useCallback((modelId: string) => {
     setInputValue(modelId);
     setIsCustom(false);
     setShowDropdown(false);
     onChange(modelId);
   }, [onChange]);
 
-  /**
-   * Handle input focus
-   */
   const handleFocus = useCallback(() => {
     if (provider === 'openrouter') {
       setShowDropdown(true);
     }
   }, [provider]);
 
-  /**
-   * Handle input blur (delayed to allow click on dropdown)
-   */
   const handleBlur = useCallback(() => {
     setTimeout(() => setShowDropdown(false), 200);
   }, []);
 
-  // Determine available models based on provider
   const availableModels = useMemo(() => {
     if (provider === 'openrouter') {
       return OPENROUTER_RECOMMENDED_MODELS;
@@ -246,32 +228,25 @@ export function ModelSelector({ provider, value, onChange, disabled = false, cla
     return fetchedModels;
   }, [provider, fetchedModels]);
 
-  // Filter dropdown models based on input
   const filteredModels = useMemo(() => {
     if (provider !== 'openrouter') {
       return availableModels;
     }
-    // Always show all recommended models when dropdown is open
-    // Only filter if user is actively typing something not in the list
     if (!inputValue) {
       return availableModels;
     }
-    // Check if current value exactly matches a recommended model
     const exactMatch = availableModels.find(m => m.id === inputValue);
     if (exactMatch) {
-      return availableModels; // Show all when a recommended model is selected
+      return availableModels;
     }
-    // Filter by search term
     const search = inputValue.toLowerCase();
     const filtered = availableModels.filter(m =>
       m.id.toLowerCase().includes(search) ||
       m.name.toLowerCase().includes(search)
     );
-    // If nothing matches filter, still show all recommended as suggestions
     return filtered.length > 0 ? filtered : availableModels;
   }, [availableModels, inputValue, provider]);
 
-  // Render for Ollama/LM Studio (standard dropdown)
   if (provider === 'ollama' || provider === 'lmstudio') {
     return (
       <div className={`input-group ${className}`}>
@@ -322,7 +297,6 @@ export function ModelSelector({ provider, value, onChange, disabled = false, cla
     );
   }
 
-  // Render for OpenRouter (editable combobox)
   return (
     <div className={`input-group model-combobox ${className}`}>
       <label htmlFor="model-input" className="input-label">
@@ -348,14 +322,12 @@ export function ModelSelector({ provider, value, onChange, disabled = false, cla
           aria-describedby="model-status"
         />
 
-        {/* Status indicator */}
         <span className="model-combobox__status" aria-hidden="true">
           {validationStatus === 'checking' && '⏳'}
           {validationStatus === 'valid' && '✓'}
           {validationStatus === 'invalid' && '✗'}
         </span>
 
-        {/* Dropdown */}
         {showDropdown && filteredModels.length > 0 && (
           <ul className="model-combobox__dropdown" role="listbox">
             {filteredModels.map((model) => (
@@ -374,7 +346,6 @@ export function ModelSelector({ provider, value, onChange, disabled = false, cla
         )}
       </div>
 
-      {/* Status messages */}
       <div id="model-status">
         {validationStatus === 'invalid' && (
           <p className="input-error">
@@ -385,7 +356,7 @@ export function ModelSelector({ provider, value, onChange, disabled = false, cla
         {validationStatus === 'valid' && modelInfo && (
           <div className="model-info">
             <span className="model-info__pricing">
-              💰 Input: {formatPrice(modelInfo.promptPrice)} · Output: {formatPrice(modelInfo.completionPrice)}
+              💰 Input: {formatPrice(modelInfo.promptPrice || 0)} · Output: {formatPrice(modelInfo.completionPrice || 0)}
             </span>
             {modelInfo.contextLength && (
               <span className="model-info__context">

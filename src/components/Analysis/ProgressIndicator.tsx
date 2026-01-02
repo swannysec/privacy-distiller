@@ -1,13 +1,52 @@
 import { useMemo, useState, useEffect } from 'react';
 import { LoadingSpinner } from '../Common';
 import { ANALYSIS_STATUS } from '../../utils/constants';
+import type { AnalysisStatus } from '../../types';
+
+/**
+ * Props for ProgressIndicator component
+ */
+interface ProgressIndicatorProps {
+  /** Current analysis status */
+  status: AnalysisStatus;
+  /** Progress percentage (0-100) */
+  progress?: number;
+  /** Description of current step */
+  currentStep?: string;
+  /** Error message if failed */
+  error?: string | null;
+  /** Additional CSS classes */
+  className?: string;
+}
+
+/**
+ * Props for StepItem component
+ */
+interface StepItemProps {
+  /** Step label */
+  label: string;
+  /** Whether step is completed */
+  completed: boolean;
+  /** Whether step is currently active */
+  active: boolean;
+}
+
+/**
+ * Configuration for each status
+ */
+interface StatusConfig {
+  icon: string;
+  label: string;
+  color: string;
+  showProgress: boolean;
+}
 
 /**
  * Format elapsed time for display
- * @param {number} seconds - Elapsed seconds
- * @returns {string} Formatted time string
+ * @param seconds - Elapsed seconds
+ * @returns Formatted time string
  */
-function formatElapsedTime(seconds) {
+function formatElapsedTime(seconds: number): string {
   if (seconds < 60) {
     return `${seconds}s`;
   }
@@ -18,13 +57,6 @@ function formatElapsedTime(seconds) {
 
 /**
  * ProgressIndicator - Component for displaying analysis progress
- * @param {Object} props
- * @param {string} props.status - Current analysis status
- * @param {number} props.progress - Progress percentage (0-100)
- * @param {string} props.currentStep - Description of current step
- * @param {string} props.error - Error message if failed
- * @param {string} props.className - Additional CSS classes
- * @returns {JSX.Element}
  */
 export function ProgressIndicator({
   status,
@@ -32,7 +64,7 @@ export function ProgressIndicator({
   currentStep = '',
   error = null,
   className = ''
-}) {
+}: ProgressIndicatorProps) {
   // Track elapsed time
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
@@ -52,8 +84,8 @@ export function ProgressIndicator({
   /**
    * Get status configuration
    */
-  const statusConfig = useMemo(() => {
-    const configs = {
+  const statusConfig = useMemo((): StatusConfig => {
+    const configs: Record<AnalysisStatus, StatusConfig> = {
       [ANALYSIS_STATUS.IDLE]: {
         icon: '⏸️',
         label: 'Ready',
@@ -204,13 +236,8 @@ export function ProgressIndicator({
 
 /**
  * StepItem - Individual step in progress indicator
- * @param {Object} props
- * @param {string} props.label - Step label
- * @param {boolean} props.completed - Whether step is completed
- * @param {boolean} props.active - Whether step is currently active
- * @returns {JSX.Element}
  */
-function StepItem({ label, completed, active }) {
+function StepItem({ label, completed, active }: StepItemProps) {
   const className = [
     'progress-indicator__step-item',
     completed && 'progress-indicator__step-item--completed',

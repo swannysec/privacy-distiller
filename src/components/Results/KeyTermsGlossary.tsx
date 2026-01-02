@@ -1,14 +1,21 @@
 import { useMemo } from 'react';
 
+interface KeyTerm {
+  term: string;
+  definition: string;
+  location?: string;
+}
+
+interface KeyTermsGlossaryProps {
+  keyTerms?: KeyTerm[];
+  className?: string;
+}
+
 /**
  * KeyTermsGlossary - Component for displaying key terms in a grid
  * Matches mockup design with simple card layout
- * @param {Object} props
- * @param {import('../../types').KeyTerm[]} props.keyTerms - Array of key terms
- * @param {string} props.className - Additional CSS classes
- * @returns {JSX.Element}
  */
-export function KeyTermsGlossary({ keyTerms = [], className = '' }) {
+export function KeyTermsGlossary({ keyTerms = [], className = '' }: KeyTermsGlossaryProps) {
   // Ensure keyTerms is always an array
   const safeKeyTerms = Array.isArray(keyTerms) ? keyTerms : [];
 

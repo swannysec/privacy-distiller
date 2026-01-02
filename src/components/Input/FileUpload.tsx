@@ -4,29 +4,36 @@ import { formatFileSize } from '../../utils/formatting';
 import { FILE_CONSTRAINTS } from '../../utils/constants';
 
 /**
+ * Props for FileUpload component
+ */
+interface FileUploadProps {
+  /** Callback when file is selected */
+  onFileSelect: (file: File) => void;
+  /** Whether upload is disabled */
+  disabled?: boolean;
+  /** Error message to display */
+  error?: string | null;
+  /** Additional CSS classes */
+  className?: string;
+}
+
+/**
  * FileUpload - Component for uploading PDF privacy policy documents
- * @param {Object} props
- * @param {Function} props.onFileSelect - Callback when file is selected
- * @param {boolean} props.disabled - Whether upload is disabled
- * @param {string} props.error - Error message to display
- * @param {string} props.className - Additional CSS classes
- * @returns {JSX.Element}
  */
 export function FileUpload({
   onFileSelect,
   disabled = false,
   error = null,
   className = ''
-}) {
-  const [selectedFile, setSelectedFile] = useState(/** @type {File | null} */ (null));
+}: FileUploadProps): JSX.Element {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const fileInputRef = useRef(/** @type {HTMLInputElement | null} */ (null));
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   /**
    * Handle file selection from input
-   * @param {React.ChangeEvent<HTMLInputElement>} e
    */
-  const handleFileChange = useCallback((e) => {
+  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setSelectedFile(file);
@@ -36,9 +43,8 @@ export function FileUpload({
 
   /**
    * Handle drag over
-   * @param {React.DragEvent} e
    */
-  const handleDragOver = useCallback((e) => {
+  const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (!disabled) {
@@ -48,9 +54,8 @@ export function FileUpload({
 
   /**
    * Handle drag leave
-   * @param {React.DragEvent} e
    */
-  const handleDragLeave = useCallback((e) => {
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
@@ -58,9 +63,8 @@ export function FileUpload({
 
   /**
    * Handle file drop
-   * @param {React.DragEvent} e
    */
-  const handleDrop = useCallback((e) => {
+  const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);

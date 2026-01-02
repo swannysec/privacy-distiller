@@ -1,14 +1,15 @@
-import PropTypes from 'prop-types';
+import React from 'react';
 import { Button } from './Button';
+
+export interface TipsModalProps {
+  onClose: () => void;
+  className?: string;
+}
 
 /**
  * TipsModal - Modal displaying usage tips for optimal privacy policy analysis
- * @param {Object} props
- * @param {Function} props.onClose - Callback to close the modal
- * @param {string} props.className - Additional CSS classes
- * @returns {JSX.Element}
  */
-export function TipsModal({ onClose, className = '' }) {
+export function TipsModal({ onClose, className = '' }: TipsModalProps): JSX.Element {
   return (
     <div className={`modal ${className}`} onClick={(e) => e.stopPropagation()}>
       <div className="modal__header">
@@ -76,8 +77,3 @@ export function TipsModal({ onClose, className = '' }) {
     </div>
   );
 }
-
-TipsModal.propTypes = {
-  onClose: PropTypes.func.isRequired,
-  className: PropTypes.string,
-};

@@ -2,17 +2,38 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { Button } from "../Common";
 
 /**
+ * Example privacy policy URL
+ */
+interface ExampleUrl {
+  label: string;
+  url: string;
+}
+
+/**
+ * Props for URLInput component
+ */
+interface URLInputProps {
+  /** Callback when URL is submitted */
+  onSubmit: (url: string) => void;
+  /** Whether input is disabled */
+  disabled?: boolean;
+  /** Error message to display */
+  error?: string | null;
+  /** Callback to clear error */
+  onClearError?: (() => void) | null;
+  /** Analysis error message to display */
+  analysisError?: string | null;
+  /** Callback to clear analysis error */
+  onClearAnalysisError?: (() => void) | null;
+  /** Input placeholder text */
+  placeholder?: string;
+  /** Additional CSS classes */
+  className?: string;
+}
+
+/**
  * URLInput - Input component for privacy policy URLs
  * Updated: Error display positioned between Analyze button and examples
- * @param {Object} props
- * @param {Function} props.onSubmit - Callback when URL is submitted
- * @param {boolean} props.disabled - Whether input is disabled
- * @param {string} props.error - Error message to display
- * @param {string} props.analysisError - Analysis error message to display
- * @param {Function} props.onClearAnalysisError - Callback to clear analysis error
- * @param {string} props.placeholder - Input placeholder text
- * @param {string} props.className - Additional CSS classes
- * @returns {JSX.Element}
  */
 export function URLInput({
   onSubmit,
@@ -23,10 +44,10 @@ export function URLInput({
   onClearAnalysisError = null,
   placeholder = "https://example.com/privacy-policy",
   className = "",
-}) {
+}: URLInputProps): JSX.Element {
   const [url, setUrl] = useState("");
   const [isValidating, setIsValidating] = useState(false);
-  const inputRef = useRef(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Focus input on mount
   useEffect(() => {
@@ -37,9 +58,8 @@ export function URLInput({
 
   /**
    * Handle URL input change
-   * @param {React.ChangeEvent<HTMLInputElement>} e
    */
-  const handleChange = useCallback((e) => {
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setUrl(e.target.value);
     // Clear error when user starts typing
     if (error && onClearError) {
@@ -49,10 +69,9 @@ export function URLInput({
 
   /**
    * Handle form submission
-   * @param {React.FormEvent} e
    */
   const handleSubmit = useCallback(
-    (e) => {
+    (e: React.FormEvent) => {
       e.preventDefault();
 
       if (!url.trim() || disabled || isValidating) {
@@ -72,10 +91,9 @@ export function URLInput({
 
   /**
    * Handle Enter key
-   * @param {React.KeyboardEvent} e
    */
   const handleKeyDown = useCallback(
-    (e) => {
+    (e: React.KeyboardEvent) => {
       if (e.key === "Enter" && !e.shiftKey) {
         handleSubmit(e);
       }
@@ -85,9 +103,8 @@ export function URLInput({
 
   /**
    * Handle example click
-   * @param {string} exampleUrl
    */
-  const handleExampleClick = useCallback((exampleUrl) => {
+  const handleExampleClick = useCallback((exampleUrl: string) => {
     setUrl(exampleUrl);
     if (onClearError) {
       onClearError();
@@ -97,7 +114,7 @@ export function URLInput({
   const isDisabled = disabled || isValidating;
   const hasValue = url.trim().length > 0;
 
-  const examples = [
+  const examples: ExampleUrl[] = [
     { label: "Google", url: "https://policies.google.com/privacy" },
     { label: "Facebook", url: "https://www.facebook.com/privacy/policy/" },
     { label: "Amazon", url: "https://www.amazon.com/gp/help/customer/display.html?nodeId=468496" },

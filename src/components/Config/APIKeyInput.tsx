@@ -1,33 +1,31 @@
 import { useState, useCallback } from 'react';
 import { validateApiKey } from '../../utils/validation';
+import type { LLMProvider } from '../../types';
 
-/**
- * APIKeyInput - Secure input component for API keys
- * @param {Object} props
- * @param {string} props.value - Current API key value
- * @param {Function} props.onChange - Callback when API key changes
- * @param {string} props.provider - Current provider ID
- * @param {boolean} props.disabled - Whether input is disabled
- * @param {string} props.className - Additional CSS classes
- * @returns {JSX.Element}
- */
-export function APIKeyInput({ value, onChange, provider, disabled = false, className = '' }) {
+interface APIKeyInputProps {
+  value: string;
+  onChange: (value: string) => void;
+  provider: LLMProvider;
+  disabled?: boolean;
+  className?: string;
+}
+
+export function APIKeyInput({
+  value,
+  onChange,
+  provider,
+  disabled = false,
+  className = ''
+}: APIKeyInputProps) {
   const [isVisible, setIsVisible] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
-  /**
-   * Handle API key change
-   * @param {React.ChangeEvent<HTMLInputElement>} e
-   */
-  const handleChange = useCallback((e) => {
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setError(null);
     onChange(newValue);
   }, [onChange]);
 
-  /**
-   * Handle blur - validate API key
-   */
   const handleBlur = useCallback(() => {
     if (value) {
       const validation = validateApiKey(value, provider);
@@ -37,9 +35,6 @@ export function APIKeyInput({ value, onChange, provider, disabled = false, class
     }
   }, [value, provider]);
 
-  /**
-   * Toggle visibility
-   */
   const toggleVisibility = useCallback(() => {
     setIsVisible(prev => !prev);
   }, []);

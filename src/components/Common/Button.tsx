@@ -4,19 +4,19 @@
 
 import React from 'react';
 
-/**
- * @param {Object} props
- * @param {React.ReactNode} props.children
- * @param {'button' | 'submit' | 'reset'} [props.type='button']
- * @param {'primary' | 'secondary' | 'danger' | 'ghost'} [props.variant='primary']
- * @param {'small' | 'medium' | 'large'} [props.size='medium']
- * @param {boolean} [props.disabled=false]
- * @param {boolean} [props.loading=false]
- * @param {Function} [props.onClick]
- * @param {string} [props.className]
- * @param {string} [props.ariaLabel]
- * @param {Object} [props.style]
- */
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  children: React.ReactNode;
+  type?: 'button' | 'submit' | 'reset';
+  variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
+  size?: 'small' | 'medium' | 'large';
+  disabled?: boolean;
+  loading?: boolean;
+  onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  className?: string;
+  ariaLabel?: string;
+  style?: React.CSSProperties;
+}
+
 export function Button({
   children,
   type = 'button',
@@ -29,7 +29,7 @@ export function Button({
   ariaLabel,
   style,
   ...props
-}) {
+}: ButtonProps): JSX.Element {
   const baseClasses = 'btn';
   const variantClass = variant === 'primary' ? 'btn--primary' :
                        variant === 'secondary' ? 'btn--secondary' :

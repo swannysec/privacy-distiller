@@ -1,18 +1,29 @@
 import { useAnalysis } from '../../contexts';
 import { ProgressIndicator } from './ProgressIndicator';
 import { ResultsDisplay } from '../Results';
-import { Card, Button } from '../Common';
+import { Card } from '../Common';
 import { ANALYSIS_STATUS } from '../../utils/constants';
 
 /**
- * AnalysisSection - Main section component for analysis workflow
- * @param {Object} props
- * @param {Function} props.onNewAnalysis - Callback to start new analysis
- * @param {Function} props.onExportResults - Optional callback to export results
- * @param {string} props.className - Additional CSS classes
- * @returns {JSX.Element}
+ * Props for AnalysisSection component
  */
-export function AnalysisSection({ onNewAnalysis, onExportResults, className = '' }) {
+interface AnalysisSectionProps {
+  /** Callback to start new analysis */
+  onNewAnalysis?: () => void;
+  /** Optional callback to export results */
+  onExportResults?: () => void;
+  /** Additional CSS classes */
+  className?: string;
+}
+
+/**
+ * AnalysisSection - Main section component for analysis workflow
+ */
+export function AnalysisSection({
+  onNewAnalysis,
+  onExportResults,
+  className = ''
+}: AnalysisSectionProps) {
   const { status, result, error, progress, currentStep, resetAnalysis } = useAnalysis();
 
   /**

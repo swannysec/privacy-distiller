@@ -1,11 +1,40 @@
 import { useMemo } from 'react';
 
+interface CategoryData {
+  score: number;
+  summary?: string;
+}
+
+interface Scorecard {
+  overallScore?: number;
+  overallGrade?: string;
+  thirdPartySharing?: CategoryData;
+  userRights?: CategoryData;
+  dataCollection?: CategoryData;
+  dataRetention?: CategoryData;
+  purposeClarity?: CategoryData;
+  securityMeasures?: CategoryData;
+  policyTransparency?: CategoryData;
+  topConcerns?: string[];
+  positiveAspects?: string[];
+}
+
+interface PrivacyScorecardProps {
+  scorecard: Scorecard;
+  className?: string;
+}
+
+interface CategoryConfig {
+  label: string;
+  icon: string;
+  weight: number;
+  description: string;
+}
+
 /**
  * Get color class based on score (1-10)
- * @param {number} score - Score from 1-10
- * @returns {string} CSS class name
  */
-function getScoreColor(score) {
+function getScoreColor(score: number): string {
   if (score >= 8) return 'scorecard__score--excellent';
   if (score >= 6) return 'scorecard__score--good';
   if (score >= 4) return 'scorecard__score--fair';
@@ -15,10 +44,8 @@ function getScoreColor(score) {
 
 /**
  * Get grade color class
- * @param {string} grade - Letter grade (A+ to F)
- * @returns {string} CSS class name
  */
-function getGradeColor(grade) {
+function getGradeColor(grade: string): string {
   if (!grade) return 'scorecard__grade--fair';
   const letter = grade.charAt(0).toUpperCase();
   if (letter === 'A') return 'scorecard__grade--excellent';
@@ -32,7 +59,7 @@ function getGradeColor(grade) {
  * New 7-category system based on EFF, NIST, FTC, GDPR frameworks
  * Categories ordered by weight (highest to lowest)
  */
-const CATEGORY_CONFIG = {
+const CATEGORY_CONFIG: Record<string, CategoryConfig> = {
   thirdPartySharing: {
     label: 'Third-Party Sharing',
     icon: '🔗',
@@ -78,7 +105,7 @@ const CATEGORY_CONFIG = {
 };
 
 // Ordered category keys (by weight, highest first)
-const CATEGORY_KEYS = [
+const CATEGORY_KEYS: (keyof Omit<Scorecard, 'overallScore' | 'overallGrade' | 'topConcerns' | 'positiveAspects'>)[] = [
   'thirdPartySharing',
   'userRights',
   'dataCollection',
@@ -88,10 +115,15 @@ const CATEGORY_KEYS = [
   'policyTransparency',
 ];
 
+interface CategoryRowProps {
+  category: string;
+  data: CategoryData | undefined;
+}
+
 /**
  * Individual category score row component
  */
-function CategoryRow({ category, data }) {
+function CategoryRow({ category, data }: CategoryRowProps) {
   const config = CATEGORY_CONFIG[category];
   const score = data?.score || 5;
   const percentage = (score / 10) * 100;
@@ -129,12 +161,8 @@ function CategoryRow({ category, data }) {
 /**
  * PrivacyScorecard - Displays a prominent privacy rating scorecard
  * Uses 7 weighted categories based on EFF, NIST, FTC, GDPR frameworks
- * @param {Object} props
- * @param {Object} props.scorecard - Scorecard data from analysis
- * @param {string} props.className - Additional CSS classes
- * @returns {JSX.Element|null}
  */
-export function PrivacyScorecard({ scorecard, className = '' }) {
+export function PrivacyScorecard({ scorecard, className = '' }: PrivacyScorecardProps) {
   // Calculate overall score if not provided
   const overallScore = useMemo(() => {
     if (scorecard?.overallScore) return scorecard.overallScore;
@@ -144,7 +172,7 @@ export function PrivacyScorecard({ scorecard, className = '' }) {
 
     for (const key of CATEGORY_KEYS) {
       if (scorecard[key]) {
-        const score = scorecard[key].score || 5;
+        const score = scorecard[key]!.score || 5;
         const weight = CATEGORY_CONFIG[key].weight;
         // (score/10) * weight gives contribution to overall score
         totalWeightedScore += (score / 10) * weight;
@@ -221,9 +249,9 @@ export function PrivacyScorecard({ scorecard, className = '' }) {
         ))}
       </div>
 
-      {(scorecard.topConcerns?.length > 0 || scorecard.positiveAspects?.length > 0) && (
+      {(scorecard.topConcerns?.length || scorecard.positiveAspects?.length) && (
         <div className="scorecard__insights">
-          {scorecard.topConcerns?.length > 0 && (
+          {scorecard.topConcerns && scorecard.topConcerns.length > 0 && (
             <div className="scorecard__concerns">
               <h3 className="scorecard__insights-title">
                 <span aria-hidden="true">⚠️</span> Key Concerns
@@ -238,7 +266,7 @@ export function PrivacyScorecard({ scorecard, className = '' }) {
             </div>
           )}
 
-          {scorecard.positiveAspects?.length > 0 && (
+          {scorecard.positiveAspects && scorecard.positiveAspects.length > 0 && (
             <div className="scorecard__positives">
               <h3 className="scorecard__insights-title">
                 <span aria-hidden="true">✅</span> Positive Aspects

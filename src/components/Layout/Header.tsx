@@ -3,15 +3,28 @@ import { useTheme } from '../../contexts/ThemeContext';
 import logo from '../../assets/logo.png';
 
 /**
- * Header - Application header with branding, navigation, and theme toggle
- * @param {Object} props
- * @param {Function} props.onConfigOpen - Callback to open configuration panel
- * @param {Function} props.onAboutOpen - Callback to open about modal
- * @param {Function} props.onTipsOpen - Callback to open tips modal
- * @param {string} props.className - Additional CSS classes
- * @returns {JSX.Element}
+ * Props for Header component
  */
-export function Header({ onConfigOpen, onAboutOpen, onTipsOpen, className = '' }) {
+interface HeaderProps {
+  /** Callback to open configuration panel */
+  onConfigOpen: () => void;
+  /** Callback to open about modal */
+  onAboutOpen: () => void;
+  /** Callback to open tips modal */
+  onTipsOpen: () => void;
+  /** Additional CSS classes */
+  className?: string;
+}
+
+/**
+ * Header - Application header with branding, navigation, and theme toggle
+ */
+export function Header({
+  onConfigOpen,
+  onAboutOpen,
+  onTipsOpen,
+  className = ''
+}: HeaderProps): JSX.Element {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { isDarkTheme, toggleTheme } = useTheme();
 
@@ -24,9 +37,9 @@ export function Header({ onConfigOpen, onAboutOpen, onTipsOpen, className = '' }
       <div className="header__container">
         {/* Logo and title */}
         <div className="header__brand">
-          <img 
-            src={logo} 
-            alt="Privacy Policy Distiller logo" 
+          <img
+            src={logo}
+            alt="Privacy Policy Distiller logo"
             className="header__logo-img"
           />
           <span className="header__title">Privacy Policy Distiller</span>

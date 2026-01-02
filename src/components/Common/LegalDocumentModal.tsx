@@ -3,21 +3,22 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Button } from './Button';
 
+export interface LegalDocumentModalProps {
+  documentPath: string;
+  title: string;
+  onClose: () => void;
+}
+
 /**
  * LegalDocumentModal - Displays legal documents (Privacy Policy, ToS) in a modal
- * @param {Object} props
- * @param {string} props.documentPath - Path to the markdown file (relative to public/)
- * @param {string} props.title - Modal title
- * @param {Function} props.onClose - Callback to close modal
- * @returns {JSX.Element}
  */
-export function LegalDocumentModal({ documentPath, title, onClose }) {
-  const [content, setContent] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+export function LegalDocumentModal({ documentPath, title, onClose }: LegalDocumentModalProps): JSX.Element {
+  const [content, setContent] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchDocument = async () => {
+    const fetchDocument = async (): Promise<void> => {
       setLoading(true);
       setError(null);
 
@@ -33,7 +34,7 @@ export function LegalDocumentModal({ documentPath, title, onClose }) {
         setContent(text);
       } catch (err) {
         console.error('Error fetching legal document:', err);
-        setError(err.message);
+        setError(err instanceof Error ? err.message : 'Unknown error');
       } finally {
         setLoading(false);
       }
@@ -44,7 +45,7 @@ export function LegalDocumentModal({ documentPath, title, onClose }) {
 
   // Handle escape key
   useEffect(() => {
-    const handleEscape = (e) => {
+    const handleEscape = (e: KeyboardEvent): void => {
       if (e.key === 'Escape') {
         onClose();
       }

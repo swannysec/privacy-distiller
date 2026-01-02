@@ -4,6 +4,20 @@
 
 import React from 'react';
 
+export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
+  type?: string;
+  value?: string;
+  onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  placeholder?: string;
+  disabled?: boolean;
+  error?: string;
+  label?: string;
+  id?: string;
+  name?: string;
+  required?: boolean;
+  className?: string;
+}
+
 export function Input({
   type = 'text',
   value,
@@ -17,7 +31,7 @@ export function Input({
   required = false,
   className = '',
   ...props
-}) {
+}: InputProps): JSX.Element {
   const inputId = id || name || `input-${Math.random().toString(36).substr(2, 9)}`;
 
   return (

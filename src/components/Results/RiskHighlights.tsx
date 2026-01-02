@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
+import type { PrivacyRisk } from '../../types';
 
 /** Custom sanitization schema - blocks javascript: links */
 const sanitizeSchema = {
@@ -11,10 +12,16 @@ const sanitizeSchema = {
   },
 };
 
+interface SeverityConfig {
+  color: string;
+  bgColor: string;
+  label: string;
+}
+
 /**
  * Severity configuration with colors matching mockup
  */
-const SEVERITY_CONFIG = {
+const SEVERITY_CONFIG: Record<string, SeverityConfig> = {
   critical: {
     color: 'var(--risk-high)',
     bgColor: 'var(--risk-high-bg)',
@@ -37,16 +44,17 @@ const SEVERITY_CONFIG = {
   }
 };
 
+interface RiskHighlightsProps {
+  risks?: PrivacyRisk[];
+  className?: string;
+}
+
 /**
  * RiskHighlights - Component for displaying privacy risks with severity levels
  * Matches mockup design with colored left borders and expandable details
- * @param {Object} props
- * @param {import('../../types').PrivacyRisk[]} props.risks - Array of identified risks
- * @param {string} props.className - Additional CSS classes
- * @returns {JSX.Element}
  */
-export function RiskHighlights({ risks = [], className = '' }) {
-  const [expandedRisks, setExpandedRisks] = useState(/** @type {Set<number>} */ (new Set()));
+export function RiskHighlights({ risks = [], className = '' }: RiskHighlightsProps) {
+  const [expandedRisks, setExpandedRisks] = useState<Set<number>>(new Set());
 
   // Ensure risks is always an array
   const safeRisks = Array.isArray(risks) ? risks : [];
@@ -55,7 +63,7 @@ export function RiskHighlights({ risks = [], className = '' }) {
    * Sort risks by severity
    */
   const sortedRisks = useMemo(() => {
-    const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+    const severityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
     return [...safeRisks].sort((a, b) =>
       (severityOrder[a.severity] || 3) - (severityOrder[b.severity] || 3)
     );
@@ -64,7 +72,7 @@ export function RiskHighlights({ risks = [], className = '' }) {
   /**
    * Toggle risk expansion
    */
-  const toggleRisk = (index) => {
+  const toggleRisk = (index: number) => {
     setExpandedRisks(prev => {
       const next = new Set(prev);
       if (next.has(index)) {
@@ -115,7 +123,7 @@ export function RiskHighlights({ risks = [], className = '' }) {
             <div
               key={index}
               className={`risk-item risk-item--${risk.severity}`}
-              style={{ '--risk-color': config.color }}
+              style={{ '--risk-color': config.color } as React.CSSProperties}
             >
               <div className="risk-item__header">
                 <h3 className="risk-item__title">{risk.title}</h3>
@@ -134,7 +142,7 @@ export function RiskHighlights({ risks = [], className = '' }) {
                 {risk.description}
               </p>
 
-              {risk.explanation && (
+              {risk.recommendation && (
                 <button
                   type="button"
                   className="risk-item__expand"
@@ -145,20 +153,18 @@ export function RiskHighlights({ risks = [], className = '' }) {
                 </button>
               )}
 
-              {isExpanded && risk.explanation && (
+              {isExpanded && risk.recommendation && (
                 <div className="risk-item__details">
                   <h4 className="risk-item__details-title">Why this matters:</h4>
                   <div className="risk-item__details-content">
-                    <ReactMarkdown rehypePlugins={[[rehypeSanitize, sanitizeSchema]]}>{risk.explanation}</ReactMarkdown>
+                    <ReactMarkdown rehypePlugins={[[rehypeSanitize, sanitizeSchema]]}>{risk.recommendation}</ReactMarkdown>
                   </div>
 
-                  {risk.affectedSections && risk.affectedSections.length > 0 && (
+                  {risk.location && (
                     <div className="risk-item__sections">
                       <h4 className="risk-item__sections-title">Related sections:</h4>
                       <ul className="risk-item__sections-list">
-                        {risk.affectedSections.map((section, idx) => (
-                          <li key={idx}>{section}</li>
-                        ))}
+                        <li>{risk.location}</li>
                       </ul>
                     </div>
                   )}

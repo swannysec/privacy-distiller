@@ -9,25 +9,28 @@ vi.mock("react-markdown", () => ({
 describe("RiskHighlights", () => {
   const mockRisks = [
     {
+      id: "risk-1",
       title: "Data Collection",
       severity: "high",
       description: "Collects extensive personal data",
-      explanation: "This may include sensitive information",
-      affectedSections: ["Section 1", "Section 2"],
+      recommendation: "This may include sensitive information",
+      location: "Section 1, Section 2",
     },
     {
+      id: "risk-2",
       title: "Third Party Sharing",
       severity: "medium",
       description: "Shares data with third parties",
-      explanation: "Your data may be sold to advertisers",
-      affectedSections: ["Section 3"],
+      recommendation: "Your data may be sold to advertisers",
+      location: "Section 3",
     },
     {
+      id: "risk-3",
       title: "Data Retention",
       severity: "low",
       description: "Retains data indefinitely",
-      explanation: "No clear deletion policy",
-      affectedSections: [],
+      recommendation: "No clear deletion policy",
+      location: "",
     },
   ];
 
@@ -39,9 +42,7 @@ describe("RiskHighlights", () => {
     it("should render title", () => {
       render(<RiskHighlights risks={mockRisks} />);
 
-      expect(
-        screen.getByText("Privacy Risks Identified"),
-      ).toBeInTheDocument();
+      expect(screen.getByText("Privacy Risks Identified")).toBeInTheDocument();
     });
 
     it("should render subtitle", () => {
@@ -90,7 +91,7 @@ describe("RiskHighlights", () => {
       ).toBeInTheDocument();
     });
 
-    it("should render Learn more buttons for risks with explanations", () => {
+    it("should render Learn more buttons for risks with recommendations", () => {
       render(<RiskHighlights risks={mockRisks} />);
 
       const learnMoreButtons = screen.getAllByRole("button", {
@@ -134,9 +135,7 @@ describe("RiskHighlights", () => {
     it("should show title even in empty state", () => {
       render(<RiskHighlights risks={[]} />);
 
-      expect(
-        screen.getByText("Privacy Risks Identified"),
-      ).toBeInTheDocument();
+      expect(screen.getByText("Privacy Risks Identified")).toBeInTheDocument();
     });
 
     it("should not render Learn more buttons in empty state", () => {
@@ -149,7 +148,7 @@ describe("RiskHighlights", () => {
   });
 
   describe("Risk Expansion", () => {
-    it("should not show explanation details by default", () => {
+    it("should not show recommendation details by default", () => {
       render(<RiskHighlights risks={mockRisks} />);
 
       expect(screen.queryByText("Why this matters:")).not.toBeInTheDocument();
@@ -181,14 +180,13 @@ describe("RiskHighlights", () => {
       fireEvent.click(learnMoreButtons[0]);
 
       expect(screen.getByText("Related sections:")).toBeInTheDocument();
-      expect(screen.getByText("Section 1")).toBeInTheDocument();
-      expect(screen.getByText("Section 2")).toBeInTheDocument();
+      expect(screen.getByText("Section 1, Section 2")).toBeInTheDocument();
     });
 
     it("should not show affected sections if empty", () => {
       render(<RiskHighlights risks={mockRisks} />);
 
-      // Click on Data Retention (which has empty affectedSections)
+      // Click on Data Retention (which has empty location)
       const learnMoreButtons = screen.getAllByRole("button", {
         name: /Learn more/i,
       });
@@ -241,7 +239,7 @@ describe("RiskHighlights", () => {
       fireEvent.click(learnMoreButtons[0]);
       fireEvent.click(learnMoreButtons[1]);
 
-      // Both explanations should be visible
+      // Both recommendations should be visible
       expect(
         screen.getByText("This may include sensitive information"),
       ).toBeInTheDocument();
@@ -275,19 +273,19 @@ describe("RiskHighlights", () => {
           title: "Low Severity Item",
           severity: "low",
           description: "Low severity",
-          explanation: "Low explanation",
+          recommendation: "Low recommendation",
         },
         {
           title: "Medium Severity Item",
           severity: "medium",
           description: "Medium severity",
-          explanation: "Medium explanation",
+          recommendation: "Medium recommendation",
         },
         {
           title: "High Severity Item",
           severity: "high",
           description: "High severity",
-          explanation: "High explanation",
+          recommendation: "High recommendation",
         },
       ];
 
@@ -307,12 +305,8 @@ describe("RiskHighlights", () => {
     it("should apply severity class to risk items", () => {
       const { container } = render(<RiskHighlights risks={mockRisks} />);
 
-      expect(
-        container.querySelector(".risk-item--high"),
-      ).toBeInTheDocument();
-      expect(
-        container.querySelector(".risk-item--medium"),
-      ).toBeInTheDocument();
+      expect(container.querySelector(".risk-item--high")).toBeInTheDocument();
+      expect(container.querySelector(".risk-item--medium")).toBeInTheDocument();
       expect(container.querySelector(".risk-item--low")).toBeInTheDocument();
     });
 
@@ -339,7 +333,7 @@ describe("RiskHighlights", () => {
   });
 
   describe("ReactMarkdown Integration", () => {
-    it("should render explanation through ReactMarkdown", () => {
+    it("should render recommendation through ReactMarkdown", () => {
       render(<RiskHighlights risks={mockRisks} />);
 
       const learnMoreButtons = screen.getAllByRole("button", {
@@ -372,7 +366,7 @@ describe("RiskHighlights", () => {
       ).toBeInTheDocument();
     });
 
-    it("should handle risks without explanation", () => {
+    it("should handle risks without recommendation", () => {
       const riskWithoutExplanation = [
         {
           title: "Simple Risk",
@@ -396,7 +390,7 @@ describe("RiskHighlights", () => {
           title: "Unknown Severity",
           severity: "unknown",
           description: "Unknown severity level",
-          explanation: "Test",
+          recommendation: "Test",
         },
       ];
 
@@ -413,13 +407,13 @@ describe("RiskHighlights", () => {
       ).toBeInTheDocument();
     });
 
-    it("should handle risk with empty string explanation", () => {
+    it("should handle risk with empty string recommendation", () => {
       const riskWithEmptyExplanation = [
         {
           title: "Empty Explanation",
           severity: "low",
-          description: "Has empty explanation",
-          explanation: "",
+          description: "Has empty recommendation",
+          recommendation: "",
         },
       ];
 
@@ -495,9 +489,7 @@ describe("RiskHighlights", () => {
     it("should use risk-highlights class", () => {
       const { container } = render(<RiskHighlights risks={mockRisks} />);
 
-      expect(
-        container.querySelector(".risk-highlights"),
-      ).toBeInTheDocument();
+      expect(container.querySelector(".risk-highlights")).toBeInTheDocument();
     });
 
     it("should use card__header class", () => {
@@ -528,9 +520,7 @@ describe("RiskHighlights", () => {
       const { container } = render(<RiskHighlights risks={mockRisks} />);
 
       expect(container.querySelector(".risk-item")).toBeInTheDocument();
-      expect(
-        container.querySelector(".risk-item__header"),
-      ).toBeInTheDocument();
+      expect(container.querySelector(".risk-item__header")).toBeInTheDocument();
       expect(container.querySelector(".risk-item__title")).toBeInTheDocument();
       expect(
         container.querySelector(".risk-item__severity"),
@@ -538,9 +528,7 @@ describe("RiskHighlights", () => {
       expect(
         container.querySelector(".risk-item__description"),
       ).toBeInTheDocument();
-      expect(
-        container.querySelector(".risk-item__expand"),
-      ).toBeInTheDocument();
+      expect(container.querySelector(".risk-item__expand")).toBeInTheDocument();
     });
 
     it("should use empty state classes", () => {
