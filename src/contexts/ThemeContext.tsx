@@ -1,16 +1,24 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+
+interface ThemeContextValue {
+  isDarkTheme: boolean;
+  toggleTheme: () => void;
+  theme: 'dark' | 'light';
+}
 
 /**
  * Theme Context - Manages dark/light theme state
  */
-const ThemeContext = createContext(null);
+const ThemeContext = createContext<ThemeContextValue | null>(null);
+
+interface ThemeProviderProps {
+  children: ReactNode;
+}
 
 /**
  * Theme Provider - Provides theme context to the application
- * @param {Object} props
- * @param {React.ReactNode} props.children
  */
-export function ThemeProvider({ children }) {
+export function ThemeProvider({ children }: ThemeProviderProps) {
   // Initialize from localStorage or default to dark theme
   const [isDarkTheme, setIsDarkTheme] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -38,7 +46,7 @@ export function ThemeProvider({ children }) {
   // Listen for system theme changes
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = (e) => {
+    const handleChange = (e: MediaQueryListEvent) => {
       // Only auto-switch if user hasn't set a preference
       const stored = localStorage.getItem('theme');
       if (!stored) {
@@ -54,7 +62,7 @@ export function ThemeProvider({ children }) {
     setIsDarkTheme(prev => !prev);
   }, []);
 
-  const value = {
+  const value: ThemeContextValue = {
     isDarkTheme,
     toggleTheme,
     theme: isDarkTheme ? 'dark' : 'light'
@@ -69,9 +77,8 @@ export function ThemeProvider({ children }) {
 
 /**
  * Hook to access theme context
- * @returns {{ isDarkTheme: boolean, toggleTheme: Function, theme: string }}
  */
-export function useTheme() {
+export function useTheme(): ThemeContextValue {
   const context = useContext(ThemeContext);
   if (!context) {
     throw new Error('useTheme must be used within a ThemeProvider');

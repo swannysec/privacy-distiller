@@ -1,41 +1,76 @@
 // jsPDF is dynamically imported in exportToPDF to reduce initial bundle size
 
+import type {
+  AnalysisResult,
+  AnalysisDocumentMetadata,
+  PrivacyScorecard,
+  PrivacyRisk,
+  KeyTerm,
+} from "../types";
+
+interface CategoryConfig {
+  label: string;
+  weight: number;
+}
+
+type CategoryKey =
+  | "thirdPartySharing"
+  | "userRights"
+  | "dataCollection"
+  | "dataRetention"
+  | "purposeClarity"
+  | "securityMeasures"
+  | "policyTransparency";
+
+interface ContentBlock {
+  type: "heading" | "paragraph" | "bullet" | "numbered";
+  content: string;
+  level?: number;
+}
+
+type RGB = [number, number, number];
+
 /**
  * Category configuration for scorecard (matches PrivacyScorecard component)
  */
-const CATEGORY_CONFIG = {
-  thirdPartySharing: { label: 'Third-Party Sharing', weight: 20 },
-  userRights: { label: 'User Rights & Control', weight: 18 },
-  dataCollection: { label: 'Data Collection', weight: 18 },
-  dataRetention: { label: 'Data Retention', weight: 14 },
-  purposeClarity: { label: 'Purpose Clarity', weight: 12 },
-  securityMeasures: { label: 'Security Measures', weight: 10 },
-  policyTransparency: { label: 'Policy Transparency', weight: 8 },
+const CATEGORY_CONFIG: Record<CategoryKey, CategoryConfig> = {
+  thirdPartySharing: { label: "Third-Party Sharing", weight: 20 },
+  userRights: { label: "User Rights & Control", weight: 18 },
+  dataCollection: { label: "Data Collection", weight: 18 },
+  dataRetention: { label: "Data Retention", weight: 14 },
+  purposeClarity: { label: "Purpose Clarity", weight: 12 },
+  securityMeasures: { label: "Security Measures", weight: 10 },
+  policyTransparency: { label: "Policy Transparency", weight: 8 },
 };
 
-const CATEGORY_KEYS = [
-  'thirdPartySharing',
-  'userRights',
-  'dataCollection',
-  'dataRetention',
-  'purposeClarity',
-  'securityMeasures',
-  'policyTransparency',
+const CATEGORY_KEYS: CategoryKey[] = [
+  "thirdPartySharing",
+  "userRights",
+  "dataCollection",
+  "dataRetention",
+  "purposeClarity",
+  "securityMeasures",
+  "policyTransparency",
 ];
 
 /**
  * Calculate overall score from scorecard data
- * @param {Object} scorecard - Scorecard data
- * @returns {number} Overall score (0-100)
  */
-function calculateOverallScore(scorecard) {
+function calculateOverallScore(
+  scorecard: PrivacyScorecard | undefined,
+): number {
   if (scorecard?.overallScore) return scorecard.overallScore;
   if (!scorecard) return 0;
 
   let totalWeightedScore = 0;
   for (const key of CATEGORY_KEYS) {
-    if (scorecard[key]) {
-      const score = scorecard[key].score || 5;
+    const categoryData = scorecard[key];
+    if (
+      categoryData &&
+      typeof categoryData === "object" &&
+      "score" in categoryData
+    ) {
+      const score = (categoryData as { score?: number }).score || 5;
       const weight = CATEGORY_CONFIG[key].weight;
       totalWeightedScore += (score / 10) * weight;
     }
@@ -45,108 +80,98 @@ function calculateOverallScore(scorecard) {
 
 /**
  * Calculate grade from score
- * @param {number} score - Score (0-100)
- * @returns {string} Letter grade
  */
-function calculateGrade(score) {
-  if (score >= 97) return 'A+';
-  if (score >= 93) return 'A';
-  if (score >= 90) return 'A-';
-  if (score >= 87) return 'B+';
-  if (score >= 83) return 'B';
-  if (score >= 80) return 'B-';
-  if (score >= 77) return 'C+';
-  if (score >= 73) return 'C';
-  if (score >= 70) return 'C-';
-  if (score >= 67) return 'D+';
-  if (score >= 63) return 'D';
-  if (score >= 60) return 'D-';
-  return 'F';
+function calculateGrade(score: number): string {
+  if (score >= 97) return "A+";
+  if (score >= 93) return "A";
+  if (score >= 90) return "A-";
+  if (score >= 87) return "B+";
+  if (score >= 83) return "B";
+  if (score >= 80) return "B-";
+  if (score >= 77) return "C+";
+  if (score >= 73) return "C";
+  if (score >= 70) return "C-";
+  if (score >= 67) return "D+";
+  if (score >= 63) return "D";
+  if (score >= 60) return "D-";
+  return "F";
 }
 
 /**
  * Get document title from source
- * @param {Object} documentMetadata - Document metadata
- * @returns {string} Document title
  */
-function getDocumentTitle(documentMetadata) {
-  const source = documentMetadata?.source || '';
-  if (source.startsWith('http')) {
+function getDocumentTitle(
+  documentMetadata: AnalysisDocumentMetadata | undefined,
+): string {
+  const source = documentMetadata?.source || "";
+  if (source.startsWith("http")) {
     try {
       const url = new URL(source);
-      const host = url.hostname.replace('www.', '');
-      const company = host.split('.')[0];
+      const host = url.hostname.replace("www.", "");
+      const company = host.split(".")[0];
       return `${company.charAt(0).toUpperCase() + company.slice(1)} Privacy Policy Analysis`;
     } catch {
-      return 'Privacy Policy Analysis';
+      return "Privacy Policy Analysis";
     }
   }
-  return source.replace('.pdf', '') + ' Analysis';
+  return source.replace(".pdf", "") + " Analysis";
 }
 
 /**
  * Format date for display
- * @param {string|Date} date - Date to format
- * @returns {string} Formatted date
  */
-function formatDate(date) {
-  if (!date) return 'Unknown date';
+function formatDate(date: string | Date | undefined): string {
+  if (!date) return "Unknown date";
   const d = new Date(date);
-  return d.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
+  return d.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 
 /**
  * Get severity display label
- * @param {string} severity - Severity level
- * @returns {string} Display label
  */
-function getSeverityLabel(severity) {
-  const s = (severity || 'low').toLowerCase();
-  if (s === 'critical' || s === 'high') return 'Higher Risk';
-  if (s === 'medium') return 'Medium Risk';
-  return 'Lower Risk';
+function getSeverityLabel(severity: string): string {
+  const s = (severity || "low").toLowerCase();
+  if (s === "critical" || s === "high") return "Higher Risk";
+  if (s === "medium") return "Medium Risk";
+  return "Lower Risk";
 }
 
 /**
  * Clean inline markdown formatting from text
- * @param {string} text - Text with markdown
- * @returns {string} Clean text
  */
-function cleanInlineMarkdown(text) {
-  if (!text) return '';
+function cleanInlineMarkdown(text: string): string {
+  if (!text) return "";
   return text
-    .replace(/\*\*([^*]+)\*\*/g, '$1') // Remove bold
-    .replace(/\*([^*]+)\*/g, '$1') // Remove italic
-    .replace(/__([^_]+)__/g, '$1') // Remove bold (underscore)
-    .replace(/_([^_]+)_/g, '$1') // Remove italic (underscore)
-    .replace(/`([^`]+)`/g, '$1') // Remove inline code
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Remove links, keep text
+    .replace(/\*\*([^*]+)\*\*/g, "$1") // Remove bold
+    .replace(/\*([^*]+)\*/g, "$1") // Remove italic
+    .replace(/__([^_]+)__/g, "$1") // Remove bold (underscore)
+    .replace(/_([^_]+)_/g, "$1") // Remove italic (underscore)
+    .replace(/`([^`]+)`/g, "$1") // Remove inline code
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1") // Remove links, keep text
     .trim();
 }
 
 /**
  * Parse markdown into structured blocks for PDF rendering
- * @param {string} markdown - Markdown text
- * @returns {Array} Array of content blocks
  */
-function parseMarkdownToBlocks(markdown) {
+function parseMarkdownToBlocks(markdown: string): ContentBlock[] {
   if (!markdown) return [];
 
-  const blocks = [];
-  const lines = markdown.split('\n');
-  let currentParagraph = [];
+  const blocks: ContentBlock[] = [];
+  const lines = markdown.split("\n");
+  let currentParagraph: string[] = [];
 
   const flushParagraph = () => {
     if (currentParagraph.length > 0) {
-      const text = currentParagraph.join(' ').trim();
+      const text = currentParagraph.join(" ").trim();
       if (text) {
-        blocks.push({ type: 'paragraph', content: cleanInlineMarkdown(text) });
+        blocks.push({ type: "paragraph", content: cleanInlineMarkdown(text) });
       }
       currentParagraph = [];
     }
@@ -166,7 +191,11 @@ function parseMarkdownToBlocks(markdown) {
     if (headerMatch) {
       flushParagraph();
       const level = headerMatch[1].length;
-      blocks.push({ type: 'heading', level, content: cleanInlineMarkdown(headerMatch[2]) });
+      blocks.push({
+        type: "heading",
+        level,
+        content: cleanInlineMarkdown(headerMatch[2]),
+      });
       continue;
     }
 
@@ -174,7 +203,10 @@ function parseMarkdownToBlocks(markdown) {
     const bulletMatch = trimmedLine.match(/^[-*+]\s+(.+)$/);
     if (bulletMatch) {
       flushParagraph();
-      blocks.push({ type: 'bullet', content: cleanInlineMarkdown(bulletMatch[1]) });
+      blocks.push({
+        type: "bullet",
+        content: cleanInlineMarkdown(bulletMatch[1]),
+      });
       continue;
     }
 
@@ -182,7 +214,10 @@ function parseMarkdownToBlocks(markdown) {
     const numberedMatch = trimmedLine.match(/^\d+\.\s+(.+)$/);
     if (numberedMatch) {
       flushParagraph();
-      blocks.push({ type: 'numbered', content: cleanInlineMarkdown(numberedMatch[1]) });
+      blocks.push({
+        type: "numbered",
+        content: cleanInlineMarkdown(numberedMatch[1]),
+      });
       continue;
     }
 
@@ -196,17 +231,15 @@ function parseMarkdownToBlocks(markdown) {
 
 /**
  * Export analysis result to PDF
- * @param {Object} result - Analysis result object
- * @returns {void} Downloads the PDF
  */
-export async function exportToPDF(result) {
+export async function exportToPDF(result: AnalysisResult): Promise<void> {
   // Dynamic import jsPDF to reduce initial bundle size
-  const { jsPDF } = await import('jspdf');
-  
+  const { jsPDF } = await import("jspdf");
+
   const doc = new jsPDF({
-    orientation: 'portrait',
-    unit: 'mm',
-    format: 'a4',
+    orientation: "portrait",
+    unit: "mm",
+    format: "a4",
   });
 
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -216,18 +249,17 @@ export async function exportToPDF(result) {
   let y = margin;
 
   // Colors
-  const primaryColor = [79, 70, 229]; // Indigo
-  const textColor = [31, 41, 55]; // Gray-800
-  const mutedColor = [107, 114, 128]; // Gray-500
-  const successColor = [34, 197, 94]; // Green
-  const warningColor = [245, 158, 11]; // Amber
-  const dangerColor = [239, 68, 68]; // Red
+  const primaryColor: RGB = [79, 70, 229]; // Indigo
+  const textColor: RGB = [31, 41, 55]; // Gray-800
+  const mutedColor: RGB = [107, 114, 128]; // Gray-500
+  const successColor: RGB = [34, 197, 94]; // Green
+  const warningColor: RGB = [245, 158, 11]; // Amber
+  const dangerColor: RGB = [239, 68, 68]; // Red
 
   /**
    * Add a new page if needed
-   * @param {number} neededHeight - Height needed for next content
    */
-  function checkPageBreak(neededHeight = 20) {
+  function checkPageBreak(neededHeight = 20): void {
     if (y + neededHeight > pageHeight - margin) {
       doc.addPage();
       y = margin;
@@ -237,7 +269,7 @@ export async function exportToPDF(result) {
   /**
    * Draw a horizontal line
    */
-  function drawLine() {
+  function drawLine(): void {
     doc.setDrawColor(229, 231, 235);
     doc.line(margin, y, pageWidth - margin, y);
     y += 8;
@@ -245,19 +277,18 @@ export async function exportToPDF(result) {
 
   /**
    * Render markdown blocks to PDF
-   * @param {Array} blocks - Parsed markdown blocks
    */
-  function renderMarkdownBlocks(blocks) {
+  function renderMarkdownBlocks(blocks: ContentBlock[]): void {
     let numberedIndex = 0;
 
     for (const block of blocks) {
       switch (block.type) {
-        case 'heading': {
+        case "heading": {
           checkPageBreak(12);
           y += 3; // Space before heading
           const fontSize = block.level === 1 ? 14 : block.level === 2 ? 12 : 11;
           doc.setFontSize(fontSize);
-          doc.setFont('helvetica', 'bold');
+          doc.setFont("helvetica", "bold");
           doc.setTextColor(...primaryColor);
           const headingLines = doc.splitTextToSize(block.content, contentWidth);
           for (const line of headingLines) {
@@ -269,10 +300,10 @@ export async function exportToPDF(result) {
           break;
         }
 
-        case 'paragraph': {
+        case "paragraph": {
           checkPageBreak(10);
           doc.setFontSize(10);
-          doc.setFont('helvetica', 'normal');
+          doc.setFont("helvetica", "normal");
           doc.setTextColor(...textColor);
           const paraLines = doc.splitTextToSize(block.content, contentWidth);
           for (const line of paraLines) {
@@ -285,13 +316,16 @@ export async function exportToPDF(result) {
           break;
         }
 
-        case 'bullet': {
+        case "bullet": {
           checkPageBreak(8);
           doc.setFontSize(10);
-          doc.setFont('helvetica', 'normal');
+          doc.setFont("helvetica", "normal");
           doc.setTextColor(...textColor);
-          const bulletLines = doc.splitTextToSize(block.content, contentWidth - 8);
-          doc.text('•', margin, y);
+          const bulletLines = doc.splitTextToSize(
+            block.content,
+            contentWidth - 8,
+          );
+          doc.text("•", margin, y);
           for (let i = 0; i < bulletLines.length; i++) {
             checkPageBreak(5);
             doc.text(bulletLines[i], margin + 6, y);
@@ -301,13 +335,16 @@ export async function exportToPDF(result) {
           break;
         }
 
-        case 'numbered': {
+        case "numbered": {
           checkPageBreak(8);
           numberedIndex++;
           doc.setFontSize(10);
-          doc.setFont('helvetica', 'normal');
+          doc.setFont("helvetica", "normal");
           doc.setTextColor(...textColor);
-          const numLines = doc.splitTextToSize(block.content, contentWidth - 10);
+          const numLines = doc.splitTextToSize(
+            block.content,
+            contentWidth - 10,
+          );
           doc.text(`${numberedIndex}.`, margin, y);
           for (let i = 0; i < numLines.length; i++) {
             checkPageBreak(5);
@@ -324,7 +361,7 @@ export async function exportToPDF(result) {
   // ===== HEADER =====
   doc.setFontSize(24);
   doc.setTextColor(...primaryColor);
-  doc.setFont('helvetica', 'bold');
+  doc.setFont("helvetica", "bold");
   const title = getDocumentTitle(result.documentMetadata);
   doc.text(title, margin, y);
   y += 10;
@@ -332,8 +369,8 @@ export async function exportToPDF(result) {
   // Metadata
   doc.setFontSize(10);
   doc.setTextColor(...mutedColor);
-  doc.setFont('helvetica', 'normal');
-  const source = result.documentMetadata?.source || 'Unknown source';
+  doc.setFont("helvetica", "normal");
+  const source = result.documentMetadata?.source || "Unknown source";
   doc.text(`Source: ${source}`, margin, y);
   y += 5;
   doc.text(`Analyzed: ${formatDate(result.timestamp)}`, margin, y);
@@ -347,45 +384,58 @@ export async function exportToPDF(result) {
 
     doc.setFontSize(16);
     doc.setTextColor(...primaryColor);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Privacy Scorecard', margin, y);
+    doc.setFont("helvetica", "bold");
+    doc.text("Privacy Scorecard", margin, y);
     y += 10;
 
-    const overallScore = result.scorecard.overallScore || calculateOverallScore(result.scorecard);
+    const overallScore =
+      result.scorecard.overallScore || calculateOverallScore(result.scorecard);
     const grade = result.scorecard.overallGrade || calculateGrade(overallScore);
 
     // Overall grade and score
     doc.setFontSize(12);
     doc.setTextColor(...textColor);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont("helvetica", "bold");
     doc.text(`Overall Grade: ${grade}`, margin, y);
     doc.text(`Privacy Score: ${overallScore}/100`, margin + 60, y);
     y += 10;
 
     // Category scores
     doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont("helvetica", "normal");
 
     for (const key of CATEGORY_KEYS) {
       const categoryData = result.scorecard[key];
       const config = CATEGORY_CONFIG[key];
-      if (categoryData) {
+      if (
+        categoryData &&
+        typeof categoryData === "object" &&
+        "score" in categoryData
+      ) {
         checkPageBreak(12);
-        const score = categoryData.score || 5;
-        const scoreColor = score >= 7 ? successColor : score >= 4 ? warningColor : dangerColor;
+        const typedCategoryData = categoryData as {
+          score?: number;
+          summary?: string;
+        };
+        const score = typedCategoryData.score || 5;
+        const scoreColor: RGB =
+          score >= 7 ? successColor : score >= 4 ? warningColor : dangerColor;
 
         doc.setTextColor(...textColor);
-        doc.setFont('helvetica', 'bold');
+        doc.setFont("helvetica", "bold");
         doc.text(`${config.label} (${config.weight}%):`, margin, y);
 
         doc.setTextColor(...scoreColor);
         doc.text(`${score}/10`, margin + 65, y);
         y += 5;
 
-        if (categoryData.summary) {
-          doc.setFont('helvetica', 'normal');
+        if (typedCategoryData.summary) {
+          doc.setFont("helvetica", "normal");
           doc.setTextColor(...mutedColor);
-          const summaryLines = doc.splitTextToSize(categoryData.summary, contentWidth);
+          const summaryLines = doc.splitTextToSize(
+            typedCategoryData.summary,
+            contentWidth,
+          );
           for (const line of summaryLines) {
             doc.text(line, margin + 4, y);
             y += 4;
@@ -396,22 +446,25 @@ export async function exportToPDF(result) {
     }
 
     // Key concerns
-    if (result.scorecard.topConcerns?.length > 0) {
+    if (
+      result.scorecard.topConcerns &&
+      result.scorecard.topConcerns.length > 0
+    ) {
       y += 4;
       checkPageBreak(20);
       doc.setTextColor(...dangerColor);
-      doc.setFont('helvetica', 'bold');
+      doc.setFont("helvetica", "bold");
       doc.setFontSize(11);
-      doc.text('Key Concerns:', margin, y);
+      doc.text("Key Concerns:", margin, y);
       y += 6;
 
       doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
+      doc.setFont("helvetica", "normal");
       doc.setTextColor(...textColor);
       for (const concern of result.scorecard.topConcerns.slice(0, 3)) {
         checkPageBreak(8);
         const lines = doc.splitTextToSize(concern, contentWidth - 8);
-        doc.text('•', margin, y);
+        doc.text("•", margin, y);
         for (let i = 0; i < lines.length; i++) {
           doc.text(lines[i], margin + 6, y);
           if (i < lines.length - 1) y += 5;
@@ -421,22 +474,25 @@ export async function exportToPDF(result) {
     }
 
     // Positive aspects
-    if (result.scorecard.positiveAspects?.length > 0) {
+    if (
+      result.scorecard.positiveAspects &&
+      result.scorecard.positiveAspects.length > 0
+    ) {
       y += 4;
       checkPageBreak(20);
       doc.setTextColor(...successColor);
-      doc.setFont('helvetica', 'bold');
+      doc.setFont("helvetica", "bold");
       doc.setFontSize(11);
-      doc.text('Positive Aspects:', margin, y);
+      doc.text("Positive Aspects:", margin, y);
       y += 6;
 
       doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
+      doc.setFont("helvetica", "normal");
       doc.setTextColor(...textColor);
       for (const positive of result.scorecard.positiveAspects.slice(0, 3)) {
         checkPageBreak(8);
         const lines = doc.splitTextToSize(positive, contentWidth - 8);
-        doc.text('•', margin, y);
+        doc.text("•", margin, y);
         for (let i = 0; i < lines.length; i++) {
           doc.text(lines[i], margin + 6, y);
           if (i < lines.length - 1) y += 5;
@@ -454,13 +510,16 @@ export async function exportToPDF(result) {
 
   doc.setFontSize(16);
   doc.setTextColor(...primaryColor);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Policy Summary', margin, y);
+  doc.setFont("helvetica", "bold");
+  doc.text("Policy Summary", margin, y);
   y += 10;
 
   // Use full summary, fall back to detailed, then brief
   const summaryMarkdown =
-    result.summary?.full || result.summary?.detailed || result.summary?.brief || 'No summary available.';
+    result.summary?.full ||
+    result.summary?.detailed ||
+    result.summary?.brief ||
+    "No summary available.";
   const blocks = parseMarkdownToBlocks(summaryMarkdown);
   renderMarkdownBlocks(blocks);
 
@@ -468,54 +527,64 @@ export async function exportToPDF(result) {
   drawLine();
 
   // ===== PRIVACY RISKS =====
-  if (result.risks?.length > 0) {
+  if (result.risks && result.risks.length > 0) {
     checkPageBreak(30);
 
     doc.setFontSize(16);
     doc.setTextColor(...primaryColor);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont("helvetica", "bold");
     doc.text(`Privacy Risks (${result.risks.length})`, margin, y);
     y += 10;
 
     // Sort risks by severity
-    const sortedRisks = [...result.risks].sort((a, b) => {
-      const order = { critical: 0, high: 1, medium: 2, low: 3 };
-      const aOrder = order[(a.severity || 'low').toLowerCase()] ?? 3;
-      const bOrder = order[(b.severity || 'low').toLowerCase()] ?? 3;
-      return aOrder - bOrder;
-    });
+    const sortedRisks = [...result.risks].sort(
+      (a: PrivacyRisk, b: PrivacyRisk) => {
+        const order: Record<string, number> = {
+          critical: 0,
+          high: 1,
+          medium: 2,
+          low: 3,
+        };
+        const aOrder = order[(a.severity || "low").toLowerCase()] ?? 3;
+        const bOrder = order[(b.severity || "low").toLowerCase()] ?? 3;
+        return aOrder - bOrder;
+      },
+    );
 
     for (const risk of sortedRisks) {
       checkPageBreak(25);
 
-      const severity = (risk.severity || 'low').toLowerCase();
+      const severity = (risk.severity || "low").toLowerCase();
       const severityLabel = getSeverityLabel(severity);
-      const severityColor =
-        severity === 'critical' || severity === 'high'
+      const severityColor: RGB =
+        severity === "critical" || severity === "high"
           ? dangerColor
-          : severity === 'medium'
+          : severity === "medium"
             ? warningColor
             : successColor;
 
       // Risk title
       doc.setFontSize(11);
-      doc.setFont('helvetica', 'bold');
+      doc.setFont("helvetica", "bold");
       doc.setTextColor(...textColor);
-      doc.text(risk.title || 'Untitled Risk', margin, y);
+      doc.text(risk.title || "Untitled Risk", margin, y);
       y += 5;
 
       // Severity label on its own line
       doc.setFontSize(9);
-      doc.setFont('helvetica', 'bold');
+      doc.setFont("helvetica", "bold");
       doc.setTextColor(...severityColor);
       doc.text(`[${severityLabel}]`, margin, y);
       y += 5;
 
       // Description
       doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
+      doc.setFont("helvetica", "normal");
       doc.setTextColor(...textColor);
-      const descLines = doc.splitTextToSize(risk.description || '', contentWidth);
+      const descLines = doc.splitTextToSize(
+        risk.description || "",
+        contentWidth,
+      );
       for (const line of descLines) {
         checkPageBreak(6);
         doc.text(line, margin, y);
@@ -529,12 +598,12 @@ export async function exportToPDF(result) {
   }
 
   // ===== KEY TERMS GLOSSARY =====
-  if (result.keyTerms?.length > 0) {
+  if (result.keyTerms && result.keyTerms.length > 0) {
     checkPageBreak(30);
 
     doc.setFontSize(16);
     doc.setTextColor(...primaryColor);
-    doc.setFont('helvetica', 'bold');
+    doc.setFont("helvetica", "bold");
     doc.text(`Key Terms Glossary (${result.keyTerms.length})`, margin, y);
     y += 10;
 
@@ -542,15 +611,18 @@ export async function exportToPDF(result) {
       checkPageBreak(18);
 
       doc.setFontSize(11);
-      doc.setFont('helvetica', 'bold');
+      doc.setFont("helvetica", "bold");
       doc.setTextColor(...textColor);
-      doc.text(term.term || 'Unknown Term', margin, y);
+      doc.text((term as KeyTerm).term || "Unknown Term", margin, y);
       y += 6;
 
       doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
+      doc.setFont("helvetica", "normal");
       doc.setTextColor(...mutedColor);
-      const defLines = doc.splitTextToSize(term.definition || 'No definition available.', contentWidth);
+      const defLines = doc.splitTextToSize(
+        (term as KeyTerm).definition || "No definition available.",
+        contentWidth,
+      );
       for (const line of defLines) {
         checkPageBreak(6);
         doc.text(line, margin, y);
@@ -562,7 +634,7 @@ export async function exportToPDF(result) {
   }
 
   // ===== FOOTER =====
-  const totalPages = doc.internal.getNumberOfPages();
+  const totalPages = doc.getNumberOfPages();
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i);
     doc.setFontSize(8);
@@ -571,7 +643,7 @@ export async function exportToPDF(result) {
       `Generated by Privacy Policy Distiller | Page ${i} of ${totalPages}`,
       pageWidth / 2,
       pageHeight - 10,
-      { align: 'center' }
+      { align: "center" },
     );
   }
 
