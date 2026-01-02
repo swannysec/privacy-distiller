@@ -4,10 +4,10 @@
 
 /**
  * Formats a date to a readable string
- * @param {Date | string} date - Date to format
- * @returns {string} Formatted date
+ * @param date - Date to format
+ * @returns Formatted date
  */
-export function formatDate(date) {
+export function formatDate(date: Date | string | null | undefined): string {
   if (!date) return '';
 
   const dateObject = typeof date === 'string' ? new Date(date) : date;
@@ -27,10 +27,10 @@ export function formatDate(date) {
 
 /**
  * Formats a date to a relative time string (e.g., "2 hours ago")
- * @param {Date | string} date - Date to format
- * @returns {string} Relative time string
+ * @param date - Date to format
+ * @returns Relative time string
  */
-export function formatRelativeTime(date) {
+export function formatRelativeTime(date: Date | string | null | undefined): string {
   if (!date) return '';
 
   const dateObject = typeof date === 'string' ? new Date(date) : date;
@@ -40,7 +40,7 @@ export function formatRelativeTime(date) {
   }
 
   const now = new Date();
-  const diffMs = now - dateObject;
+  const diffMs = now.getTime() - dateObject.getTime();
   const diffSec = Math.floor(diffMs / 1000);
   const diffMin = Math.floor(diffSec / 60);
   const diffHour = Math.floor(diffMin / 60);
@@ -56,10 +56,10 @@ export function formatRelativeTime(date) {
 
 /**
  * Formats file size to human-readable format
- * @param {number} bytes - File size in bytes
- * @returns {string} Formatted file size
+ * @param bytes - File size in bytes
+ * @returns Formatted file size
  */
-export function formatFileSize(bytes) {
+export function formatFileSize(bytes: number): string {
   if (typeof bytes !== 'number' || bytes < 0) {
     return '0 B';
   }
@@ -78,10 +78,10 @@ export function formatFileSize(bytes) {
 
 /**
  * Formats a number with thousand separators
- * @param {number} num - Number to format
- * @returns {string} Formatted number
+ * @param num - Number to format
+ * @returns Formatted number
  */
-export function formatNumber(num) {
+export function formatNumber(num: number): string {
   if (typeof num !== 'number') {
     return '0';
   }
@@ -91,12 +91,12 @@ export function formatNumber(num) {
 
 /**
  * Truncates text to a maximum length with ellipsis
- * @param {string} text - Text to truncate
- * @param {number} maxLength - Maximum length
- * @param {string} suffix - Suffix to add (default: '...')
- * @returns {string} Truncated text
+ * @param text - Text to truncate
+ * @param maxLength - Maximum length
+ * @param suffix - Suffix to add (default: '...')
+ * @returns Truncated text
  */
-export function truncateText(text, maxLength, suffix = '...') {
+export function truncateText(text: string, maxLength: number, suffix: string = '...'): string {
   if (!text || typeof text !== 'string') {
     return '';
   }
@@ -110,10 +110,10 @@ export function truncateText(text, maxLength, suffix = '...') {
 
 /**
  * Converts text to title case
- * @param {string} text - Text to convert
- * @returns {string} Title cased text
+ * @param text - Text to convert
+ * @returns Title cased text
  */
-export function toTitleCase(text) {
+export function toTitleCase(text: string): string {
   if (!text || typeof text !== 'string') {
     return '';
   }
@@ -127,11 +127,11 @@ export function toTitleCase(text) {
 
 /**
  * Formats a percentage
- * @param {number} value - Value (0-100)
- * @param {number} decimals - Number of decimal places (default: 0)
- * @returns {string} Formatted percentage
+ * @param value - Value (0-100)
+ * @param decimals - Number of decimal places (default: 0)
+ * @returns Formatted percentage
  */
-export function formatPercentage(value, decimals = 0) {
+export function formatPercentage(value: number, decimals: number = 0): string {
   if (typeof value !== 'number') {
     return '0%';
   }
@@ -142,10 +142,10 @@ export function formatPercentage(value, decimals = 0) {
 
 /**
  * Formats a duration in milliseconds to human-readable format
- * @param {number} ms - Duration in milliseconds
- * @returns {string} Formatted duration
+ * @param ms - Duration in milliseconds
+ * @returns Formatted duration
  */
-export function formatDuration(ms) {
+export function formatDuration(ms: number): string {
   if (typeof ms !== 'number' || ms < 0) {
     return '0s';
   }
@@ -165,10 +165,10 @@ export function formatDuration(ms) {
 
 /**
  * Capitalizes the first letter of a string
- * @param {string} text - Text to capitalize
- * @returns {string} Capitalized text
+ * @param text - Text to capitalize
+ * @returns Capitalized text
  */
-export function capitalize(text) {
+export function capitalize(text: string): string {
   if (!text || typeof text !== 'string') {
     return '';
   }
@@ -178,12 +178,12 @@ export function capitalize(text) {
 
 /**
  * Pluralizes a word based on count
- * @param {number} count - Count to check
- * @param {string} singular - Singular form
- * @param {string} [plural] - Plural form (defaults to singular + 's')
- * @returns {string} Pluralized word
+ * @param count - Count to check
+ * @param singular - Singular form
+ * @param plural - Plural form (defaults to singular + 's')
+ * @returns Pluralized word
  */
-export function pluralize(count, singular, plural) {
+export function pluralize(count: number, singular: string, plural?: string): string {
   if (count === 1) {
     return singular;
   }
@@ -192,11 +192,11 @@ export function pluralize(count, singular, plural) {
 
 /**
  * Formats a list of items with proper grammar
- * @param {string[]} items - Items to format
- * @param {string} conjunction - Conjunction to use (default: 'and')
- * @returns {string} Formatted list
+ * @param items - Items to format
+ * @param conjunction - Conjunction to use (default: 'and')
+ * @returns Formatted list
  */
-export function formatList(items, conjunction = 'and') {
+export function formatList(items: string[], conjunction: string = 'and'): string {
   if (!Array.isArray(items) || items.length === 0) {
     return '';
   }

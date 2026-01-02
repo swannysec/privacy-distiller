@@ -8,14 +8,15 @@ import {
   TEXT_PROCESSING,
   ERROR_CODES,
   ERROR_MESSAGES,
-} from "./constants.js";
+} from "./constants";
+import type { ValidationResult, LLMConfig } from '../types';
 
 /**
  * Validates a URL input
- * @param {string} url - URL to validate
- * @returns {import('../types').ValidationResult}
+ * @param url - URL to validate
+ * @returns ValidationResult
  */
-export function validateUrl(url) {
+export function validateUrl(url: string): ValidationResult {
   const errors = [];
 
   if (!url || typeof url !== "string") {
@@ -47,7 +48,7 @@ export function validateUrl(url) {
     return { valid: false, errors };
   }
 
-  let urlObject;
+  let urlObject: URL;
   try {
     urlObject = new URL(trimmedUrl);
   } catch {
@@ -101,10 +102,10 @@ export function validateUrl(url) {
 
 /**
  * Validates a file input
- * @param {File} file - File to validate
- * @returns {import('../types').ValidationResult}
+ * @param file - File to validate
+ * @returns ValidationResult
  */
-export function validateFile(file) {
+export function validateFile(file: File): ValidationResult {
   const errors = [];
 
   if (!file) {
@@ -145,10 +146,10 @@ export function validateFile(file) {
  * Validates PDF file magic bytes (file signature)
  * This is an async function that reads the first bytes of the file
  * to verify it's actually a PDF, not just a renamed file
- * @param {File} file - File to validate
- * @returns {Promise<import('../types').ValidationResult>}
+ * @param file - File to validate
+ * @returns Promise<ValidationResult>
  */
-export async function validatePdfMagicBytes(file) {
+export async function validatePdfMagicBytes(file: File): Promise<ValidationResult> {
   const errors = [];
 
   if (!file) {
@@ -191,10 +192,10 @@ export async function validatePdfMagicBytes(file) {
 
 /**
  * Validates extracted document text
- * @param {string} text - Text to validate
- * @returns {import('../types').ValidationResult}
+ * @param text - Text to validate
+ * @returns ValidationResult
  */
-export function validateDocumentText(text) {
+export function validateDocumentText(text: string): ValidationResult {
   const errors = [];
 
   if (!text || typeof text !== "string") {
@@ -229,10 +230,10 @@ export function validateDocumentText(text) {
 
 /**
  * Validates LLM configuration
- * @param {import('../types').LLMConfig} config - LLM configuration to validate
- * @returns {import('../types').ValidationResult}
+ * @param config - LLM configuration to validate
+ * @returns ValidationResult
  */
-export function validateLLMConfig(config) {
+export function validateLLMConfig(config: LLMConfig): ValidationResult {
   const errors = [];
 
   if (!config) {
@@ -301,10 +302,10 @@ export function validateLLMConfig(config) {
 
 /**
  * Validates an API key format (basic check)
- * @param {string} apiKey - API key to validate
- * @returns {import('../types').ValidationResult}
+ * @param apiKey - API key to validate
+ * @returns ValidationResult
  */
-export function validateApiKey(apiKey) {
+export function validateApiKey(apiKey: string): ValidationResult {
   const errors = [];
 
   if (!apiKey || typeof apiKey !== "string") {

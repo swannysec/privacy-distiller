@@ -6,16 +6,16 @@ import DOMPurify from "dompurify";
 
 /**
  * Sanitizes HTML content to prevent XSS attacks
- * @param {string} html - HTML content to sanitize
- * @param {Object} options - DOMPurify options
- * @returns {string} Sanitized HTML
+ * @param html - HTML content to sanitize
+ * @param options - DOMPurify options
+ * @returns Sanitized HTML
  */
-export function sanitizeHtml(html, options = {}) {
+export function sanitizeHtml(html: string, options: DOMPurify.Config = {}): string {
   if (!html || typeof html !== "string") {
     return "";
   }
 
-  const defaultOptions = {
+  const defaultOptions: DOMPurify.Config = {
     ALLOWED_TAGS: [
       "p",
       "br",
@@ -49,10 +49,10 @@ export function sanitizeHtml(html, options = {}) {
 
 /**
  * Sanitizes text content by removing potentially dangerous characters
- * @param {string} text - Text to sanitize
- * @returns {string} Sanitized text
+ * @param text - Text to sanitize
+ * @returns Sanitized text
  */
-export function sanitizeText(text) {
+export function sanitizeText(text: string): string {
   if (!text || typeof text !== "string") {
     return "";
   }
@@ -60,7 +60,7 @@ export function sanitizeText(text) {
   // Apply sanitization in a loop to handle nested bypass attempts
   // e.g., "javajavascript:script:" -> "javascript:" after first pass
   let result = text;
-  let previous;
+  let previous: string;
   do {
     previous = result;
     result = result
@@ -76,10 +76,10 @@ export function sanitizeText(text) {
 
 /**
  * Sanitizes a URL to ensure it's safe
- * @param {string} url - URL to sanitize
- * @returns {string} Sanitized URL
+ * @param url - URL to sanitize
+ * @returns Sanitized URL
  */
-export function sanitizeUrl(url) {
+export function sanitizeUrl(url: string): string {
   if (!url || typeof url !== "string") {
     return "";
   }
@@ -102,10 +102,10 @@ export function sanitizeUrl(url) {
 
 /**
  * Sanitizes LLM-generated content for safe display
- * @param {string} content - LLM-generated content
- * @returns {string} Sanitized content
+ * @param content - LLM-generated content
+ * @returns Sanitized content
  */
-export function sanitizeLLMContent(content) {
+export function sanitizeLLMContent(content: string): string {
   if (!content || typeof content !== "string") {
     return "";
   }
@@ -121,10 +121,10 @@ export function sanitizeLLMContent(content) {
 
 /**
  * Strips all HTML tags from content
- * @param {string} html - HTML content
- * @returns {string} Plain text
+ * @param html - HTML content
+ * @returns Plain text
  */
-export function stripHtml(html) {
+export function stripHtml(html: string): string {
   if (!html || typeof html !== "string") {
     return "";
   }
@@ -134,10 +134,10 @@ export function stripHtml(html) {
 
 /**
  * Escapes HTML special characters
- * @param {string} text - Text to escape
- * @returns {string} Escaped text
+ * @param text - Text to escape
+ * @returns Escaped text
  */
-export function escapeHtml(text) {
+export function escapeHtml(text: string): string {
   if (!text || typeof text !== "string") {
     return "";
   }
@@ -149,10 +149,10 @@ export function escapeHtml(text) {
 
 /**
  * Sanitizes file name to prevent path traversal
- * @param {string} fileName - File name to sanitize
- * @returns {string} Sanitized file name
+ * @param fileName - File name to sanitize
+ * @returns Sanitized file name
  */
-export function sanitizeFileName(fileName) {
+export function sanitizeFileName(fileName: string): string {
   if (!fileName || typeof fileName !== "string") {
     return "unknown";
   }

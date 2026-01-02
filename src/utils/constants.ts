@@ -2,8 +2,139 @@
  * @file Application constants
  */
 
+import type { LLMProvider } from '../types';
+
+interface ProviderConfig {
+  id: LLMProvider;
+  name: string;
+  baseUrl: string;
+  requiresApiKey: boolean;
+  defaultModels: string[];
+}
+
+interface LLMProviders {
+  OPENROUTER: ProviderConfig;
+  OLLAMA: ProviderConfig;
+  LMSTUDIO: ProviderConfig;
+}
+
+interface DefaultLLMConfig {
+  provider: LLMProvider;
+  apiKey: string;
+  model: string;
+  baseUrl: string;
+  temperature: number;
+  maxTokens: number;
+  contextWindow: number | null;
+}
+
+interface DefaultContextWindows {
+  [key: string]: number;
+}
+
+interface DefaultMaxTokens {
+  [key: string]: number;
+}
+
+interface FileConstraints {
+  MAX_SIZE_BYTES: number;
+  MAX_SIZE_MB: number;
+  ALLOWED_TYPES: string[];
+  ALLOWED_EXTENSIONS: string[];
+  PDF_MAGIC_BYTES: number[];
+}
+
+interface URLConstraints {
+  MAX_LENGTH: number;
+  ALLOWED_PROTOCOLS: string[];
+  BLOCKED_DOMAINS: string[];
+  PRIVATE_IP_PATTERNS: RegExp[];
+}
+
+interface TextProcessing {
+  MAX_DOCUMENT_LENGTH: number;
+  MIN_DOCUMENT_LENGTH: number;
+  CHUNK_SIZE: number;
+  CHUNK_OVERLAP: number;
+}
+
+interface AnalysisConfig {
+  TIMEOUT_MS: number;
+  RETRY_ATTEMPTS: number;
+  RETRY_DELAY_MS: number;
+}
+
+interface RiskLevelConfig {
+  value: string;
+  label: string;
+  color: string;
+  priority: number;
+}
+
+interface RiskLevels {
+  LOW: RiskLevelConfig;
+  MEDIUM: RiskLevelConfig;
+  HIGHER: RiskLevelConfig;
+  CRITICAL: RiskLevelConfig;
+}
+
+interface AnalysisStatus {
+  IDLE: string;
+  EXTRACTING: string;
+  ANALYZING: string;
+  COMPLETED: string;
+  ERROR: string;
+  FAILED: string;
+}
+
+interface SummaryTypeConfig {
+  value: string;
+  label: string;
+  maxLength: number;
+}
+
+interface SummaryTypes {
+  BRIEF: SummaryTypeConfig;
+  DETAILED: SummaryTypeConfig;
+  FULL: SummaryTypeConfig;
+}
+
+interface StorageKeys {
+  LLM_CONFIG: string;
+  LLM_CONFIG_TIMESTAMP: string;
+  ANALYSIS_HISTORY: string;
+  USER_PREFERENCES: string;
+}
+
+interface ErrorCodes {
+  INVALID_URL: string;
+  INVALID_FILE_TYPE: string;
+  FILE_TOO_LARGE: string;
+  INVALID_API_KEY: string;
+  PDF_EXTRACTION_FAILED: string;
+  URL_FETCH_FAILED: string;
+  DOCUMENT_TOO_LONG: string;
+  DOCUMENT_TOO_SHORT: string;
+  LLM_REQUEST_FAILED: string;
+  LLM_TIMEOUT: string;
+  LLM_RATE_LIMITED: string;
+  LLM_INVALID_RESPONSE: string;
+  NETWORK_ERROR: string;
+  UNKNOWN_ERROR: string;
+}
+
+interface ErrorMessages {
+  [key: string]: string;
+}
+
+interface A11Y {
+  SKIP_TO_MAIN: string;
+  MAIN_CONTENT: string;
+  ARIA_LIVE_REGION: string;
+}
+
 // LLM Provider configurations
-export const LLM_PROVIDERS = {
+export const LLM_PROVIDERS: LLMProviders = {
   OPENROUTER: {
     id: "openrouter",
     name: "OpenRouter",
@@ -32,7 +163,7 @@ export const LLM_PROVIDERS = {
 };
 
 // Default LLM configuration
-export const DEFAULT_LLM_CONFIG = {
+export const DEFAULT_LLM_CONFIG: DefaultLLMConfig = {
   provider: "openrouter",
   apiKey: "",
   model: "google/gemini-3-flash-preview",
@@ -43,20 +174,20 @@ export const DEFAULT_LLM_CONFIG = {
 };
 
 // Default context windows for local providers (conservative defaults)
-export const DEFAULT_CONTEXT_WINDOWS = {
+export const DEFAULT_CONTEXT_WINDOWS: DefaultContextWindows = {
   ollama: 8192,
   lmstudio: 8192,
 };
 
 // Default max response tokens for local providers
-export const DEFAULT_MAX_TOKENS = {
+export const DEFAULT_MAX_TOKENS: DefaultMaxTokens = {
   ollama: 4096,
   lmstudio: 4096,
   openrouter: 32000,
 };
 
 // File upload constraints
-export const FILE_CONSTRAINTS = {
+export const FILE_CONSTRAINTS: FileConstraints = {
   MAX_SIZE_BYTES: 10 * 1024 * 1024, // 10MB
   MAX_SIZE_MB: 10,
   ALLOWED_TYPES: ["application/pdf"],
@@ -65,7 +196,7 @@ export const FILE_CONSTRAINTS = {
 };
 
 // URL validation
-export const URL_CONSTRAINTS = {
+export const URL_CONSTRAINTS: URLConstraints = {
   MAX_LENGTH: 2048,
   ALLOWED_PROTOCOLS: ["http:", "https:"],
   BLOCKED_DOMAINS: ["localhost", "127.0.0.1", "0.0.0.0", "[::1]", "[::]"],
@@ -84,7 +215,7 @@ export const URL_CONSTRAINTS = {
 };
 
 // Text processing
-export const TEXT_PROCESSING = {
+export const TEXT_PROCESSING: TextProcessing = {
   MAX_DOCUMENT_LENGTH: 2000000, // characters - ~500k tokens for large context windows
   MIN_DOCUMENT_LENGTH: 100,
   CHUNK_SIZE: 4000, // characters per chunk for LLM processing
@@ -92,14 +223,14 @@ export const TEXT_PROCESSING = {
 };
 
 // Analysis configuration
-export const ANALYSIS_CONFIG = {
+export const ANALYSIS_CONFIG: AnalysisConfig = {
   TIMEOUT_MS: 600000, // 10 minutes - local models may need longer for large documents
   RETRY_ATTEMPTS: 3,
   RETRY_DELAY_MS: 1000,
 };
 
 // Risk severity levels
-export const RISK_LEVELS = {
+export const RISK_LEVELS: RiskLevels = {
   LOW: {
     value: "low",
     label: "Low",
@@ -127,7 +258,7 @@ export const RISK_LEVELS = {
 };
 
 // Analysis statuses
-export const ANALYSIS_STATUS = {
+export const ANALYSIS_STATUS: AnalysisStatus = {
   IDLE: "idle",
   EXTRACTING: "extracting",
   ANALYZING: "analyzing",
@@ -137,7 +268,7 @@ export const ANALYSIS_STATUS = {
 };
 
 // Summary types
-export const SUMMARY_TYPES = {
+export const SUMMARY_TYPES: SummaryTypes = {
   BRIEF: {
     value: "brief",
     label: "Brief Summary",
@@ -156,7 +287,7 @@ export const SUMMARY_TYPES = {
 };
 
 // Storage keys
-export const STORAGE_KEYS = {
+export const STORAGE_KEYS: StorageKeys = {
   LLM_CONFIG: "ppa_llm_config",
   LLM_CONFIG_TIMESTAMP: "ppa_llm_config_timestamp",
   ANALYSIS_HISTORY: "ppa_analysis_history",
@@ -164,10 +295,10 @@ export const STORAGE_KEYS = {
 };
 
 // Security: API key timeout (60 minutes of inactivity)
-export const API_KEY_TIMEOUT_MS = 60 * 60 * 1000; // 60 minutes
+export const API_KEY_TIMEOUT_MS: number = 60 * 60 * 1000; // 60 minutes
 
 // Error codes
-export const ERROR_CODES = {
+export const ERROR_CODES: ErrorCodes = {
   // Validation errors
   INVALID_URL: "INVALID_URL",
   INVALID_FILE_TYPE: "INVALID_FILE_TYPE",
@@ -192,7 +323,7 @@ export const ERROR_CODES = {
 };
 
 // Error messages
-export const ERROR_MESSAGES = {
+export const ERROR_MESSAGES: ErrorMessages = {
   [ERROR_CODES.INVALID_URL]:
     "Please enter a valid URL starting with http:// or https://",
   [ERROR_CODES.INVALID_FILE_TYPE]: "Please upload a PDF file",
@@ -220,17 +351,17 @@ export const ERROR_MESSAGES = {
 
 // CORS proxy configuration
 // Cloudflare Worker proxies requests to bypass CORS restrictions
-export const CLOUDFLARE_WORKER_URL = "https://proxy.privacydistiller.com";
+export const CLOUDFLARE_WORKER_URL: string = "https://proxy.privacydistiller.com";
 
 // CORS proxy fallback chain
 // When CLOUDFLARE_WORKER_URL is set, it will be used exclusively
 // When empty, falls back to direct fetch only (no third-party proxies)
-export const CORS_PROXIES = CLOUDFLARE_WORKER_URL
+export const CORS_PROXIES: string[] = CLOUDFLARE_WORKER_URL
   ? ["", `${CLOUDFLARE_WORKER_URL}/?url=`] // Direct + Cloudflare Worker
   : [""]; // Direct fetch only (no third-party proxies)
 
 // Accessibility
-export const A11Y = {
+export const A11Y: A11Y = {
   SKIP_TO_MAIN: "skip-to-main",
   MAIN_CONTENT: "main-content",
   ARIA_LIVE_REGION: "aria-live-region",
