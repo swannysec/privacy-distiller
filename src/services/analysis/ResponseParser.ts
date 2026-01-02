@@ -4,14 +4,35 @@
  */
 
 import { generateId } from '../../utils/helpers.js';
+import type { PrivacyRisk, KeyTerm, RiskLevel } from '../../types';
+
+interface ScorecardCategory {
+  score: number;
+  weight: number;
+  summary: string;
+}
+
+interface Scorecard {
+  thirdPartySharing: ScorecardCategory;
+  userRights: ScorecardCategory;
+  dataCollection: ScorecardCategory;
+  dataRetention: ScorecardCategory;
+  purposeClarity: ScorecardCategory;
+  securityMeasures: ScorecardCategory;
+  policyTransparency: ScorecardCategory;
+  topConcerns: string[];
+  positiveAspects: string[];
+  overallScore?: number;
+  overallGrade?: string;
+}
 
 export class ResponseParser {
   /**
    * Parses privacy risks from LLM response
-   * @param {string} responseText - LLM response
-   * @returns {import('../../types').PrivacyRisk[]} Parsed risks
+   * @param responseText - LLM response
+   * @returns Parsed risks
    */
-  static parseRisks(responseText) {
+  static parseRisks(responseText: string): PrivacyRisk[] {
     try {
       // Try to extract JSON array from response
       const jsonMatch = responseText.match(/\[[\s\S]*\]/);
@@ -24,8 +45,8 @@ export class ResponseParser {
 
       // Validate and transform
       return risks
-        .filter(risk => risk.title && risk.description && risk.severity)
-        .map(risk => ({
+        .filter((risk: any) => risk.title && risk.description && risk.severity)
+        .map((risk: any) => ({
           id: generateId(),
           title: risk.title.trim(),
           description: risk.description.trim(),
@@ -42,10 +63,10 @@ export class ResponseParser {
 
   /**
    * Parses key terms from LLM response
-   * @param {string} responseText - LLM response
-   * @returns {import('../../types').KeyTerm[]} Parsed terms
+   * @param responseText - LLM response
+   * @returns Parsed terms
    */
-  static parseKeyTerms(responseText) {
+  static parseKeyTerms(responseText: string): KeyTerm[] {
     try {
       // Try to extract JSON array from response
       const jsonMatch = responseText.match(/\[[\s\S]*\]/);
@@ -58,8 +79,8 @@ export class ResponseParser {
 
       // Validate and transform
       return terms
-        .filter(term => term.term && term.definition)
-        .map(term => ({
+        .filter((term: any) => term.term && term.definition)
+        .map((term: any) => ({
           term: term.term.trim(),
           definition: term.definition.trim(),
           location: term.location?.trim() || 'General',
@@ -74,10 +95,10 @@ export class ResponseParser {
 
   /**
    * Parse privacy scorecard JSON from LLM response
-   * @param {string} responseText - Raw LLM response
-   * @returns {Object|null} Parsed scorecard or null
+   * @param responseText - Raw LLM response
+   * @returns Parsed scorecard or null
    */
-  static parseScorecard(responseText) {
+  static parseScorecard(responseText: string): Scorecard | null {
     try {
       // Clean the response - remove markdown code blocks if present
       let cleanedText = responseText
@@ -93,10 +114,10 @@ export class ResponseParser {
         return null;
       }
 
-      const scorecard = JSON.parse(jsonMatch[0]);
+      const scorecard: Scorecard = JSON.parse(jsonMatch[0]);
 
       // New 7-category system with weights (total = 100%)
-      const categories = [
+      const categories: Array<{ key: keyof Omit<Scorecard, 'topConcerns' | 'positiveAspects' | 'overallScore' | 'overallGrade'>; weight: number }> = [
         { key: 'thirdPartySharing', weight: 20 },
         { key: 'userRights', weight: 18 },
         { key: 'dataCollection', weight: 18 },
@@ -146,10 +167,10 @@ export class ResponseParser {
 
   /**
    * Convert numerical score (0-100) to traditional letter grade
-   * @param {number} score - Score from 0-100
-   * @returns {string} Letter grade
+   * @param score - Score from 0-100
+   * @returns Letter grade
    */
-  static scoreToGrade(score) {
+  static scoreToGrade(score: number): string {
     if (score >= 97) return 'A+';
     if (score >= 93) return 'A';
     if (score >= 90) return 'A-';
@@ -167,10 +188,10 @@ export class ResponseParser {
 
   /**
    * Extracts key points from summary text
-   * @param {string} summaryText - Summary text
-   * @returns {string[]} Key points
+   * @param summaryText - Summary text
+   * @returns Key points
    */
-  static extractKeyPoints(summaryText) {
+  static extractKeyPoints(summaryText: string): string[] {
     if (!summaryText) return [];
 
     // Try to extract bullet points
@@ -200,13 +221,13 @@ export class ResponseParser {
 
   /**
    * Normalizes severity level
-   * @param {string} severity - Raw severity value
-   * @returns {import('../../types').RiskLevel} Normalized severity
+   * @param severity - Raw severity value
+   * @returns Normalized severity
    */
-  static normalizeSeverity(severity) {
+  static normalizeSeverity(severity: string): RiskLevel {
     const normalized = severity.toLowerCase().trim();
 
-    const severityMap = {
+    const severityMap: Record<string, RiskLevel> = {
       'low': 'low',
       'medium': 'medium',
       'moderate': 'medium',
@@ -220,10 +241,10 @@ export class ResponseParser {
 
   /**
    * Cleans LLM response text
-   * @param {string} text - Raw response text
-   * @returns {string} Cleaned text
+   * @param text - Raw response text
+   * @returns Cleaned text
    */
-  static cleanResponse(text) {
+  static cleanResponse(text: string): string {
     if (!text) return '';
 
     return text

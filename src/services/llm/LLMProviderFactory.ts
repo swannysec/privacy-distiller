@@ -3,9 +3,11 @@
  * @description Factory for creating LLM provider instances
  */
 
-import { OpenRouterProvider } from './OpenRouterProvider.js';
-import { OllamaProvider } from './OllamaProvider.js';
-import { LMStudioProvider } from './LMStudioProvider.js';
+import type { LLMConfig } from '../../types';
+import { BaseLLMProvider } from './BaseLLMProvider';
+import { OpenRouterProvider } from './OpenRouterProvider';
+import { OllamaProvider } from './OllamaProvider';
+import { LMStudioProvider } from './LMStudioProvider';
 
 /**
  * Factory class for creating LLM provider instances
@@ -13,10 +15,10 @@ import { LMStudioProvider } from './LMStudioProvider.js';
 export class LLMProviderFactory {
   /**
    * Creates an LLM provider instance based on configuration
-   * @param {import('../../types').LLMConfig} config
-   * @returns {import('./BaseLLMProvider.js').BaseLLMProvider}
+   * @param config - LLM configuration
+   * @returns LLM provider instance
    */
-  static createProvider(config) {
+  static createProvider(config: LLMConfig): BaseLLMProvider {
     switch (config.provider) {
       case 'openrouter':
         return new OpenRouterProvider(config);

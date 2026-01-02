@@ -30,13 +30,19 @@ const CORS_BLOCKED_DOMAINS = [
  */
 const DIRECT_FETCH_TIMEOUT = 2000;
 
+interface FetchResult {
+  html: string;
+  source?: string;
+}
+
 export class URLFetcher {
   /**
    * Fetches and extracts text from a URL
-   * @param {string} url - URL to fetch
-   * @returns {Promise<string>} Extracted text
+   * @param url - URL to fetch
+   * @param maxRedirects - Maximum number of redirects to follow
+   * @returns Extracted text
    */
-  static async fetch(url, maxRedirects = 3) {
+  static async fetch(url: string, maxRedirects: number = 3): Promise<string> {
     // Validate URL
     const validation = validateUrl(url);
     if (!validation.valid) {
@@ -47,7 +53,7 @@ export class URLFetcher {
     let redirectCount = 0;
 
     while (redirectCount < maxRedirects) {
-      let result;
+      let result: FetchResult;
       try {
         result = await this._fetchWithProxies(currentUrl);
       } catch (err) {
@@ -79,11 +85,11 @@ export class URLFetcher {
 
   /**
    * Check if a URL is from a known CORS-blocked domain
-   * @param {string} url - URL to check
-   * @returns {boolean} True if domain is known to block CORS
+   * @param url - URL to check
+   * @returns True if domain is known to block CORS
    * @private
    */
-  static _isKnownCorsBlockedDomain(url) {
+  private static _isKnownCorsBlockedDomain(url: string): boolean {
     try {
       const hostname = new URL(url).hostname.toLowerCase();
       return CORS_BLOCKED_DOMAINS.some(domain =>
@@ -97,20 +103,20 @@ export class URLFetcher {
   /**
    * Fetches URL content using parallel fetch strategy with race condition
    * Direct fetch and proxies race simultaneously for fastest response
-   * @param {string} url - URL to fetch
-   * @returns {Promise<{html: string}>} Fetched HTML content
+   * @param url - URL to fetch
+   * @returns Fetched HTML content
    * @private
    */
-  static async _fetchWithProxies(url) {
+  private static async _fetchWithProxies(url: string): Promise<FetchResult> {
     const abortController = new AbortController();
-    const fetchPromises = [];
+    const fetchPromises: Promise<FetchResult>[] = [];
 
     // Skip direct fetch for known CORS-blocked domains
     const skipDirectFetch = this._isKnownCorsBlockedDomain(url);
 
     if (!skipDirectFetch) {
       // Direct fetch with fast timeout
-      const directFetchPromise = new Promise(async (resolve, reject) => {
+      const directFetchPromise = new Promise<FetchResult>(async (resolve, reject) => {
         const timeoutId = setTimeout(() => {
           reject(new Error('Direct fetch timeout'));
         }, DIRECT_FETCH_TIMEOUT);
@@ -145,7 +151,7 @@ export class URLFetcher {
     for (const proxy of CORS_PROXIES) {
       if (!proxy) continue; // Skip empty proxy (direct fetch already handled)
 
-      const proxyPromise = (async () => {
+      const proxyPromise = (async (): Promise<FetchResult> => {
         try {
           // Cloudflare Worker uses ?url= parameter format
           const fetchUrl = `${proxy}${encodeURIComponent(url)}`;
@@ -185,7 +191,7 @@ export class URLFetcher {
       abortController.abort();
 
       return { html: result.html };
-    } catch (aggregateError) {
+    } catch (aggregateError: any) {
       // All fetches failed
       const errors = aggregateError.errors || [];
       const lastError = errors[errors.length - 1];
@@ -197,11 +203,11 @@ export class URLFetcher {
 
   /**
    * Detects meta refresh redirect in HTML
-   * @param {string} html - HTML content
-   * @returns {string|null} Redirect URL or null if no redirect
+   * @param html - HTML content
+   * @returns Redirect URL or null if no redirect
    * @private
    */
-  static _detectMetaRefreshRedirect(html) {
+  private static _detectMetaRefreshRedirect(html: string): string | null {
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
 
@@ -234,10 +240,10 @@ export class URLFetcher {
 
   /**
    * Extracts text content from HTML
-   * @param {string} html - HTML content
-   * @returns {string} Extracted text
+   * @param html - HTML content
+   * @returns Extracted text
    */
-  static extractTextFromHtml(html) {
+  static extractTextFromHtml(html: string): string {
     // Create DOM parser
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
@@ -276,10 +282,15 @@ export class URLFetcher {
 
   /**
    * Gets page metadata
-   * @param {string} url - URL to fetch
-   * @returns {Promise<Object>} Page metadata
+   * @param url - URL to fetch
+   * @returns Page metadata
    */
-  static async getMetadata(url) {
+  static async getMetadata(url: string): Promise<{
+    title: string;
+    description: string;
+    keywords: string;
+    author: string;
+  }> {
     try {
       const response = await fetch(url);
       const html = await response.text();

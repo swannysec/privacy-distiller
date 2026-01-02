@@ -3,19 +3,22 @@
  * @description LLM provider for local Ollama instance
  */
 
-import { BaseLLMProvider } from './BaseLLMProvider.js';
-import { ANALYSIS_CONFIG, ERROR_CODES, ERROR_MESSAGES } from '../../utils/constants.js';
+import { BaseLLMProvider } from './BaseLLMProvider';
+import { ANALYSIS_CONFIG, ERROR_CODES, ERROR_MESSAGES } from '../../utils/constants';
 
+/**
+ * Ollama local provider implementation
+ */
 export class OllamaProvider extends BaseLLMProvider {
-  getName() {
+  getName(): string {
     return 'Ollama';
   }
 
-  validateConfig() {
+  validateConfig(): boolean {
     return !!(this.config.model && this.config.baseUrl);
   }
 
-  async complete(prompt, options = {}) {
+  async complete(prompt: string, options: Record<string, unknown> = {}): Promise<string> {
     if (!this.validateConfig()) {
       throw new Error('Invalid Ollama configuration');
     }
@@ -25,9 +28,9 @@ export class OllamaProvider extends BaseLLMProvider {
       prompt,
       stream: false,
       options: {
-        temperature: options.temperature ?? this.config.temperature,
-        num_predict: options.maxTokens ?? this.config.maxTokens,
-        num_ctx: this.config.contextWindow || 8192,
+        temperature: (options.temperature as number | undefined) ?? this.config.temperature,
+        num_predict: (options.maxTokens as number | undefined) ?? this.config.maxTokens,
+        num_ctx: (this.config as any).contextWindow || 8192,
       },
     };
 
@@ -60,7 +63,7 @@ export class OllamaProvider extends BaseLLMProvider {
 
     } catch (err) {
       clearTimeout(timeoutId);
-      if (err.name === 'AbortError') {
+      if ((err as Error).name === 'AbortError') {
         throw new Error(ERROR_MESSAGES[ERROR_CODES.LLM_TIMEOUT]);
       }
       throw err;

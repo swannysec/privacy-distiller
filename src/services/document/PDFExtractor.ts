@@ -16,13 +16,13 @@ const PDFJS_WORKER_CONFIG = {
 };
 
 // Cache for the verified worker blob URL
-let workerBlobUrl = null;
+let workerBlobUrl: string | null = null;
 
 /**
  * Fetches and verifies the PDF.js worker script with SRI
- * @returns {Promise<string>} Blob URL of the verified worker script
+ * @returns Blob URL of the verified worker script
  */
-async function getVerifiedWorkerUrl() {
+async function getVerifiedWorkerUrl(): Promise<string> {
   // Return cached URL if available
   if (workerBlobUrl) {
     return workerBlobUrl;
@@ -45,7 +45,7 @@ async function getVerifiedWorkerUrl() {
     workerBlobUrl = URL.createObjectURL(blob);
     
     return workerBlobUrl;
-  } catch (err) {
+  } catch (err: any) {
     // Log warning and fall back to direct CDN URL (without SRI protection)
     console.warn('Failed to fetch worker with SRI verification:', err.message);
     console.warn('Falling back to direct CDN URL (less secure)');
@@ -53,13 +53,19 @@ async function getVerifiedWorkerUrl() {
   }
 }
 
+interface PDFMetadata {
+  numPages: number;
+  info: Record<string, any>;
+  metadata: any;
+}
+
 export class PDFExtractor {
   /**
    * Extracts text from a PDF file
-   * @param {File} file - PDF file
-   * @returns {Promise<string>} Extracted text
+   * @param file - PDF file
+   * @returns Extracted text
    */
-  static async extract(file) {
+  static async extract(file: File): Promise<string> {
     // Validate file
     const validation = validateFile(file);
     if (!validation.valid) {
@@ -89,7 +95,7 @@ export class PDFExtractor {
 
         // Combine text items with proper spacing
         const pageText = textContent.items
-          .map(item => item.str)
+          .map((item: any) => item.str)
           .join(' ');
 
         fullText += pageText + '\n\n';
@@ -109,7 +115,7 @@ export class PDFExtractor {
 
       return cleanText;
 
-    } catch (err) {
+    } catch (err: any) {
       if (err.message.includes('Invalid PDF')) {
         throw new Error(ERROR_MESSAGES[ERROR_CODES.PDF_EXTRACTION_FAILED]);
       }
@@ -119,10 +125,10 @@ export class PDFExtractor {
 
   /**
    * Gets PDF metadata
-   * @param {File} file - PDF file
-   * @returns {Promise<Object>} PDF metadata
+   * @param file - PDF file
+   * @returns PDF metadata
    */
-  static async getMetadata(file) {
+  static async getMetadata(file: File): Promise<PDFMetadata> {
     try {
       const pdfjsLib = await import('pdfjs-dist');
       pdfjsLib.GlobalWorkerOptions.workerSrc = await getVerifiedWorkerUrl();

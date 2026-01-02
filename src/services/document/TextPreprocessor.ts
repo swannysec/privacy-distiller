@@ -9,10 +9,10 @@ import { chunk } from '../../utils/helpers.js';
 export class TextPreprocessor {
   /**
    * Preprocesses extracted text for LLM analysis
-   * @param {string} text - Raw text to preprocess
-   * @returns {string} Preprocessed text
+   * @param text - Raw text to preprocess
+   * @returns Preprocessed text
    */
-  static preprocess(text) {
+  static preprocess(text: string): string {
     if (!text || typeof text !== 'string') {
       return '';
     }
@@ -36,15 +36,15 @@ export class TextPreprocessor {
 
   /**
    * Chunks text into smaller segments for LLM processing
-   * @param {string} text - Text to chunk
-   * @param {number} chunkSize - Maximum chunk size in characters
-   * @param {number} overlap - Overlap between chunks in characters
-   * @returns {string[]} Array of text chunks
+   * @param text - Text to chunk
+   * @param chunkSize - Maximum chunk size in characters
+   * @param overlap - Overlap between chunks in characters
+   * @returns Array of text chunks
    */
-  static chunkText(text, chunkSize = TEXT_PROCESSING.CHUNK_SIZE, overlap = TEXT_PROCESSING.CHUNK_OVERLAP) {
+  static chunkText(text: string, chunkSize: number = TEXT_PROCESSING.CHUNK_SIZE, overlap: number = TEXT_PROCESSING.CHUNK_OVERLAP): string[] {
     if (!text) return [];
 
-    const chunks = [];
+    const chunks: string[] = [];
     let startIndex = 0;
 
     while (startIndex < text.length) {
@@ -67,10 +67,10 @@ export class TextPreprocessor {
 
   /**
    * Extracts sentences from text
-   * @param {string} text - Text to extract sentences from
-   * @returns {string[]} Array of sentences
+   * @param text - Text to extract sentences from
+   * @returns Array of sentences
    */
-  static extractSentences(text) {
+  static extractSentences(text: string): string[] {
     if (!text) return [];
 
     // Simple sentence splitting (can be improved with NLP)
@@ -84,11 +84,11 @@ export class TextPreprocessor {
 
   /**
    * Truncates text to a maximum length
-   * @param {string} text - Text to truncate
-   * @param {number} maxLength - Maximum length
-   * @returns {string} Truncated text
+   * @param text - Text to truncate
+   * @param maxLength - Maximum length
+   * @returns Truncated text
    */
-  static truncate(text, maxLength = TEXT_PROCESSING.MAX_DOCUMENT_LENGTH) {
+  static truncate(text: string, maxLength: number = TEXT_PROCESSING.MAX_DOCUMENT_LENGTH): string {
     if (!text || text.length <= maxLength) {
       return text;
     }
@@ -106,10 +106,10 @@ export class TextPreprocessor {
 
   /**
    * Removes common boilerplate text
-   * @param {string} text - Text to clean
-   * @returns {string} Cleaned text
+   * @param text - Text to clean
+   * @returns Cleaned text
    */
-  static removeBoilerplate(text) {
+  static removeBoilerplate(text: string): string {
     if (!text) return '';
 
     let cleaned = text;
@@ -133,21 +133,21 @@ export class TextPreprocessor {
 
   /**
    * Counts words in text
-   * @param {string} text - Text to count words in
-   * @returns {number} Word count
+   * @param text - Text to count words in
+   * @returns Word count
    */
-  static countWords(text) {
+  static countWords(text: string): number {
     if (!text) return 0;
     return text.split(/\s+/).filter(word => word.length > 0).length;
   }
 
   /**
    * Estimates reading time
-   * @param {string} text - Text to estimate reading time for
-   * @param {number} wordsPerMinute - Reading speed (default: 200)
-   * @returns {number} Reading time in minutes
+   * @param text - Text to estimate reading time for
+   * @param wordsPerMinute - Reading speed (default: 200)
+   * @returns Reading time in minutes
    */
-  static estimateReadingTime(text, wordsPerMinute = 200) {
+  static estimateReadingTime(text: string, wordsPerMinute: number = 200): number {
     const wordCount = this.countWords(text);
     return Math.ceil(wordCount / wordsPerMinute);
   }

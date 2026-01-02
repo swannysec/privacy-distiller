@@ -3,19 +3,22 @@
  * @description LLM provider for OpenRouter API
  */
 
-import { BaseLLMProvider } from './BaseLLMProvider.js';
-import { ANALYSIS_CONFIG, ERROR_CODES, ERROR_MESSAGES } from '../../utils/constants.js';
+import { BaseLLMProvider } from './BaseLLMProvider';
+import { ANALYSIS_CONFIG, ERROR_CODES, ERROR_MESSAGES } from '../../utils/constants';
 
+/**
+ * OpenRouter API provider implementation
+ */
 export class OpenRouterProvider extends BaseLLMProvider {
-  getName() {
+  getName(): string {
     return 'OpenRouter';
   }
 
-  validateConfig() {
+  validateConfig(): boolean {
     return !!(this.config.apiKey && this.config.model && this.config.baseUrl);
   }
 
-  async complete(prompt, options = {}) {
+  async complete(prompt: string, options: Record<string, unknown> = {}): Promise<string> {
     if (!this.validateConfig()) {
       throw new Error(ERROR_MESSAGES[ERROR_CODES.INVALID_API_KEY]);
     }
@@ -23,8 +26,8 @@ export class OpenRouterProvider extends BaseLLMProvider {
     const requestBody = {
       model: this.config.model,
       messages: [{ role: 'user', content: prompt }],
-      temperature: options.temperature ?? this.config.temperature,
-      max_tokens: options.maxTokens ?? this.config.maxTokens,
+      temperature: (options.temperature as number | undefined) ?? this.config.temperature,
+      max_tokens: (options.maxTokens as number | undefined) ?? this.config.maxTokens,
     };
 
     const controller = new AbortController();
@@ -62,7 +65,7 @@ export class OpenRouterProvider extends BaseLLMProvider {
 
     } catch (err) {
       clearTimeout(timeoutId);
-      if (err.name === 'AbortError') {
+      if ((err as Error).name === 'AbortError') {
         throw new Error(ERROR_MESSAGES[ERROR_CODES.LLM_TIMEOUT]);
       }
       throw err;
