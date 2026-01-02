@@ -1,0 +1,93 @@
+{
+  "$schema": "https://claude.ai/schemas/claude-code-settings.json",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|mcp__acp__Bash",
+        "hooks": [
+          ".claude/hooks/block-dangerous-commands.md",
+          ".claude/hooks/prevent-server-start.md",
+          ".claude/hooks/protect-production-branch.md",
+          ".claude/hooks/deployment-guardrail.md"
+        ]
+      },
+      {
+        "matcher": "Write|Edit|mcp__acp__Write|mcp__acp__Edit",
+        "hooks": [".claude/hooks/validate-file-writes.md"]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Read",
+      "Edit",
+      "Write",
+      "Glob",
+      "Grep",
+
+      "Bash(npm test)",
+      "Bash(npm test:*)",
+      "Bash(npm run build)",
+      "Bash(npm run lint)",
+      "Bash(npm run format)",
+      "Bash(npm audit)",
+      "Bash(npm install*)",
+      "Bash(npm ls*)",
+      "Bash(npm outdated*)",
+      "Bash(npm why*)",
+
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git branch*)",
+      "Bash(git checkout*)",
+      "Bash(git switch*)",
+      "Bash(git add*)",
+      "Bash(git commit*)",
+      "Bash(git push*)",
+      "Bash(git fetch*)",
+      "Bash(git reset*)",
+      "Bash(git stash*)",
+      "Bash(git pull*)",
+      "Bash(git merge*)",
+      "Bash(git rebase*)",
+      "Bash(git cherry-pick*)",
+      "Bash(git show*)",
+      "Bash(git rev-parse*)",
+      "Bash(gh pr *)",
+      "Bash(gh issue *)",
+      "Bash(gh repo view*)",
+      "Bash(gh run *)",
+      "Bash(gh workflow *)",
+
+      "Bash(mkdir*)",
+      "Bash(cat *)",
+      "Bash(ls *)",
+      "Bash(ls)",
+      "Bash(head*)",
+      "Bash(tail*)",
+      "Bash(wc*)",
+      "Bash(find *)",
+      "Bash(pwd)",
+      "Bash(echo *)",
+      "Bash(type *)",
+      "Bash(which *)",
+      "Bash(where *)",
+
+      "Bash(npx vitest*)",
+      "Bash(npx playwright*)",
+      "Bash(npx eslint*)",
+      "Bash(npx prettier*)",
+      "Bash(npx tsc*)"
+    ],
+    "deny": [
+      "Bash(rm -rf /)",
+      "Bash(rm -rf ~)",
+      "Bash(rm -rf *)",
+      "Bash(:(){ :|:& };:)",
+      "Bash(*> /dev/sd*)",
+      "Bash(mkfs*)",
+      "Bash(dd if=*)"
+    ]
+  }
+}
