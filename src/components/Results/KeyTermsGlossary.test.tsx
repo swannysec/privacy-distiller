@@ -2,8 +2,13 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { KeyTermsGlossary } from "./KeyTermsGlossary";
 
+interface KeyTerm {
+  term: string;
+  definition: string;
+}
+
 describe("KeyTermsGlossary", () => {
-  const mockKeyTerms = [
+  const mockKeyTerms: KeyTerm[] = [
     {
       term: "PII",
       definition:
@@ -100,10 +105,10 @@ describe("KeyTermsGlossary", () => {
       const termItem = container.querySelector(".term-item");
       expect(termItem).toBeInTheDocument();
 
-      const termWord = termItem.querySelector(".term-item__word");
+      const termWord = termItem!.querySelector(".term-item__word");
       expect(termWord).toBeInTheDocument();
 
-      const termDefinition = termItem.querySelector(".term-item__definition");
+      const termDefinition = termItem!.querySelector(".term-item__definition");
       expect(termDefinition).toBeInTheDocument();
     });
 
@@ -189,7 +194,7 @@ describe("KeyTermsGlossary", () => {
     });
 
     it("should handle null keyTerms", () => {
-      render(<KeyTermsGlossary keyTerms={null} />);
+      render(<KeyTermsGlossary keyTerms={null as unknown as KeyTerm[]} />);
 
       expect(
         screen.getByText(/No key terms were extracted from this policy/i),
@@ -199,7 +204,7 @@ describe("KeyTermsGlossary", () => {
 
   describe("Alphabetical Sorting", () => {
     it("should sort terms alphabetically", () => {
-      const unsortedTerms = [
+      const unsortedTerms: KeyTerm[] = [
         { term: "Zebra", definition: "Last animal" },
         { term: "Apple", definition: "First fruit" },
         { term: "Banana", definition: "Second fruit" },
@@ -218,7 +223,7 @@ describe("KeyTermsGlossary", () => {
     });
 
     it("should handle case-insensitive sorting", () => {
-      const mixedCaseTerms = [
+      const mixedCaseTerms: KeyTerm[] = [
         { term: "zebra", definition: "lowercase z" },
         { term: "Apple", definition: "capital A" },
         { term: "banana", definition: "lowercase b" },
@@ -238,7 +243,7 @@ describe("KeyTermsGlossary", () => {
       const termsWithMissing = [
         { term: "Zebra", definition: "Has term" },
         { term: "", definition: "Empty term" },
-        { definition: "No term property" },
+        { definition: "No term property" } as KeyTerm,
         { term: "Apple", definition: "Has term" },
       ];
 
@@ -252,7 +257,7 @@ describe("KeyTermsGlossary", () => {
     });
 
     it("should maintain original order for identical terms", () => {
-      const duplicateTerms = [
+      const duplicateTerms: KeyTerm[] = [
         { term: "Same", definition: "First definition" },
         { term: "Same", definition: "Second definition" },
         { term: "Same", definition: "Third definition" },
@@ -278,7 +283,9 @@ describe("KeyTermsGlossary", () => {
       );
 
       // Title icon
-      const titleIcon = container.querySelector('.card__title span[aria-hidden="true"]');
+      const titleIcon = container.querySelector(
+        '.card__title span[aria-hidden="true"]',
+      );
       expect(titleIcon).toBeInTheDocument();
       expect(titleIcon).toHaveTextContent("📚");
     });
@@ -286,7 +293,9 @@ describe("KeyTermsGlossary", () => {
     it("should have aria-hidden on empty state icon", () => {
       const { container } = render(<KeyTermsGlossary keyTerms={[]} />);
 
-      const emptyIcon = container.querySelector('.key-terms__empty-icon[aria-hidden="true"]');
+      const emptyIcon = container.querySelector(
+        '.key-terms__empty-icon[aria-hidden="true"]',
+      );
       expect(emptyIcon).toBeInTheDocument();
       expect(emptyIcon).toHaveTextContent("📖");
     });
@@ -327,7 +336,7 @@ describe("KeyTermsGlossary", () => {
     });
 
     it("should handle very long term names", () => {
-      const longTerms = [
+      const longTerms: KeyTerm[] = [
         {
           term: "Very Long Term Name That Should Still Display Correctly",
           definition: "Definition",
@@ -337,12 +346,14 @@ describe("KeyTermsGlossary", () => {
       render(<KeyTermsGlossary keyTerms={longTerms} />);
 
       expect(
-        screen.getByText("Very Long Term Name That Should Still Display Correctly"),
+        screen.getByText(
+          "Very Long Term Name That Should Still Display Correctly",
+        ),
       ).toBeInTheDocument();
     });
 
     it("should handle very long definitions", () => {
-      const longDefTerms = [
+      const longDefTerms: KeyTerm[] = [
         {
           term: "Term",
           definition:
@@ -358,23 +369,25 @@ describe("KeyTermsGlossary", () => {
     });
 
     it("should handle terms with special characters", () => {
-      const specialTerms = [
+      const specialTerms: KeyTerm[] = [
         {
           term: "Term & Special <Characters>",
-          definition: 'Definition with "quotes" and \'apostrophes\'',
+          definition: "Definition with \"quotes\" and 'apostrophes'",
         },
       ];
 
       render(<KeyTermsGlossary keyTerms={specialTerms} />);
 
-      expect(screen.getByText("Term & Special <Characters>")).toBeInTheDocument();
       expect(
-        screen.getByText('Definition with "quotes" and \'apostrophes\''),
+        screen.getByText("Term & Special <Characters>"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText("Definition with \"quotes\" and 'apostrophes'"),
       ).toBeInTheDocument();
     });
 
     it("should handle empty term string", () => {
-      const emptyStringTerms = [
+      const emptyStringTerms: KeyTerm[] = [
         { term: "", definition: "Definition with empty term" },
         { term: "Valid", definition: "Valid definition" },
       ];
@@ -388,7 +401,7 @@ describe("KeyTermsGlossary", () => {
     });
 
     it("should handle empty definition string", () => {
-      const emptyDefTerms = [
+      const emptyDefTerms: KeyTerm[] = [
         { term: "Term", definition: "" },
         { term: "Valid", definition: "Valid definition" },
       ];
@@ -402,7 +415,9 @@ describe("KeyTermsGlossary", () => {
     });
 
     it("should handle non-array keyTerms gracefully", () => {
-      render(<KeyTermsGlossary keyTerms="not an array" />);
+      render(
+        <KeyTermsGlossary keyTerms={"not an array" as unknown as KeyTerm[]} />,
+      );
 
       expect(
         screen.getByText(/No key terms were extracted from this policy/i),
@@ -419,13 +434,16 @@ describe("KeyTermsGlossary", () => {
       const card = container.querySelector(".card.key-terms");
       expect(card).toBeInTheDocument();
       // Should have class attribute but empty className prop
-      expect(card.className).toContain("card");
-      expect(card.className).toContain("key-terms");
+      expect(card?.className).toContain("card");
+      expect(card?.className).toContain("key-terms");
     });
 
     it("should combine custom className with default classes", () => {
       const { container } = render(
-        <KeyTermsGlossary keyTerms={mockKeyTerms} className="my-custom-class" />,
+        <KeyTermsGlossary
+          keyTerms={mockKeyTerms}
+          className="my-custom-class"
+        />,
       );
 
       const card = container.querySelector(".card.key-terms.my-custom-class");

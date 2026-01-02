@@ -1,34 +1,34 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { ResultsDisplay } from "./ResultsDisplay";
 
 // Mock child components
 vi.mock("./SummaryView", () => ({
-  SummaryView: vi.fn(({ summary }) => (
+  SummaryView: vi.fn(({ summary }: { summary?: { brief?: string } }) => (
     <div data-testid="summary-view">Summary: {summary?.brief}</div>
   )),
 }));
 
 vi.mock("./RiskHighlights", () => ({
-  RiskHighlights: vi.fn(({ risks }) => (
+  RiskHighlights: vi.fn(({ risks }: { risks?: unknown[] }) => (
     <div data-testid="risk-highlights">Risks: {risks?.length || 0}</div>
   )),
 }));
 
 vi.mock("./KeyTermsGlossary", () => ({
-  KeyTermsGlossary: vi.fn(({ keyTerms }) => (
+  KeyTermsGlossary: vi.fn(({ keyTerms }: { keyTerms?: unknown[] }) => (
     <div data-testid="key-terms-glossary">Terms: {keyTerms?.length || 0}</div>
   )),
 }));
 
 vi.mock("./PrivacyScorecard", () => ({
-  PrivacyScorecard: vi.fn(({ scorecard }) => (
+  PrivacyScorecard: vi.fn(({ scorecard }: { scorecard?: unknown }) => (
     <div data-testid="privacy-scorecard">Scorecard</div>
   )),
 }));
 
 vi.mock("../Common", () => ({
-  Button: ({ children, variant, size, onClick }) => (
+  Button: ({ children, variant, size, onClick }: { children: React.ReactNode; variant?: string; size?: string; onClick?: () => void }) => (
     <button onClick={onClick} data-variant={variant} data-size={size}>
       {children}
     </button>
@@ -36,18 +36,49 @@ vi.mock("../Common", () => ({
 }));
 
 vi.mock("../../utils/formatting", () => ({
-  formatDate: vi.fn((date) => "Jan 1, 2025"),
+  formatDate: vi.fn((date: string) => "Jan 1, 2025"),
 }));
 
 vi.mock("../../utils/sanitization", () => ({
-  sanitizeText: vi.fn((text) => text),
+  sanitizeText: vi.fn((text: string) => text),
 }));
 
-describe("ResultsDisplay", () => {
-  const mockOnNewAnalysis = vi.fn();
-  const mockOnExport = vi.fn();
+interface Risk {
+  title: string;
+  severity: string;
+  description: string;
+  explanation: string;
+}
 
-  const mockResult = {
+interface KeyTerm {
+  term: string;
+  definition: string;
+  category: string;
+}
+
+interface AnalysisResult {
+  id: string;
+  timestamp: string;
+  documentMetadata: {
+    source: string;
+    title: string;
+    extractedAt: string;
+  };
+  summary: {
+    brief: string;
+    detailed: string;
+    full: string;
+  };
+  risks: Risk[];
+  keyTerms: KeyTerm[];
+  scorecard?: { overallScore: number };
+}
+
+describe("ResultsDisplay", () => {
+  const mockOnNewAnalysis: Mock = vi.fn();
+  const mockOnExport: Mock = vi.fn();
+
+  const mockResult: AnalysisResult = {
     id: "result-1",
     timestamp: "2025-01-01T12:00:00Z",
     documentMetadata: {
@@ -242,7 +273,7 @@ describe("ResultsDisplay", () => {
     });
 
     it("should render PrivacyScorecard when scorecard present", () => {
-      const resultWithScorecard = {
+      const resultWithScorecard: AnalysisResult = {
         ...mockResult,
         scorecard: { overallScore: 75 },
       };
@@ -296,7 +327,7 @@ describe("ResultsDisplay", () => {
     });
 
     it("should render fallback when documentMetadata is missing", () => {
-      const incompleteResult = { id: "1", summary: {} };
+      const incompleteResult = { id: "1", summary: {} } as unknown as AnalysisResult;
 
       render(
         <ResultsDisplay
@@ -527,7 +558,7 @@ describe("ResultsDisplay", () => {
     });
 
     it("should not show risk indicator when no risks", () => {
-      const noRisksResult = { ...mockResult, risks: [] };
+      const noRisksResult: AnalysisResult = { ...mockResult, risks: [] };
 
       render(
         <ResultsDisplay
@@ -542,7 +573,7 @@ describe("ResultsDisplay", () => {
     });
 
     it("should apply high risk class for high severity risks", () => {
-      const highRiskResult = {
+      const highRiskResult: AnalysisResult = {
         ...mockResult,
         risks: [
           {
@@ -566,7 +597,7 @@ describe("ResultsDisplay", () => {
     });
 
     it("should apply medium risk class for medium severity risks only", () => {
-      const mediumRiskResult = {
+      const mediumRiskResult: AnalysisResult = {
         ...mockResult,
         risks: [
           {
@@ -590,7 +621,7 @@ describe("ResultsDisplay", () => {
     });
 
     it("should apply low risk class for low severity risks only", () => {
-      const lowRiskResult = {
+      const lowRiskResult: AnalysisResult = {
         ...mockResult,
         risks: [
           {
@@ -629,7 +660,7 @@ describe("ResultsDisplay", () => {
     });
 
     it("should handle PDF filename source", () => {
-      const pdfResult = {
+      const pdfResult: AnalysisResult = {
         ...mockResult,
         documentMetadata: {
           ...mockResult.documentMetadata,
@@ -647,7 +678,7 @@ describe("ResultsDisplay", () => {
     });
 
     it("should handle www prefix in URL", () => {
-      const wwwResult = {
+      const wwwResult: AnalysisResult = {
         ...mockResult,
         documentMetadata: {
           ...mockResult.documentMetadata,
@@ -665,7 +696,7 @@ describe("ResultsDisplay", () => {
     });
 
     it("should handle invalid URL gracefully", () => {
-      const invalidResult = {
+      const invalidResult: AnalysisResult = {
         ...mockResult,
         documentMetadata: {
           ...mockResult.documentMetadata,
@@ -689,7 +720,7 @@ describe("ResultsDisplay", () => {
 
   describe("Edge Cases", () => {
     it("should handle result with no risks", () => {
-      const noRisksResult = { ...mockResult, risks: [] };
+      const noRisksResult: AnalysisResult = { ...mockResult, risks: [] };
       render(
         <ResultsDisplay
           result={noRisksResult}
@@ -703,7 +734,7 @@ describe("ResultsDisplay", () => {
     });
 
     it("should handle result with no key terms", () => {
-      const noTermsResult = { ...mockResult, keyTerms: [] };
+      const noTermsResult: AnalysisResult = { ...mockResult, keyTerms: [] };
       render(
         <ResultsDisplay
           result={noTermsResult}
@@ -717,7 +748,7 @@ describe("ResultsDisplay", () => {
     });
 
     it("should handle result with empty summary", () => {
-      const emptySummaryResult = {
+      const emptySummaryResult: AnalysisResult = {
         ...mockResult,
         summary: { brief: "", detailed: "", full: "" },
       };
@@ -733,7 +764,7 @@ describe("ResultsDisplay", () => {
     });
 
     it("should handle result with undefined risks", () => {
-      const undefinedRisksResult = { ...mockResult, risks: undefined };
+      const undefinedRisksResult = { ...mockResult, risks: undefined } as unknown as AnalysisResult;
 
       render(
         <ResultsDisplay
@@ -748,7 +779,7 @@ describe("ResultsDisplay", () => {
     });
 
     it("should handle result with undefined keyTerms", () => {
-      const undefinedTermsResult = { ...mockResult, keyTerms: undefined };
+      const undefinedTermsResult = { ...mockResult, keyTerms: undefined } as unknown as AnalysisResult;
 
       render(
         <ResultsDisplay
@@ -781,7 +812,7 @@ describe("ResultsDisplay", () => {
     });
 
     it("should handle empty source string", () => {
-      const emptySourceResult = {
+      const emptySourceResult: AnalysisResult = {
         ...mockResult,
         documentMetadata: {
           ...mockResult.documentMetadata,

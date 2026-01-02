@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { DocumentInput } from "./DocumentInput";
 import * as validation from "../../utils/validation";
 
 // Mock child components
 vi.mock("./URLInput", () => ({
-  URLInput: ({ onSubmit, disabled, error }) => (
+  URLInput: ({ onSubmit, disabled, error }: { onSubmit?: (url: string) => void; disabled?: boolean; error?: string }) => (
     <div data-testid="url-input">
       <input
         data-testid="url-input-field"
@@ -18,7 +18,7 @@ vi.mock("./URLInput", () => ({
 }));
 
 vi.mock("./FileUpload", () => ({
-  FileUpload: ({ onFileSelect, disabled, error }) => (
+  FileUpload: ({ onFileSelect, disabled, error }: { onFileSelect?: (file: File) => void; disabled?: boolean; error?: string }) => (
     <div data-testid="file-upload">
       <button
         data-testid="file-select-button"
@@ -38,7 +38,7 @@ vi.mock("./FileUpload", () => ({
 }));
 
 describe("DocumentInput", () => {
-  let mockOnDocumentSelected;
+  let mockOnDocumentSelected: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     mockOnDocumentSelected = vi.fn();
@@ -376,7 +376,7 @@ describe("DocumentInput", () => {
 
       const documentInput = container.querySelector(".document-input");
       expect(documentInput).toBeInTheDocument();
-      expect(documentInput.className).toContain("custom-class");
+      expect(documentInput?.className).toContain("custom-class");
     });
   });
 

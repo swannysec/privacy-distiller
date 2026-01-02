@@ -8,20 +8,97 @@ import { renderHook, act } from "@testing-library/react";
 import { useLLMProvider, __resetRateLimiter } from "./useLLMProvider.js";
 import * as LLMConfigContext from "../contexts/LLMConfigContext.jsx";
 
+// Define types for mocks
+interface MockConfig {
+  provider: string;
+  apiKey: string;
+  model: string;
+  baseUrl: string;
+  temperature: number;
+  maxTokens: number;
+  contextWindow?: number;
+}
+
+interface ValidationResult {
+  isValid: boolean;
+  errors: string[];
+}
+
 // Mock the LLMConfigContext
 vi.mock("../contexts/LLMConfigContext.jsx", () => ({
   useLLMConfig: vi.fn(),
 }));
 
+// Common error messages
+const RATE_LIMIT_ERROR =
+  "Rate limit exceeded. Please wait before making another request.";
+const HTTP_RATE_LIMIT_ERROR =
+  "Rate limit exceeded. Please wait a moment and try again.";
+const INVALID_RESPONSE_ERROR =
+  "Received invalid response from AI. Please try again.";
+const DEFAULT_API_KEY_ERROR = "Please enter a valid API key";
+
 describe("useLLMProvider - TokenBucket Rate Limiting", () => {
-  let mockConfig;
-  let mockValidateConfig;
+  let mockConfig: MockConfig;
+  let mockValidateConfig: ReturnType<typeof vi.fn<[], ValidationResult>>;
+
+  /**
+   * Sets up fake timers with a specific timestamp and resets the rate limiter
+   */
+  function setupFakeTimers(isoDate: string): void {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(isoDate));
+    __resetRateLimiter(Date.now());
+  }
+
+  /**
+   * Creates a mock fetch response for OpenRouter/LM Studio format
+   */
+  function mockOpenAIResponse(content: string) {
+    return {
+      ok: true,
+      json: async () => ({
+        choices: [{ message: { content } }],
+      }),
+    };
+  }
+
+  /**
+   * Creates a mock fetch response for Ollama format
+   */
+  function mockOllamaResponse(content: string) {
+    return {
+      ok: true,
+      json: async () => ({
+        message: { content },
+      }),
+    };
+  }
+
+  /**
+   * Configures mockConfig for Ollama provider
+   */
+  function configureOllama(contextWindow?: number): void {
+    mockConfig.provider = "ollama";
+    mockConfig.baseUrl = "http://localhost:11434";
+    mockConfig.model = "llama3.1";
+    if (contextWindow) {
+      mockConfig.contextWindow = contextWindow;
+    }
+  }
+
+  /**
+   * Exhausts the rate limiter by making 10 successful requests
+   */
+  async function exhaustRateLimit(result: { current: { complete: (prompt: string) => Promise<string> } }): Promise<void> {
+    for (let i = 0; i < 10; i++) {
+      await result.current.complete(`Test ${i}`);
+    }
+  }
 
   beforeEach(() => {
     vi.clearAllMocks();
     global.fetch = vi.fn();
-
-    // Reset rate limiter state between tests to prevent token depletion
     __resetRateLimiter();
 
     mockConfig = {
@@ -33,31 +110,22 @@ describe("useLLMProvider - TokenBucket Rate Limiting", () => {
       maxTokens: 4096,
     };
 
-    mockValidateConfig = vi.fn().mockReturnValue({
+    mockValidateConfig = vi.fn<[], ValidationResult>().mockReturnValue({
       isValid: true,
       errors: [],
     });
 
-    LLMConfigContext.useLLMConfig.mockReturnValue({
+    (LLMConfigContext.useLLMConfig as ReturnType<typeof vi.fn>).mockReturnValue({
       config: mockConfig,
       validateConfig: mockValidateConfig,
     });
   });
 
   it("should allow requests up to capacity (10) and reject 11th request", async () => {
-    // Use fake timers and advance to ensure full token bucket
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2024-01-01T00:00:00Z"));
-    __resetRateLimiter(Date.now()); // Reset with fake timer's current time
+    setupFakeTimers("2024-01-01T00:00:00Z");
 
     const { result } = renderHook(() => useLLMProvider());
-
-    global.fetch.mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        choices: [{ message: { content: "Test response" } }],
-      }),
-    });
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockOpenAIResponse("Test response"));
 
     // Make 10 requests (the capacity) - should all succeed
     const promises = [];
@@ -72,43 +140,28 @@ describe("useLLMProvider - TokenBucket Rate Limiting", () => {
     // 11th request should be rate limited
     await act(async () => {
       await expect(result.current.complete("Test prompt 11")).rejects.toThrow(
-        "Rate limit exceeded. Please wait before making another request.",
+        RATE_LIMIT_ERROR,
       );
     });
 
-    expect(global.fetch).toHaveBeenCalledTimes(10); // Still 10, not 11
-
-    // Error state should be set after the async operation
-    expect(result.current.error).toBe(
-      "Rate limit exceeded. Please wait before making another request.",
-    );
+    expect(global.fetch).toHaveBeenCalledTimes(10);
+    expect(result.current.error).toBe(RATE_LIMIT_ERROR);
     expect(result.current.isProcessing).toBe(false);
 
     vi.useRealTimers();
   });
 
   it("should refill tokens over time (6 seconds per token)", async () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2024-01-01T00:01:00Z"));
-    __resetRateLimiter(Date.now()); // Reset with fake timer's current time
+    setupFakeTimers("2024-01-01T00:01:00Z");
 
     const { result } = renderHook(() => useLLMProvider());
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockOpenAIResponse("Test response"));
 
-    global.fetch.mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        choices: [{ message: { content: "Test response" } }],
-      }),
-    });
-
-    // Exhaust rate limit
-    for (let i = 0; i < 10; i++) {
-      await result.current.complete(`Test ${i}`);
-    }
+    await exhaustRateLimit(result);
 
     // Should fail immediately
     await expect(result.current.complete("Fail")).rejects.toThrow(
-      "Rate limit exceeded. Please wait before making another request.",
+      RATE_LIMIT_ERROR,
     );
 
     // Advance time by 6 seconds (1 token refilled)
@@ -122,18 +175,10 @@ describe("useLLMProvider - TokenBucket Rate Limiting", () => {
   });
 
   it("should work with OpenRouter provider", async () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2024-01-01T00:02:00Z"));
-    __resetRateLimiter(Date.now()); // Reset with fake timer's current time
+    setupFakeTimers("2024-01-01T00:02:00Z");
 
     const { result } = renderHook(() => useLLMProvider());
-
-    global.fetch.mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        choices: [{ message: { content: "OpenRouter response" } }],
-      }),
-    });
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockOpenAIResponse("OpenRouter response"));
 
     const response = await result.current.complete("Test prompt");
 
@@ -154,22 +199,11 @@ describe("useLLMProvider - TokenBucket Rate Limiting", () => {
   });
 
   it("should work with Ollama provider", async () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2024-01-01T00:03:00Z"));
-    __resetRateLimiter(Date.now()); // Reset with fake timer's current time
-
-    mockConfig.provider = "ollama";
-    mockConfig.baseUrl = "http://localhost:11434";
-    mockConfig.model = "llama3.1";
+    setupFakeTimers("2024-01-01T00:03:00Z");
+    configureOllama();
 
     const { result } = renderHook(() => useLLMProvider());
-
-    global.fetch.mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        message: { content: "Ollama response" },
-      }),
-    });
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockOllamaResponse("Ollama response"));
 
     const response = await result.current.complete("Test prompt");
 
@@ -186,23 +220,12 @@ describe("useLLMProvider - TokenBucket Rate Limiting", () => {
   });
 
   it("should check rate limit before validating config", async () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2024-01-01T00:04:00Z"));
-    __resetRateLimiter(Date.now()); // Reset with fake timer's current time
+    setupFakeTimers("2024-01-01T00:04:00Z");
 
     const { result } = renderHook(() => useLLMProvider());
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockOpenAIResponse("Test response"));
 
-    global.fetch.mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        choices: [{ message: { content: "Test response" } }],
-      }),
-    });
-
-    // Exhaust rate limit
-    for (let i = 0; i < 10; i++) {
-      await result.current.complete(`Test ${i}`);
-    }
+    await exhaustRateLimit(result);
 
     // Make validateConfig return invalid
     mockValidateConfig.mockReturnValue({
@@ -212,7 +235,7 @@ describe("useLLMProvider - TokenBucket Rate Limiting", () => {
 
     // Should fail with rate limit error, not validation error
     await expect(result.current.complete("Test")).rejects.toThrow(
-      "Rate limit exceeded. Please wait before making another request.",
+      RATE_LIMIT_ERROR,
     );
 
     // validateConfig should not have been called for the rate-limited request
@@ -222,39 +245,23 @@ describe("useLLMProvider - TokenBucket Rate Limiting", () => {
   });
 
   it("should use exact rate limit error message", async () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2024-01-01T00:05:00Z"));
-    __resetRateLimiter(Date.now()); // Reset with fake timer's current time
+    setupFakeTimers("2024-01-01T00:05:00Z");
 
     const { result } = renderHook(() => useLLMProvider());
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockOpenAIResponse("Test response"));
 
-    global.fetch.mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        choices: [{ message: { content: "Test response" } }],
-      }),
-    });
+    await exhaustRateLimit(result);
 
-    // Exhaust rate limit
-    for (let i = 0; i < 10; i++) {
-      await result.current.complete(`Test ${i}`);
-    }
-
-    // Verify exact error message
     const error = await result.current
       .complete("Rate limited")
-      .catch((err) => err);
-    expect(error.message).toBe(
-      "Rate limit exceeded. Please wait before making another request.",
-    );
+      .catch((err: Error) => err);
+    expect(error.message).toBe(RATE_LIMIT_ERROR);
 
     vi.useRealTimers();
   });
 
   it("should handle validation errors", async () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2024-01-01T00:06:00Z"));
-    __resetRateLimiter(Date.now());
+    setupFakeTimers("2024-01-01T00:06:00Z");
 
     mockValidateConfig.mockReturnValue({
       isValid: false,
@@ -266,15 +273,12 @@ describe("useLLMProvider - TokenBucket Rate Limiting", () => {
     await expect(result.current.complete("Test prompt")).rejects.toThrow(
       "Invalid API key format",
     );
-    // Note: error state check removed due to async timing issues with fake timers
 
     vi.useRealTimers();
   });
 
   it("should handle validation errors with no specific error message", async () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2024-01-01T00:07:00Z"));
-    __resetRateLimiter(Date.now());
+    setupFakeTimers("2024-01-01T00:07:00Z");
 
     mockValidateConfig.mockReturnValue({
       isValid: false,
@@ -284,38 +288,36 @@ describe("useLLMProvider - TokenBucket Rate Limiting", () => {
     const { result } = renderHook(() => useLLMProvider());
 
     await expect(result.current.complete("Test prompt")).rejects.toThrow(
-      "Please enter a valid API key",
+      DEFAULT_API_KEY_ERROR,
     );
 
     vi.useRealTimers();
   });
 
   it("should handle HTTP 429 rate limit response", async () => {
-    // Use real timers since retry logic uses delays
     vi.useRealTimers();
     __resetRateLimiter();
 
     const { result } = renderHook(() => useLLMProvider());
 
-    global.fetch.mockResolvedValue({
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
       ok: false,
       status: 429,
       statusText: "Too Many Requests",
     });
 
     await expect(result.current.complete("Test prompt")).rejects.toThrow(
-      "Rate limit exceeded. Please wait a moment and try again.",
+      HTTP_RATE_LIMIT_ERROR,
     );
   }, 15000);
 
   it("should handle non-429 HTTP errors", async () => {
-    // Use real timers since retry logic uses delays
     vi.useRealTimers();
     __resetRateLimiter();
 
     const { result } = renderHook(() => useLLMProvider());
 
-    global.fetch.mockResolvedValue({
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
       ok: false,
       status: 500,
       statusText: "Internal Server Error",
@@ -327,9 +329,7 @@ describe("useLLMProvider - TokenBucket Rate Limiting", () => {
   }, 15000);
 
   it("should work with LM Studio provider", async () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2024-01-01T00:10:00Z"));
-    __resetRateLimiter(Date.now());
+    setupFakeTimers("2024-01-01T00:10:00Z");
 
     mockConfig.provider = "lmstudio";
     mockConfig.baseUrl = "http://localhost:1234/v1";
@@ -337,13 +337,7 @@ describe("useLLMProvider - TokenBucket Rate Limiting", () => {
     mockConfig.apiKey = "";
 
     const { result } = renderHook(() => useLLMProvider());
-
-    global.fetch.mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        choices: [{ message: { content: "LM Studio response" } }],
-      }),
-    });
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockOpenAIResponse("LM Studio response"));
 
     const response = await result.current.complete("Test prompt");
 
@@ -357,65 +351,55 @@ describe("useLLMProvider - TokenBucket Rate Limiting", () => {
   });
 
   it("should handle invalid Ollama response format", async () => {
-    // Use real timers since retry logic uses delays
     vi.useRealTimers();
     __resetRateLimiter();
-
-    mockConfig.provider = "ollama";
-    mockConfig.baseUrl = "http://localhost:11434";
-    mockConfig.model = "llama3.1";
+    configureOllama();
 
     const { result } = renderHook(() => useLLMProvider());
 
-    global.fetch.mockResolvedValue({
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
       ok: true,
       json: async () => ({}), // Missing message.content
     });
 
     await expect(result.current.complete("Test prompt")).rejects.toThrow(
-      "Received invalid response from AI. Please try again.",
+      INVALID_RESPONSE_ERROR,
     );
   }, 15000);
 
   it("should handle invalid OpenRouter response format", async () => {
-    // Use real timers since retry logic uses delays
     vi.useRealTimers();
     __resetRateLimiter();
 
     const { result } = renderHook(() => useLLMProvider());
 
-    global.fetch.mockResolvedValue({
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
       ok: true,
       json: async () => ({}), // Missing choices array
     });
 
     await expect(result.current.complete("Test prompt")).rejects.toThrow(
-      "Received invalid response from AI. Please try again.",
+      INVALID_RESPONSE_ERROR,
     );
   }, 15000);
 
   it("should handle network errors", async () => {
-    // Use real timers since retry logic uses delays
     vi.useRealTimers();
     __resetRateLimiter();
 
     const { result } = renderHook(() => useLLMProvider());
-
-    global.fetch.mockRejectedValue(new Error("Network error"));
+    (global.fetch as ReturnType<typeof vi.fn>).mockRejectedValue(new Error("Network error"));
 
     await expect(result.current.complete("Test prompt")).rejects.toThrow(
       "Network error",
     );
-    // Note: error state may not be immediately available due to async timing
   }, 15000);
 
   it("should clear error state", () => {
     const { result } = renderHook(() => useLLMProvider());
 
-    // clearError should be a function
     expect(typeof result.current.clearError).toBe("function");
 
-    // Calling clearError should not throw
     act(() => {
       result.current.clearError();
     });
@@ -424,18 +408,10 @@ describe("useLLMProvider - TokenBucket Rate Limiting", () => {
   });
 
   it("should use custom temperature and maxTokens options", async () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2024-01-01T00:15:00Z"));
-    __resetRateLimiter(Date.now());
+    setupFakeTimers("2024-01-01T00:15:00Z");
 
     const { result } = renderHook(() => useLLMProvider());
-
-    global.fetch.mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        choices: [{ message: { content: "Test response" } }],
-      }),
-    });
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockOpenAIResponse("Test response"));
 
     await result.current.complete("Test prompt", {
       temperature: 0.5,
@@ -460,19 +436,15 @@ describe("useLLMProvider - TokenBucket Rate Limiting", () => {
 
   it("should expose config from hook", () => {
     const { result } = renderHook(() => useLLMProvider());
-
     expect(result.current.config).toEqual(mockConfig);
   });
 
   it("should handle non-Error exceptions", async () => {
-    // Use real timers since retry logic uses delays
     vi.useRealTimers();
     __resetRateLimiter();
 
     const { result } = renderHook(() => useLLMProvider());
-
-    // Non-Error values get converted to Error by retry function
-    global.fetch.mockRejectedValue("string error");
+    (global.fetch as ReturnType<typeof vi.fn>).mockRejectedValue("string error");
 
     await expect(result.current.complete("Test prompt")).rejects.toThrow(
       "string error",
@@ -480,23 +452,11 @@ describe("useLLMProvider - TokenBucket Rate Limiting", () => {
   }, 15000);
 
   it("should handle Ollama with contextWindow option", async () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2024-01-01T00:17:00Z"));
-    __resetRateLimiter(Date.now());
-
-    mockConfig.provider = "ollama";
-    mockConfig.baseUrl = "http://localhost:11434";
-    mockConfig.model = "llama3.1";
-    mockConfig.contextWindow = 16384;
+    setupFakeTimers("2024-01-01T00:17:00Z");
+    configureOllama(16384);
 
     const { result } = renderHook(() => useLLMProvider());
-
-    global.fetch.mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        message: { content: "Ollama response" },
-      }),
-    });
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockOllamaResponse("Ollama response"));
 
     await result.current.complete("Test prompt");
 

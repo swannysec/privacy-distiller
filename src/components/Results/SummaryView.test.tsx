@@ -4,11 +4,17 @@ import { SummaryView } from "./SummaryView";
 
 // Mock ReactMarkdown
 vi.mock("react-markdown", () => ({
-  default: ({ children }) => <div data-testid="markdown">{children}</div>,
+  default: ({ children }: { children: React.ReactNode }) => <div data-testid="markdown">{children}</div>,
 }));
 
+interface Summary {
+  brief: string;
+  detailed: string;
+  full: string;
+}
+
 describe("SummaryView", () => {
-  const mockSummary = {
+  const mockSummary: Summary = {
     brief:
       "This is a brief summary of the policy. It contains about 200 words.",
     detailed:
@@ -143,7 +149,7 @@ describe("SummaryView", () => {
 
   describe("Reading Time Estimation", () => {
     it("should calculate reading time for brief summary", () => {
-      const briefSummary = {
+      const briefSummary: Summary = {
         brief: Array(200).fill("word").join(" "), // 200 words
         detailed: "",
         full: "",
@@ -156,7 +162,7 @@ describe("SummaryView", () => {
     });
 
     it("should calculate reading time for detailed summary", () => {
-      const detailedSummary = {
+      const detailedSummary: Summary = {
         brief: "",
         detailed: Array(600).fill("word").join(" "), // 600 words
         full: "",
@@ -172,7 +178,7 @@ describe("SummaryView", () => {
     });
 
     it("should round up reading time", () => {
-      const shortSummary = {
+      const shortSummary: Summary = {
         brief: Array(50).fill("word").join(" "), // 50 words
         detailed: "",
         full: "",
@@ -249,7 +255,7 @@ describe("SummaryView", () => {
 
   describe("Edge Cases", () => {
     it("should handle empty brief summary with default text", () => {
-      const emptySummary = {
+      const emptySummary: Summary = {
         brief: "",
         detailed: "Detailed content",
         full: "Full content",
@@ -268,7 +274,7 @@ describe("SummaryView", () => {
     });
 
     it("should handle very long content", () => {
-      const longSummary = {
+      const longSummary: Summary = {
         brief: Array(5000).fill("word").join(" "),
         detailed: Array(10000).fill("word").join(" "),
         full: Array(20000).fill("word").join(" "),
@@ -297,7 +303,7 @@ describe("SummaryView", () => {
     });
 
     it("should handle summary with only whitespace", () => {
-      const whitespaceSummary = {
+      const whitespaceSummary: Summary = {
         brief: "   \n\n   ",
         detailed: "\t\t\t",
         full: "          ",

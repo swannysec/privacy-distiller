@@ -1,11 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { AnalysisSection } from "./AnalysisSection";
 import { ANALYSIS_STATUS } from "../../utils/constants";
 
 // Mock child components
 vi.mock("../../components/Analysis/ProgressIndicator", () => ({
-  ProgressIndicator: vi.fn(({ status, progress, currentStep }) => (
+  ProgressIndicator: vi.fn(({ status, progress, currentStep }: { status: string; progress: number; currentStep: string }) => (
     <div data-testid="progress-indicator">
       Status: {status}, Progress: {progress}, Step: {currentStep}
     </div>
@@ -13,7 +13,7 @@ vi.mock("../../components/Analysis/ProgressIndicator", () => ({
 }));
 
 vi.mock("../../components/Results", () => ({
-  ResultsDisplay: vi.fn(({ result, onNewAnalysis, onExport }) => (
+  ResultsDisplay: vi.fn(({ result, onNewAnalysis, onExport }: { result: { id: string }; onNewAnalysis: () => void; onExport?: (result: { id: string }) => void }) => (
     <div data-testid="results-display">
       <div>Result ID: {result.id}</div>
       <button onClick={onNewAnalysis}>New Analysis</button>
@@ -23,12 +23,12 @@ vi.mock("../../components/Results", () => ({
 }));
 
 vi.mock("../Common", () => ({
-  Card: ({ children, className }) => (
+  Card: ({ children, className }: { children: React.ReactNode; className?: string }) => (
     <div className={className} data-testid="card">
       {children}
     </div>
   ),
-  Button: ({ children, variant, onClick, ariaLabel }) => (
+  Button: ({ children, variant, onClick, ariaLabel }: { children: React.ReactNode; variant?: string; onClick?: () => void; ariaLabel?: string }) => (
     <button onClick={onClick} aria-label={ariaLabel} data-variant={variant}>
       {children}
     </button>
@@ -37,7 +37,7 @@ vi.mock("../Common", () => ({
 
 // Mock context
 const mockResetAnalysis = vi.fn();
-const mockUseAnalysis = vi.fn();
+const mockUseAnalysis: Mock = vi.fn();
 
 vi.mock("../../contexts", () => ({
   useAnalysis: () => mockUseAnalysis(),

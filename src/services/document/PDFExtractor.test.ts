@@ -15,15 +15,15 @@ vi.mock("pdfjs-dist", () => ({
 /**
  * Creates a mock File with arrayBuffer method
  */
-function createMockFile(content, name, type) {
+function createMockFile(content: string, name: string, type: string): File {
   const blob = new Blob([content], { type });
   const file = new File([blob], name, { type });
   // Ensure arrayBuffer is available
   if (!file.arrayBuffer) {
-    file.arrayBuffer = async () => {
+    (file as File & { arrayBuffer: () => Promise<ArrayBuffer> }).arrayBuffer = async () => {
       const reader = new FileReader();
       return new Promise((resolve) => {
-        reader.onload = () => resolve(reader.result);
+        reader.onload = () => resolve(reader.result as ArrayBuffer);
         reader.readAsArrayBuffer(blob);
       });
     };
@@ -32,8 +32,8 @@ function createMockFile(content, name, type) {
 }
 
 describe("PDFExtractor", () => {
-  let mockFetch;
-  let originalFetch;
+  let mockFetch: ReturnType<typeof vi.fn>;
+  let originalFetch: typeof global.fetch;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -73,7 +73,7 @@ describe("PDFExtractor", () => {
 
     it("should use SRI verification for worker loading", async () => {
       const { getDocument } = await import("pdfjs-dist");
-      getDocument.mockReturnValue({
+      (getDocument as ReturnType<typeof vi.fn>).mockReturnValue({
         promise: Promise.resolve({
           numPages: 1,
           getPage: () =>
@@ -125,11 +125,11 @@ describe("PDFExtractor", () => {
     });
 
     it("should throw error for null file", async () => {
-      await expect(PDFExtractor.extract(null)).rejects.toThrow();
+      await expect(PDFExtractor.extract(null as unknown as File)).rejects.toThrow();
     });
 
     it("should throw error for undefined file", async () => {
-      await expect(PDFExtractor.extract(undefined)).rejects.toThrow();
+      await expect(PDFExtractor.extract(undefined as unknown as File)).rejects.toThrow();
     });
 
     it("should handle Invalid PDF error specifically", async () => {
@@ -138,7 +138,7 @@ describe("PDFExtractor", () => {
       // Attach catch to avoid unhandled rejection
       mockPdfPromise.catch(() => {});
 
-      getDocument.mockReturnValue({
+      (getDocument as ReturnType<typeof vi.fn>).mockReturnValue({
         promise: mockPdfPromise,
       });
 
@@ -157,7 +157,7 @@ describe("PDFExtractor", () => {
       // Attach catch to avoid unhandled rejection
       mockPdfPromise.catch(() => {});
 
-      getDocument.mockReturnValue({
+      (getDocument as ReturnType<typeof vi.fn>).mockReturnValue({
         promise: mockPdfPromise,
       });
 
@@ -176,7 +176,7 @@ describe("PDFExtractor", () => {
   describe("extract", () => {
     it("should extract text from single page PDF", async () => {
       const { getDocument } = await import("pdfjs-dist");
-      getDocument.mockReturnValue({
+      (getDocument as ReturnType<typeof vi.fn>).mockReturnValue({
         promise: Promise.resolve({
           numPages: 1,
           getPage: vi.fn().mockResolvedValue({
@@ -234,7 +234,7 @@ describe("PDFExtractor", () => {
           }),
         });
 
-      getDocument.mockReturnValue({
+      (getDocument as ReturnType<typeof vi.fn>).mockReturnValue({
         promise: Promise.resolve({
           numPages: 3,
           getPage: mockGetPage,
@@ -257,7 +257,7 @@ describe("PDFExtractor", () => {
 
     it("should clean up extracted text by normalizing whitespace", async () => {
       const { getDocument } = await import("pdfjs-dist");
-      getDocument.mockReturnValue({
+      (getDocument as ReturnType<typeof vi.fn>).mockReturnValue({
         promise: Promise.resolve({
           numPages: 1,
           getPage: vi.fn().mockResolvedValue({
@@ -292,7 +292,7 @@ describe("PDFExtractor", () => {
 
     it("should throw error for empty extracted text", async () => {
       const { getDocument } = await import("pdfjs-dist");
-      getDocument.mockReturnValue({
+      (getDocument as ReturnType<typeof vi.fn>).mockReturnValue({
         promise: Promise.resolve({
           numPages: 1,
           getPage: vi.fn().mockResolvedValue({
@@ -314,7 +314,7 @@ describe("PDFExtractor", () => {
 
     it("should throw error for text that is too short", async () => {
       const { getDocument } = await import("pdfjs-dist");
-      getDocument.mockReturnValue({
+      (getDocument as ReturnType<typeof vi.fn>).mockReturnValue({
         promise: Promise.resolve({
           numPages: 1,
           getPage: vi.fn().mockResolvedValue({
@@ -338,7 +338,7 @@ describe("PDFExtractor", () => {
   describe("getMetadata", () => {
     it("should return metadata from PDF", async () => {
       const { getDocument } = await import("pdfjs-dist");
-      getDocument.mockReturnValue({
+      (getDocument as ReturnType<typeof vi.fn>).mockReturnValue({
         promise: Promise.resolve({
           numPages: 5,
           getMetadata: vi.fn().mockResolvedValue({
@@ -373,7 +373,7 @@ describe("PDFExtractor", () => {
       // Attach catch to avoid unhandled rejection
       mockPdfPromise.catch(() => {});
 
-      getDocument.mockReturnValue({
+      (getDocument as ReturnType<typeof vi.fn>).mockReturnValue({
         promise: mockPdfPromise,
       });
 
@@ -390,7 +390,7 @@ describe("PDFExtractor", () => {
 
     it("should handle getMetadata call failure gracefully", async () => {
       const { getDocument } = await import("pdfjs-dist");
-      getDocument.mockReturnValue({
+      (getDocument as ReturnType<typeof vi.fn>).mockReturnValue({
         promise: Promise.resolve({
           numPages: 2,
           getMetadata: vi.fn().mockRejectedValue(new Error("Metadata error")),

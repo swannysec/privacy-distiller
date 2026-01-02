@@ -212,6 +212,10 @@ export const URL_CONSTRAINTS: URLConstraints = {
     /^\[fe80:/i, // IPv6 link-local
     /^\[fc00:/i, // IPv6 unique local
     /^\[fd/i, // IPv6 unique local
+    /^::1$/, // IPv6 loopback (unbracketed)
+    /^\[::1\]$/, // IPv6 loopback (bracketed)
+    /^0:0:0:0:0:0:0:1$/, // IPv6 loopback (full form)
+    /^\[0:0:0:0:0:0:0:1\]$/, // IPv6 loopback (full form, bracketed)
   ],
 };
 

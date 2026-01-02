@@ -203,7 +203,7 @@ describe("ProviderSelector", () => {
     });
 
     it("should render without onChange (edge case)", () => {
-      render(<ProviderSelector value="openrouter" onChange={undefined} />);
+      render(<ProviderSelector value="openrouter" onChange={undefined as unknown as (value: string) => void} />);
 
       const select = screen.getByRole("combobox", { name: /LLM Provider/i });
       expect(select).toBeInTheDocument();

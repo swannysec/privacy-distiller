@@ -1,26 +1,16 @@
-import { useMemo } from 'react';
+import { useMemo } from "react";
+import type {
+  PrivacyScorecard as ScorecardType,
+  ScorecardCategory,
+} from "../../types";
 
-interface CategoryData {
-  score: number;
-  summary?: string;
-}
-
-interface Scorecard {
-  overallScore?: number;
-  overallGrade?: string;
-  thirdPartySharing?: CategoryData;
-  userRights?: CategoryData;
-  dataCollection?: CategoryData;
-  dataRetention?: CategoryData;
-  purposeClarity?: CategoryData;
-  securityMeasures?: CategoryData;
-  policyTransparency?: CategoryData;
-  topConcerns?: string[];
-  positiveAspects?: string[];
-}
+/**
+ * Extended scorecard type that allows optional categories for display flexibility
+ */
+type DisplayScorecard = Partial<ScorecardType>;
 
 interface PrivacyScorecardProps {
-  scorecard: Scorecard;
+  scorecard: DisplayScorecard;
   className?: string;
 }
 
@@ -35,24 +25,24 @@ interface CategoryConfig {
  * Get color class based on score (1-10)
  */
 function getScoreColor(score: number): string {
-  if (score >= 8) return 'scorecard__score--excellent';
-  if (score >= 6) return 'scorecard__score--good';
-  if (score >= 4) return 'scorecard__score--fair';
-  if (score >= 2) return 'scorecard__score--poor';
-  return 'scorecard__score--critical';
+  if (score >= 8) return "scorecard__score--excellent";
+  if (score >= 6) return "scorecard__score--good";
+  if (score >= 4) return "scorecard__score--fair";
+  if (score >= 2) return "scorecard__score--poor";
+  return "scorecard__score--critical";
 }
 
 /**
  * Get grade color class
  */
 function getGradeColor(grade: string): string {
-  if (!grade) return 'scorecard__grade--fair';
+  if (!grade) return "scorecard__grade--fair";
   const letter = grade.charAt(0).toUpperCase();
-  if (letter === 'A') return 'scorecard__grade--excellent';
-  if (letter === 'B') return 'scorecard__grade--good';
-  if (letter === 'C') return 'scorecard__grade--fair';
-  if (letter === 'D') return 'scorecard__grade--poor';
-  return 'scorecard__grade--critical';
+  if (letter === "A") return "scorecard__grade--excellent";
+  if (letter === "B") return "scorecard__grade--good";
+  if (letter === "C") return "scorecard__grade--fair";
+  if (letter === "D") return "scorecard__grade--poor";
+  return "scorecard__grade--critical";
 }
 
 /**
@@ -61,63 +51,66 @@ function getGradeColor(grade: string): string {
  */
 const CATEGORY_CONFIG: Record<string, CategoryConfig> = {
   thirdPartySharing: {
-    label: 'Third-Party Sharing',
-    icon: '🔗',
+    label: "Third-Party Sharing",
+    icon: "🔗",
     weight: 20,
-    description: 'Who receives your data and why',
+    description: "Who receives your data and why",
   },
   userRights: {
-    label: 'User Rights & Control',
-    icon: '⚙️',
+    label: "User Rights & Control",
+    icon: "⚙️",
     weight: 18,
-    description: 'Your ability to access, delete, and control your data',
+    description: "Your ability to access, delete, and control your data",
   },
   dataCollection: {
-    label: 'Data Collection',
-    icon: '📊',
+    label: "Data Collection",
+    icon: "📊",
     weight: 18,
-    description: 'What data is collected and whether it is necessary',
+    description: "What data is collected and whether it is necessary",
   },
   dataRetention: {
-    label: 'Data Retention',
-    icon: '🗄️',
+    label: "Data Retention",
+    icon: "🗄️",
     weight: 14,
-    description: 'How long your data is stored',
+    description: "How long your data is stored",
   },
   purposeClarity: {
-    label: 'Purpose Clarity',
-    icon: '🎯',
+    label: "Purpose Clarity",
+    icon: "🎯",
     weight: 12,
-    description: 'How clearly data uses are explained',
+    description: "How clearly data uses are explained",
   },
   securityMeasures: {
-    label: 'Security Measures',
-    icon: '🔒',
+    label: "Security Measures",
+    icon: "🔒",
     weight: 10,
-    description: 'How your data is protected',
+    description: "How your data is protected",
   },
   policyTransparency: {
-    label: 'Policy Transparency',
-    icon: '📖',
+    label: "Policy Transparency",
+    icon: "📖",
     weight: 8,
-    description: 'How readable and accessible the policy is',
+    description: "How readable and accessible the policy is",
   },
 };
 
 // Ordered category keys (by weight, highest first)
-const CATEGORY_KEYS: (keyof Omit<Scorecard, 'overallScore' | 'overallGrade' | 'topConcerns' | 'positiveAspects'>)[] = [
-  'thirdPartySharing',
-  'userRights',
-  'dataCollection',
-  'dataRetention',
-  'purposeClarity',
-  'securityMeasures',
-  'policyTransparency',
+const CATEGORY_KEYS: (keyof Omit<
+  ScorecardType,
+  "overallScore" | "overallGrade" | "topConcerns" | "positiveAspects"
+>)[] = [
+  "thirdPartySharing",
+  "userRights",
+  "dataCollection",
+  "dataRetention",
+  "purposeClarity",
+  "securityMeasures",
+  "policyTransparency",
 ];
 
 interface CategoryRowProps {
   category: string;
-  data: CategoryData | undefined;
+  data: ScorecardCategory | undefined;
 }
 
 /**
@@ -162,7 +155,10 @@ function CategoryRow({ category, data }: CategoryRowProps) {
  * PrivacyScorecard - Displays a prominent privacy rating scorecard
  * Uses 7 weighted categories based on EFF, NIST, FTC, GDPR frameworks
  */
-export function PrivacyScorecard({ scorecard, className = '' }: PrivacyScorecardProps) {
+export function PrivacyScorecard({
+  scorecard,
+  className = "",
+}: PrivacyScorecardProps) {
   // Calculate overall score if not provided
   const overallScore = useMemo(() => {
     if (scorecard?.overallScore) return scorecard.overallScore;
@@ -185,22 +181,22 @@ export function PrivacyScorecard({ scorecard, className = '' }: PrivacyScorecard
   // Calculate grade from score if not provided
   const grade = useMemo(() => {
     if (scorecard?.overallGrade) return scorecard.overallGrade;
-    if (!overallScore) return 'C';
+    if (!overallScore) return "C";
 
     // Traditional letter grade scale
-    if (overallScore >= 97) return 'A+';
-    if (overallScore >= 93) return 'A';
-    if (overallScore >= 90) return 'A-';
-    if (overallScore >= 87) return 'B+';
-    if (overallScore >= 83) return 'B';
-    if (overallScore >= 80) return 'B-';
-    if (overallScore >= 77) return 'C+';
-    if (overallScore >= 73) return 'C';
-    if (overallScore >= 70) return 'C-';
-    if (overallScore >= 67) return 'D+';
-    if (overallScore >= 63) return 'D';
-    if (overallScore >= 60) return 'D-';
-    return 'F';
+    if (overallScore >= 97) return "A+";
+    if (overallScore >= 93) return "A";
+    if (overallScore >= 90) return "A-";
+    if (overallScore >= 87) return "B+";
+    if (overallScore >= 83) return "B";
+    if (overallScore >= 80) return "B-";
+    if (overallScore >= 77) return "C+";
+    if (overallScore >= 73) return "C";
+    if (overallScore >= 70) return "C-";
+    if (overallScore >= 67) return "D+";
+    if (overallScore >= 63) return "D";
+    if (overallScore >= 60) return "D-";
+    return "F";
   }, [scorecard?.overallGrade, overallScore]);
 
   if (!scorecard) {
@@ -234,8 +230,8 @@ export function PrivacyScorecard({ scorecard, className = '' }: PrivacyScorecard
 
       <div className="scorecard__methodology">
         <p className="scorecard__methodology-text">
-          Weights based on EFF, NIST, FTC, and GDPR privacy frameworks.
-          Your own priorities may differ—review category details below.
+          Weights based on EFF, NIST, FTC, and GDPR privacy frameworks. Your own
+          priorities may differ—review category details below.
         </p>
       </div>
 
@@ -258,7 +254,10 @@ export function PrivacyScorecard({ scorecard, className = '' }: PrivacyScorecard
               </h3>
               <ul className="scorecard__insights-list">
                 {scorecard.topConcerns.slice(0, 3).map((concern, index) => (
-                  <li key={index} className="scorecard__insight scorecard__insight--concern">
+                  <li
+                    key={index}
+                    className="scorecard__insight scorecard__insight--concern"
+                  >
                     {concern}
                   </li>
                 ))}
@@ -266,20 +265,26 @@ export function PrivacyScorecard({ scorecard, className = '' }: PrivacyScorecard
             </div>
           )}
 
-          {scorecard.positiveAspects && scorecard.positiveAspects.length > 0 && (
-            <div className="scorecard__positives">
-              <h3 className="scorecard__insights-title">
-                <span aria-hidden="true">✅</span> Positive Aspects
-              </h3>
-              <ul className="scorecard__insights-list">
-                {scorecard.positiveAspects.slice(0, 3).map((positive, index) => (
-                  <li key={index} className="scorecard__insight scorecard__insight--positive">
-                    {positive}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          {scorecard.positiveAspects &&
+            scorecard.positiveAspects.length > 0 && (
+              <div className="scorecard__positives">
+                <h3 className="scorecard__insights-title">
+                  <span aria-hidden="true">✅</span> Positive Aspects
+                </h3>
+                <ul className="scorecard__insights-list">
+                  {scorecard.positiveAspects
+                    .slice(0, 3)
+                    .map((positive, index) => (
+                      <li
+                        key={index}
+                        className="scorecard__insight scorecard__insight--positive"
+                      >
+                        {positive}
+                      </li>
+                    ))}
+                </ul>
+              </div>
+            )}
         </div>
       )}
     </div>

@@ -5,7 +5,7 @@ import { APIKeyInput } from "./APIKeyInput";
 // Mock validation
 const mockValidateApiKey = vi.fn();
 vi.mock("../../utils/validation", () => ({
-  validateApiKey: (...args) => mockValidateApiKey(...args),
+  validateApiKey: (...args: unknown[]) => mockValidateApiKey(...args),
 }));
 
 describe("APIKeyInput", () => {
@@ -416,7 +416,7 @@ describe("APIKeyInput", () => {
     it("should handle undefined value", () => {
       render(
         <APIKeyInput
-          value={undefined}
+          value={undefined as unknown as string}
           onChange={mockOnChange}
           provider="openrouter"
         />,
@@ -429,7 +429,7 @@ describe("APIKeyInput", () => {
     it("should handle null value", () => {
       render(
         <APIKeyInput
-          value={null}
+          value={null as unknown as string}
           onChange={mockOnChange}
           provider="openrouter"
         />,

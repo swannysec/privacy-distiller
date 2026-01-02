@@ -64,16 +64,16 @@ describe('Card', () => {
       const { container } = render(<Card title="Title">Content</Card>);
       const header = container.querySelector('.card__header');
       expect(header).toBeInTheDocument();
-      expect(header.children).toHaveLength(1);
-      expect(header.querySelector('.card__title')).toBeInTheDocument();
+      expect(header?.children).toHaveLength(1);
+      expect(header?.querySelector('.card__title')).toBeInTheDocument();
     });
 
     it('should render header with subtitle only', () => {
       const { container } = render(<Card subtitle="Subtitle">Content</Card>);
       const header = container.querySelector('.card__header');
       expect(header).toBeInTheDocument();
-      expect(header.children).toHaveLength(1);
-      expect(header.querySelector('.card__subtitle')).toBeInTheDocument();
+      expect(header?.children).toHaveLength(1);
+      expect(header?.querySelector('.card__subtitle')).toBeInTheDocument();
     });
 
     it('should render header with both title and subtitle', () => {
@@ -84,9 +84,9 @@ describe('Card', () => {
       );
       const header = container.querySelector('.card__header');
       expect(header).toBeInTheDocument();
-      expect(header.children).toHaveLength(2);
-      expect(header.querySelector('.card__title')).toBeInTheDocument();
-      expect(header.querySelector('.card__subtitle')).toBeInTheDocument();
+      expect(header?.children).toHaveLength(2);
+      expect(header?.querySelector('.card__title')).toBeInTheDocument();
+      expect(header?.querySelector('.card__subtitle')).toBeInTheDocument();
     });
   });
 
@@ -130,20 +130,20 @@ describe('Card', () => {
     it('should apply custom className', () => {
       const { container } = render(<Card className="custom-card">Content</Card>);
       const card = container.querySelector('.card');
-      expect(card.className).toContain('card');
-      expect(card.className).toContain('custom-card');
+      expect(card?.className).toContain('card');
+      expect(card?.className).toContain('custom-card');
     });
 
     it('should handle empty className', () => {
       const { container } = render(<Card className="">Content</Card>);
       const card = container.querySelector('.card');
-      expect(card.className).toBe('card ');
+      expect(card?.className).toBe('card ');
     });
   });
 
   describe('additional props', () => {
     it('should forward additional props to card element', () => {
-      const { container } = render(
+      render(
         <Card data-testid="custom-card" data-custom="value">
           Content
         </Card>
@@ -169,16 +169,16 @@ describe('Card', () => {
     it('should render with correct structure (no header)', () => {
       const { container } = render(<Card>Content</Card>);
       const card = container.querySelector('.card');
-      expect(card.children).toHaveLength(1);
-      expect(card.querySelector('.card__content')).toBeInTheDocument();
+      expect(card?.children).toHaveLength(1);
+      expect(card?.querySelector('.card__content')).toBeInTheDocument();
     });
 
     it('should render with correct structure (with header)', () => {
       const { container } = render(<Card title="Title">Content</Card>);
       const card = container.querySelector('.card');
-      expect(card.children).toHaveLength(2);
-      expect(card.children[0]).toBe(card.querySelector('.card__header'));
-      expect(card.children[1]).toBe(card.querySelector('.card__content'));
+      expect(card?.children).toHaveLength(2);
+      expect(card?.children[0]).toBe(card?.querySelector('.card__header'));
+      expect(card?.children[1]).toBe(card?.querySelector('.card__content'));
     });
 
     it('should maintain structure with all props', () => {
@@ -188,14 +188,14 @@ describe('Card', () => {
         </Card>
       );
       const card = container.querySelector('.card');
-      const header = card.querySelector('.card__header');
-      const content = card.querySelector('.card__content');
+      const header = card?.querySelector('.card__header');
+      const content = card?.querySelector('.card__content');
 
-      expect(card.children).toHaveLength(2);
+      expect(card?.children).toHaveLength(2);
       expect(header).toBeInTheDocument();
       expect(content).toBeInTheDocument();
-      expect(header.querySelector('.card__title')).toHaveTextContent('Title');
-      expect(header.querySelector('.card__subtitle')).toHaveTextContent('Subtitle');
+      expect(header?.querySelector('.card__title')).toHaveTextContent('Title');
+      expect(header?.querySelector('.card__subtitle')).toHaveTextContent('Subtitle');
       expect(content).toHaveTextContent('Content');
     });
   });

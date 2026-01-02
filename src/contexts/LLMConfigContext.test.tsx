@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, vi, type Mock } from "vitest";
 import {
   render,
   screen,
@@ -21,6 +21,10 @@ vi.mock("../utils/storage", () => ({
 vi.mock("../utils/validation", () => ({
   validateLLMConfig: vi.fn(() => ({ valid: true, errors: [] })),
 }));
+
+const mockGetLLMConfig = storage.getLLMConfig as Mock;
+const mockSaveLLMConfig = storage.saveLLMConfig as Mock;
+const mockRemoveLLMConfig = storage.removeLLMConfig as Mock;
 
 // Test component to access context
 function TestComponent() {
@@ -65,7 +69,7 @@ function TestComponent() {
 describe("LLMConfigContext", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    storage.getLLMConfig.mockReturnValue(null);
+    mockGetLLMConfig.mockReturnValue(null);
   });
 
   describe("LLMConfigProvider", () => {
@@ -80,7 +84,7 @@ describe("LLMConfigContext", () => {
     });
 
     it("should provide default config when storage is empty", () => {
-      storage.getLLMConfig.mockReturnValue(null);
+      mockGetLLMConfig.mockReturnValue(null);
 
       render(
         <LLMConfigProvider>
@@ -103,7 +107,7 @@ describe("LLMConfigContext", () => {
         maxTokens: 4096,
       };
 
-      storage.getLLMConfig.mockReturnValue(savedConfig);
+      mockGetLLMConfig.mockReturnValue(savedConfig);
 
       render(
         <LLMConfigProvider>
@@ -116,7 +120,7 @@ describe("LLMConfigContext", () => {
     });
 
     it("should handle null config from storage", () => {
-      storage.getLLMConfig.mockReturnValue(null);
+      mockGetLLMConfig.mockReturnValue(null);
 
       render(
         <LLMConfigProvider>
@@ -131,7 +135,7 @@ describe("LLMConfigContext", () => {
     });
 
     it("should persist config to storage when updated", async () => {
-      storage.getLLMConfig.mockReturnValue(null);
+      mockGetLLMConfig.mockReturnValue(null);
 
       render(
         <LLMConfigProvider>
@@ -144,7 +148,7 @@ describe("LLMConfigContext", () => {
       });
 
       await waitFor(() => {
-        expect(storage.saveLLMConfig).toHaveBeenCalled();
+        expect(mockSaveLLMConfig).toHaveBeenCalled();
       });
     });
   });
@@ -164,7 +168,7 @@ describe("LLMConfigContext", () => {
     });
 
     it("should provide config state", () => {
-      storage.getLLMConfig.mockReturnValue(null);
+      mockGetLLMConfig.mockReturnValue(null);
 
       render(
         <LLMConfigProvider>
@@ -177,7 +181,7 @@ describe("LLMConfigContext", () => {
     });
 
     it("should update config with updateConfig", async () => {
-      storage.getLLMConfig.mockReturnValue(null);
+      mockGetLLMConfig.mockReturnValue(null);
 
       render(
         <LLMConfigProvider>
@@ -195,7 +199,7 @@ describe("LLMConfigContext", () => {
     });
 
     it("should update model with updateConfig", async () => {
-      storage.getLLMConfig.mockReturnValue(null);
+      mockGetLLMConfig.mockReturnValue(null);
 
       render(
         <LLMConfigProvider>
@@ -213,7 +217,7 @@ describe("LLMConfigContext", () => {
     });
 
     it("should set provider with defaults using setProvider", async () => {
-      storage.getLLMConfig.mockReturnValue(null);
+      mockGetLLMConfig.mockReturnValue(null);
 
       render(
         <LLMConfigProvider>
@@ -235,7 +239,7 @@ describe("LLMConfigContext", () => {
     });
 
     it("should set OpenRouter provider with defaults", async () => {
-      storage.getLLMConfig.mockReturnValue(null);
+      mockGetLLMConfig.mockReturnValue(null);
 
       render(
         <LLMConfigProvider>
@@ -259,7 +263,7 @@ describe("LLMConfigContext", () => {
     });
 
     it("should set LM Studio provider with defaults", async () => {
-      storage.getLLMConfig.mockReturnValue(null);
+      mockGetLLMConfig.mockReturnValue(null);
 
       render(
         <LLMConfigProvider>
@@ -281,7 +285,7 @@ describe("LLMConfigContext", () => {
     });
 
     it("should validate config", async () => {
-      storage.getLLMConfig.mockReturnValue(null);
+      mockGetLLMConfig.mockReturnValue(null);
 
       render(
         <LLMConfigProvider>
@@ -299,7 +303,7 @@ describe("LLMConfigContext", () => {
     });
 
     it("should reset config to defaults", async () => {
-      storage.getLLMConfig.mockReturnValue(null);
+      mockGetLLMConfig.mockReturnValue(null);
 
       render(
         <LLMConfigProvider>
@@ -325,15 +329,15 @@ describe("LLMConfigContext", () => {
         expect(screen.getByTestId("provider")).toHaveTextContent(
           DEFAULT_LLM_CONFIG.provider,
         );
-        expect(storage.removeLLMConfig).toHaveBeenCalled();
+        expect(mockRemoveLLMConfig).toHaveBeenCalled();
       });
     });
 
     it("should clear validation errors on reset", async () => {
-      const { validateLLMConfig } = await import("../utils/validation");
+      const { validateLLMConfig } = await import("../utils/validation") as { validateLLMConfig: Mock };
       validateLLMConfig.mockReturnValue({ valid: false, errors: ["Error 1"] });
 
-      storage.getLLMConfig.mockReturnValue(null);
+      mockGetLLMConfig.mockReturnValue(null);
 
       render(
         <LLMConfigProvider>
@@ -361,7 +365,7 @@ describe("LLMConfigContext", () => {
 
   describe("config persistence", () => {
     it("should save config to storage when updateConfig is called", async () => {
-      storage.getLLMConfig.mockReturnValue(null);
+      mockGetLLMConfig.mockReturnValue(null);
 
       render(
         <LLMConfigProvider>
@@ -374,12 +378,12 @@ describe("LLMConfigContext", () => {
       });
 
       await waitFor(() => {
-        expect(storage.saveLLMConfig).toHaveBeenCalled();
+        expect(mockSaveLLMConfig).toHaveBeenCalled();
       });
     });
 
     it("should save config to storage when setProvider is called", async () => {
-      storage.getLLMConfig.mockReturnValue(null);
+      mockGetLLMConfig.mockReturnValue(null);
 
       render(
         <LLMConfigProvider>
@@ -392,7 +396,7 @@ describe("LLMConfigContext", () => {
       });
 
       await waitFor(() => {
-        expect(storage.saveLLMConfig).toHaveBeenCalled();
+        expect(mockSaveLLMConfig).toHaveBeenCalled();
       });
     });
 
@@ -406,7 +410,7 @@ describe("LLMConfigContext", () => {
         maxTokens: 2048,
       };
 
-      storage.getLLMConfig.mockReturnValue(savedConfig);
+      mockGetLLMConfig.mockReturnValue(savedConfig);
 
       render(
         <LLMConfigProvider>
@@ -422,13 +426,13 @@ describe("LLMConfigContext", () => {
 
   describe("validation", () => {
     it("should track validation errors", async () => {
-      const { validateLLMConfig } = await import("../utils/validation");
+      const { validateLLMConfig } = await import("../utils/validation") as { validateLLMConfig: Mock };
       validateLLMConfig.mockReturnValue({
         valid: false,
         errors: ["API key is required", "Model is required"],
       });
 
-      storage.getLLMConfig.mockReturnValue(null);
+      mockGetLLMConfig.mockReturnValue(null);
 
       render(
         <LLMConfigProvider>
@@ -447,10 +451,10 @@ describe("LLMConfigContext", () => {
     });
 
     it("should return isValid true when no errors", async () => {
-      const { validateLLMConfig } = await import("../utils/validation");
+      const { validateLLMConfig } = await import("../utils/validation") as { validateLLMConfig: Mock };
       validateLLMConfig.mockReturnValue({ valid: true, errors: [] });
 
-      storage.getLLMConfig.mockReturnValue(null);
+      mockGetLLMConfig.mockReturnValue(null);
 
       render(
         <LLMConfigProvider>
@@ -465,7 +469,7 @@ describe("LLMConfigContext", () => {
 
   describe("provider switching", () => {
     it("should update all provider-specific settings when switching providers", async () => {
-      storage.getLLMConfig.mockReturnValue(null);
+      mockGetLLMConfig.mockReturnValue(null);
 
       render(
         <LLMConfigProvider>
@@ -505,7 +509,7 @@ describe("LLMConfigContext", () => {
     });
 
     it("should preserve custom settings when switching providers", async () => {
-      storage.getLLMConfig.mockReturnValue(null);
+      mockGetLLMConfig.mockReturnValue(null);
 
       render(
         <LLMConfigProvider>

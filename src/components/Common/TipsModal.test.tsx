@@ -67,7 +67,7 @@ describe('TipsModal', () => {
     const { container } = render(<TipsModal onClose={onClose} />);
 
     const modal = container.querySelector('.modal');
-    fireEvent.click(modal);
+    fireEvent.click(modal!);
 
     // onClose should not be called because stopPropagation prevents it
     expect(onClose).not.toHaveBeenCalled();

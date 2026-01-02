@@ -4,7 +4,7 @@ import { LLMConfigPanel } from "./LLMConfigPanel";
 
 // Mock child components
 vi.mock("./ProviderSelector", () => ({
-  ProviderSelector: vi.fn(({ value, onChange, disabled }) => (
+  ProviderSelector: vi.fn(({ value, onChange, disabled }: { value: string; onChange: (value: string) => void; disabled?: boolean }) => (
     <div data-testid="provider-selector">
       <select
         value={value}
@@ -20,7 +20,7 @@ vi.mock("./ProviderSelector", () => ({
 }));
 
 vi.mock("./APIKeyInput", () => ({
-  APIKeyInput: vi.fn(({ value, onChange, provider, disabled }) => (
+  APIKeyInput: vi.fn(({ value, onChange, provider, disabled }: { value: string; onChange: (value: string) => void; provider: string; disabled?: boolean }) => (
     <div data-testid="api-key-input">
       <input
         type="password"
@@ -34,7 +34,7 @@ vi.mock("./APIKeyInput", () => ({
 }));
 
 vi.mock("./ModelSelector", () => ({
-  ModelSelector: vi.fn(({ provider, value, onChange, disabled }) => (
+  ModelSelector: vi.fn(({ value, onChange, disabled }: { provider: string; value: string; onChange: (value: string) => void; disabled?: boolean }) => (
     <div data-testid="model-selector">
       <select
         value={value}
@@ -49,7 +49,7 @@ vi.mock("./ModelSelector", () => ({
 }));
 
 vi.mock("../Common", () => ({
-  Button: ({ children, variant, onClick, disabled }) => (
+  Button: ({ children, variant, onClick, disabled }: { children: React.ReactNode; variant?: string; onClick?: () => void; disabled?: boolean }) => (
     <button
       onClick={onClick}
       disabled={disabled}
@@ -121,7 +121,7 @@ describe("LLMConfigPanel", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockValidateConfig.mockReturnValue({ isValid: true, errors: [] });
-    global.fetch.mockReset();
+    (global.fetch as ReturnType<typeof vi.fn>).mockReset();
     // Set default mock return value
     vi.mocked(useLLMConfig).mockReturnValue(mockContextValue);
   });
@@ -214,7 +214,7 @@ describe("LLMConfigPanel", () => {
       const providerSelect = screen
         .getByTestId("provider-selector")
         .querySelector("select");
-      fireEvent.change(providerSelect, { target: { value: "ollama" } });
+      fireEvent.change(providerSelect!, { target: { value: "ollama" } });
 
       expect(mockSetProvider).toHaveBeenCalledWith("ollama");
     });
@@ -237,7 +237,7 @@ describe("LLMConfigPanel", () => {
       const providerSelect = screen
         .getByTestId("provider-selector")
         .querySelector("select");
-      fireEvent.change(providerSelect, { target: { value: "ollama" } });
+      fireEvent.change(providerSelect!, { target: { value: "ollama" } });
 
       expect(screen.queryByText(/Error/i)).not.toBeInTheDocument();
     });
@@ -250,7 +250,7 @@ describe("LLMConfigPanel", () => {
       const apiKeyInput = screen
         .getByTestId("api-key-input")
         .querySelector("input");
-      fireEvent.change(apiKeyInput, { target: { value: "new-key" } });
+      fireEvent.change(apiKeyInput!, { target: { value: "new-key" } });
 
       expect(mockUpdateConfig).toHaveBeenCalledWith({ apiKey: "new-key" });
     });
@@ -263,7 +263,7 @@ describe("LLMConfigPanel", () => {
       const modelSelect = screen
         .getByTestId("model-selector")
         .querySelector("select");
-      fireEvent.change(modelSelect, { target: { value: "model2" } });
+      fireEvent.change(modelSelect!, { target: { value: "model2" } });
 
       expect(mockUpdateConfig).toHaveBeenCalledWith({ model: "model2" });
     });
@@ -357,7 +357,7 @@ describe("LLMConfigPanel", () => {
       const providerSelect = screen
         .getByTestId("provider-selector")
         .querySelector("select");
-      fireEvent.change(providerSelect, { target: { value: "ollama" } });
+      fireEvent.change(providerSelect!, { target: { value: "ollama" } });
 
       const saveButton = screen.getByRole("button", {
         name: /Save Configuration/i,
@@ -366,14 +366,14 @@ describe("LLMConfigPanel", () => {
       fireEvent.click(saveButton);
 
       // After save, changing again should set hasChanges to true
-      fireEvent.change(providerSelect, { target: { value: "lmstudio" } });
+      fireEvent.change(providerSelect!, { target: { value: "lmstudio" } });
       expect(mockSetProvider).toHaveBeenCalledWith("lmstudio");
     });
   });
 
   describe("Test Connection", () => {
     it("should test OpenRouter connection successfully", async () => {
-      global.fetch.mockResolvedValueOnce({
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: true,
         json: async () => ({ data: [{}, {}] }),
       });
@@ -391,7 +391,7 @@ describe("LLMConfigPanel", () => {
     });
 
     it("should handle OpenRouter connection failure", async () => {
-      global.fetch.mockRejectedValueOnce(new Error("Network error"));
+      (global.fetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error("Network error"));
 
       render(<LLMConfigPanel />);
 

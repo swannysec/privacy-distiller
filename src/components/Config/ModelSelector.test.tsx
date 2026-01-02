@@ -2,9 +2,10 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { ModelSelector } from './ModelSelector';
 import { LLMConfigProvider } from '../../contexts/LLMConfigContext';
+import type { ReactNode } from 'react';
 
 // Wrapper component for tests
-const renderWithProvider = (ui, options) => {
+const renderWithProvider = (ui: ReactNode, options?: Parameters<typeof render>[1]) => {
   return render(
     <LLMConfigProvider>{ui}</LLMConfigProvider>,
     options
@@ -440,18 +441,18 @@ describe('ModelSelector', () => {
 
   describe('Edge Cases', () => {
     it('should handle undefined value gracefully', () => {
-      renderWithProvider(<ModelSelector provider="openrouter" value={undefined} onChange={mockOnChange} />);
+      renderWithProvider(<ModelSelector provider="openrouter" value={undefined as unknown as string} onChange={mockOnChange} />);
 
       const input = screen.getByRole('textbox');
       expect(input).toBeInTheDocument();
-      expect(input.value).toBe('');
+      expect((input as HTMLInputElement).value).toBe('');
     });
 
     it('should handle empty string value', () => {
       renderWithProvider(<ModelSelector provider="openrouter" value="" onChange={mockOnChange} />);
 
       const input = screen.getByRole('textbox');
-      expect(input.value).toBe('');
+      expect((input as HTMLInputElement).value).toBe('');
     });
 
     it('should handle rapid provider switches', async () => {

@@ -212,13 +212,13 @@ describe('Button', () => {
     it('should render spinner before content when loading', () => {
       const { container } = render(<Button loading>Content</Button>);
       const button = container.querySelector('button');
-      const spinner = button.querySelector('.btn__spinner');
-      const content = button.querySelector('.btn__content');
+      const spinner = button?.querySelector('.btn__spinner');
+      const content = button?.querySelector('.btn__content');
 
       expect(spinner).toBeInTheDocument();
       expect(content).toBeInTheDocument();
-      expect(button.children[0]).toBe(spinner);
-      expect(button.children[1]).toBe(content);
+      expect(button?.children[0]).toBe(spinner);
+      expect(button?.children[1]).toBe(content);
     });
   });
 

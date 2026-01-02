@@ -5,7 +5,7 @@ import * as formatting from "../../utils/formatting";
 
 // Mock formatFileSize
 vi.mock("../../utils/formatting", () => ({
-  formatFileSize: vi.fn((size) => {
+  formatFileSize: vi.fn((size: number) => {
     if (size >= 1024 * 1024) {
       return `${(size / (1024 * 1024)).toFixed(2)} MB`;
     }
@@ -25,7 +25,7 @@ vi.mock("../../utils/constants", () => ({
 
 // Mock Button component
 vi.mock("../Common", () => ({
-  Button: ({ children, onClick, disabled, ariaLabel }) => (
+  Button: ({ children, onClick, disabled, ariaLabel }: { children: React.ReactNode; onClick?: () => void; disabled?: boolean; ariaLabel?: string }) => (
     <button onClick={onClick} disabled={disabled} aria-label={ariaLabel}>
       {children}
     </button>
@@ -33,7 +33,7 @@ vi.mock("../Common", () => ({
 }));
 
 describe("FileUpload", () => {
-  let mockOnFileSelect;
+  let mockOnFileSelect: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     mockOnFileSelect = vi.fn();
@@ -147,9 +147,9 @@ describe("FileUpload", () => {
       );
       const dropzone = container.querySelector(".upload-zone");
 
-      fireEvent.dragOver(dropzone);
+      fireEvent.dragOver(dropzone!);
 
-      expect(dropzone.className).toContain("upload-zone--dragging");
+      expect(dropzone?.className).toContain("upload-zone--dragging");
     });
 
     it("should handle drag leave", () => {
@@ -158,10 +158,10 @@ describe("FileUpload", () => {
       );
       const dropzone = container.querySelector(".upload-zone");
 
-      fireEvent.dragOver(dropzone);
-      fireEvent.dragLeave(dropzone);
+      fireEvent.dragOver(dropzone!);
+      fireEvent.dragLeave(dropzone!);
 
-      expect(dropzone.className).not.toContain("upload-zone--dragging");
+      expect(dropzone?.className).not.toContain("upload-zone--dragging");
     });
 
     it("should handle file drop", () => {
@@ -173,7 +173,7 @@ describe("FileUpload", () => {
         type: "application/pdf",
       });
 
-      fireEvent.drop(dropzone, {
+      fireEvent.drop(dropzone!, {
         dataTransfer: {
           files: [file],
         },
@@ -191,7 +191,7 @@ describe("FileUpload", () => {
         type: "text/plain",
       });
 
-      fireEvent.drop(dropzone, {
+      fireEvent.drop(dropzone!, {
         dataTransfer: {
           files: [file],
         },
@@ -209,16 +209,16 @@ describe("FileUpload", () => {
         type: "application/pdf",
       });
 
-      fireEvent.dragOver(dropzone);
-      expect(dropzone.className).toContain("upload-zone--dragging");
+      fireEvent.dragOver(dropzone!);
+      expect(dropzone?.className).toContain("upload-zone--dragging");
 
-      fireEvent.drop(dropzone, {
+      fireEvent.drop(dropzone!, {
         dataTransfer: {
           files: [file],
         },
       });
 
-      expect(dropzone.className).not.toContain("upload-zone--dragging");
+      expect(dropzone?.className).not.toContain("upload-zone--dragging");
     });
 
     it("should not accept drops when disabled", () => {
@@ -230,7 +230,7 @@ describe("FileUpload", () => {
         type: "application/pdf",
       });
 
-      fireEvent.drop(dropzone, {
+      fireEvent.drop(dropzone!, {
         dataTransfer: {
           files: [file],
         },
@@ -245,9 +245,9 @@ describe("FileUpload", () => {
       );
       const dropzone = container.querySelector(".upload-zone");
 
-      fireEvent.dragOver(dropzone);
+      fireEvent.dragOver(dropzone!);
 
-      expect(dropzone.className).not.toContain("upload-zone--dragging");
+      expect(dropzone?.className).not.toContain("upload-zone--dragging");
     });
   });
 
@@ -301,7 +301,7 @@ describe("FileUpload", () => {
       fireEvent.change(input, { target: { files: [file] } });
 
       const dropzone = container.querySelector(".upload-zone");
-      expect(dropzone.className).toContain("upload-zone--has-file");
+      expect(dropzone?.className).toContain("upload-zone--has-file");
     });
   });
 
@@ -324,7 +324,7 @@ describe("FileUpload", () => {
 
     it("should reset file input value", () => {
       render(<FileUpload onFileSelect={mockOnFileSelect} />);
-      const input = screen.getByLabelText("Choose PDF file");
+      const input = screen.getByLabelText("Choose PDF file") as HTMLInputElement;
       const file = new File(["content"], "test.pdf", {
         type: "application/pdf",
       });
@@ -365,7 +365,7 @@ describe("FileUpload", () => {
         <FileUpload onFileSelect={mockOnFileSelect} disabled />,
       );
       const dropzone = container.querySelector(".upload-zone");
-      expect(dropzone.className).toContain("upload-zone--disabled");
+      expect(dropzone?.className).toContain("upload-zone--disabled");
     });
 
     it("should disable clear button when disabled", () => {
@@ -416,7 +416,7 @@ describe("FileUpload", () => {
         <FileUpload onFileSelect={mockOnFileSelect} error="Error" />,
       );
       const dropzone = container.querySelector(".upload-zone");
-      expect(dropzone.className).toContain("upload-zone--error");
+      expect(dropzone?.className).toContain("upload-zone--error");
     });
 
     it("should show error icon", () => {
@@ -440,7 +440,7 @@ describe("FileUpload", () => {
         <FileUpload onFileSelect={mockOnFileSelect} className="custom-class" />,
       );
       const fileUpload = container.querySelector(".file-upload");
-      expect(fileUpload.className).toContain("custom-class");
+      expect(fileUpload?.className).toContain("custom-class");
     });
   });
 

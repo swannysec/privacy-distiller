@@ -6,7 +6,7 @@ import { ANALYSIS_STATUS } from "../../utils/constants";
 
 // Mock LoadingSpinner from Common barrel export
 vi.mock("../Common", () => ({
-  LoadingSpinner: ({ size }) => (
+  LoadingSpinner: ({ size }: { size?: string }) => (
     <div data-testid="loading-spinner" data-size={size}>
       Loading...
     </div>
@@ -661,7 +661,7 @@ describe("ProgressIndicator", () => {
   describe("Edge Cases", () => {
     it("should handle unknown status gracefully", () => {
       const { container } = render(
-        <ProgressIndicator status="unknown-status" />,
+        <ProgressIndicator status={"unknown-status" as string} />,
       );
 
       expect(
@@ -670,7 +670,7 @@ describe("ProgressIndicator", () => {
     });
 
     it("should handle null status", () => {
-      const { container } = render(<ProgressIndicator status={null} />);
+      const { container } = render(<ProgressIndicator status={null as unknown as string} />);
 
       expect(
         container.querySelector(".progress-indicator"),
@@ -678,7 +678,7 @@ describe("ProgressIndicator", () => {
     });
 
     it("should handle undefined status", () => {
-      const { container } = render(<ProgressIndicator status={undefined} />);
+      const { container } = render(<ProgressIndicator status={undefined as unknown as string} />);
 
       expect(
         container.querySelector(".progress-indicator"),

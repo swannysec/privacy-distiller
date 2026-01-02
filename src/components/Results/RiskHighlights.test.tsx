@@ -3,11 +3,22 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { RiskHighlights } from "./RiskHighlights";
 
 vi.mock("react-markdown", () => ({
-  default: ({ children }) => <div data-testid="markdown">{children}</div>,
+  default: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="markdown">{children}</div>
+  ),
 }));
 
+interface Risk {
+  id?: string;
+  title: string;
+  severity: string;
+  description: string;
+  recommendation?: string;
+  location?: string;
+}
+
 describe("RiskHighlights", () => {
-  const mockRisks = [
+  const mockRisks: Risk[] = [
     {
       id: "risk-1",
       title: "Data Collection",
@@ -268,7 +279,7 @@ describe("RiskHighlights", () => {
 
   describe("Risk Sorting", () => {
     it("should sort risks by severity (higher risks first, then medium, then low)", () => {
-      const unsortedRisks = [
+      const unsortedRisks: Risk[] = [
         {
           title: "Low Severity Item",
           severity: "low",
@@ -359,7 +370,7 @@ describe("RiskHighlights", () => {
     });
 
     it("should handle null risks prop", () => {
-      render(<RiskHighlights risks={null} />);
+      render(<RiskHighlights risks={null as unknown as Risk[]} />);
 
       expect(
         screen.getByText(/No significant privacy risks were identified/i),
@@ -367,7 +378,7 @@ describe("RiskHighlights", () => {
     });
 
     it("should handle risks without recommendation", () => {
-      const riskWithoutExplanation = [
+      const riskWithoutExplanation: Risk[] = [
         {
           title: "Simple Risk",
           severity: "low",
@@ -385,7 +396,7 @@ describe("RiskHighlights", () => {
     });
 
     it("should handle unknown severity by defaulting to medium config", () => {
-      const unknownSeverityRisk = [
+      const unknownSeverityRisk: Risk[] = [
         {
           title: "Unknown Severity",
           severity: "unknown",
@@ -408,7 +419,7 @@ describe("RiskHighlights", () => {
     });
 
     it("should handle risk with empty string recommendation", () => {
-      const riskWithEmptyExplanation = [
+      const riskWithEmptyExplanation: Risk[] = [
         {
           title: "Empty Explanation",
           severity: "low",

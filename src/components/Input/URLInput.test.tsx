@@ -4,9 +4,9 @@ import { URLInput } from './URLInput';
 
 // Mock Button component
 vi.mock('../Common', () => ({
-  Button: ({ children, disabled, loading, type, onClick, ariaLabel }) => (
+  Button: ({ children, disabled, loading, type, onClick, ariaLabel }: { children: React.ReactNode; disabled?: boolean; loading?: boolean; type?: string; onClick?: () => void; ariaLabel?: string }) => (
     <button
-      type={type}
+      type={type as 'button' | 'submit' | 'reset' | undefined}
       disabled={disabled}
       data-loading={loading}
       onClick={onClick}
@@ -18,7 +18,7 @@ vi.mock('../Common', () => ({
 }));
 
 describe('URLInput', () => {
-  let mockOnSubmit;
+  let mockOnSubmit: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     mockOnSubmit = vi.fn();
@@ -158,7 +158,7 @@ describe('URLInput', () => {
     it('should prevent default form submission', () => {
       render(<URLInput onSubmit={mockOnSubmit} />);
       const input = screen.getByLabelText('Privacy Policy URL');
-      const form = input.closest('form');
+      const form = input.closest('form')!;
 
       fireEvent.change(input, { target: { value: 'https://example.com' } });
 
@@ -316,7 +316,7 @@ describe('URLInput', () => {
         <URLInput onSubmit={mockOnSubmit} className="custom-class" />
       );
       const form = container.querySelector('.url-input');
-      expect(form.className).toContain('custom-class');
+      expect(form?.className).toContain('custom-class');
     });
   });
 

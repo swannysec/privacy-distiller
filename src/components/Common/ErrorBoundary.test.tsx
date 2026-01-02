@@ -3,7 +3,12 @@ import { render, screen } from '@testing-library/react';
 import { ErrorBoundary } from './ErrorBoundary';
 
 // Component that throws an error
-const ThrowError = ({ shouldThrow, errorMessage }) => {
+interface ThrowErrorProps {
+  shouldThrow: boolean;
+  errorMessage?: string;
+}
+
+const ThrowError = ({ shouldThrow, errorMessage }: ThrowErrorProps) => {
   if (shouldThrow) {
     throw new Error(errorMessage || 'Test error');
   }
@@ -126,7 +131,7 @@ describe('ErrorBoundary', () => {
 
       const details = document.querySelector('.error-boundary__details');
       expect(details).toBeInTheDocument();
-      expect(details.tagName).toBe('DETAILS');
+      expect(details?.tagName).toBe('DETAILS');
     });
 
     it('should have summary for error details', () => {
@@ -198,7 +203,7 @@ describe('ErrorBoundary', () => {
     });
 
     it('should update state via getDerivedStateFromError', () => {
-      const { container } = render(
+      render(
         <ErrorBoundary>
           <ThrowError shouldThrow={true} />
         </ErrorBoundary>
@@ -260,7 +265,7 @@ describe('ErrorBoundary', () => {
       );
 
       const errorDiv = container.querySelector('.error-boundary');
-      const children = Array.from(errorDiv.children);
+      const children = Array.from(errorDiv?.children || []);
 
       expect(children[0].className).toContain('error-boundary__title');
       expect(children[1].className).toContain('error-boundary__message');

@@ -227,8 +227,8 @@ describe("Input", () => {
     it("should apply custom className to wrapper", () => {
       const { container } = render(<Input className="custom-class" />);
       const wrapper = container.querySelector(".input-wrapper");
-      expect(wrapper.className).toContain("input-wrapper");
-      expect(wrapper.className).toContain("custom-class");
+      expect(wrapper?.className).toContain("input-wrapper");
+      expect(wrapper?.className).toContain("custom-class");
     });
 
     it("should apply base input class", () => {
@@ -264,20 +264,20 @@ describe("Input", () => {
         <Input label="Test Label" error="Test Error" />,
       );
       const wrapper = container.querySelector(".input-wrapper");
-      const label = wrapper.querySelector(".input-label");
-      const input = wrapper.querySelector(".input");
-      const error = wrapper.querySelector(".input-error");
+      const label = wrapper?.querySelector(".input-label");
+      const input = wrapper?.querySelector(".input");
+      const error = wrapper?.querySelector(".input-error");
 
-      expect(wrapper.children[0]).toBe(label);
-      expect(wrapper.children[1]).toBe(input);
-      expect(wrapper.children[2]).toBe(error);
+      expect(wrapper?.children[0]).toBe(label);
+      expect(wrapper?.children[1]).toBe(input);
+      expect(wrapper?.children[2]).toBe(error);
     });
 
     it("should render only input when no label or error", () => {
       const { container } = render(<Input />);
       const wrapper = container.querySelector(".input-wrapper");
-      expect(wrapper.children).toHaveLength(1);
-      expect(wrapper.querySelector(".input")).toBeInTheDocument();
+      expect(wrapper?.children).toHaveLength(1);
+      expect(wrapper?.querySelector(".input")).toBeInTheDocument();
     });
   });
 

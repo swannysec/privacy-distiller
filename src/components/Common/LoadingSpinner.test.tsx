@@ -27,19 +27,19 @@ describe("LoadingSpinner", () => {
     it("should apply medium size by default", () => {
       const { container } = render(<LoadingSpinner />);
       const spinner = container.querySelector(".spinner");
-      expect(spinner.className).toContain("spinner--medium");
+      expect(spinner?.className).toContain("spinner--medium");
     });
 
     it("should apply small size", () => {
       const { container } = render(<LoadingSpinner size="small" />);
       const spinner = container.querySelector(".spinner");
-      expect(spinner.className).toContain("spinner--small");
+      expect(spinner?.className).toContain("spinner--small");
     });
 
     it("should apply large size", () => {
       const { container } = render(<LoadingSpinner size="large" />);
       const spinner = container.querySelector(".spinner");
-      expect(spinner.className).toContain("spinner--large");
+      expect(spinner?.className).toContain("spinner--large");
     });
   });
 
@@ -59,7 +59,7 @@ describe("LoadingSpinner", () => {
     it("should render message in paragraph element", () => {
       const { container } = render(<LoadingSpinner message="Loading..." />);
       const message = container.querySelector(".loading-spinner__message");
-      expect(message.tagName).toBe("P");
+      expect(message?.tagName).toBe("P");
     });
 
     it("should apply loading-spinner__message class to message", () => {
@@ -100,12 +100,12 @@ describe("LoadingSpinner", () => {
     it("should have correct structure without message", () => {
       const { container } = render(<LoadingSpinner />);
       const wrapper = container.querySelector(".loading-spinner");
-      const spinner = wrapper.querySelector(".spinner");
-      const srOnly = wrapper.querySelector(".sr-only");
+      const spinner = wrapper?.querySelector(".spinner");
+      const srOnly = wrapper?.querySelector(".sr-only");
 
-      expect(wrapper.children).toHaveLength(2);
-      expect(wrapper.children[0]).toBe(spinner);
-      expect(wrapper.children[1]).toBe(srOnly);
+      expect(wrapper?.children).toHaveLength(2);
+      expect(wrapper?.children[0]).toBe(spinner);
+      expect(wrapper?.children[1]).toBe(srOnly);
     });
 
     it("should have correct structure with message", () => {
@@ -113,14 +113,14 @@ describe("LoadingSpinner", () => {
         <LoadingSpinner message="Loading data..." />,
       );
       const wrapper = container.querySelector(".loading-spinner");
-      const spinner = wrapper.querySelector(".spinner");
-      const message = wrapper.querySelector(".loading-spinner__message");
-      const srOnly = wrapper.querySelector(".sr-only");
+      const spinner = wrapper?.querySelector(".spinner");
+      const message = wrapper?.querySelector(".loading-spinner__message");
+      const srOnly = wrapper?.querySelector(".sr-only");
 
-      expect(wrapper.children).toHaveLength(3);
-      expect(wrapper.children[0]).toBe(spinner);
-      expect(wrapper.children[1]).toBe(message);
-      expect(wrapper.children[2]).toBe(srOnly);
+      expect(wrapper?.children).toHaveLength(3);
+      expect(wrapper?.children[0]).toBe(spinner);
+      expect(wrapper?.children[1]).toBe(message);
+      expect(wrapper?.children[2]).toBe(srOnly);
     });
 
     it("should nest spinner circle inside spinner", () => {
@@ -128,9 +128,9 @@ describe("LoadingSpinner", () => {
       const spinner = container.querySelector(".spinner");
       const circle = container.querySelector(".spinner__circle");
 
-      expect(spinner).toContainElement(circle);
-      expect(spinner.children).toHaveLength(1);
-      expect(spinner.children[0]).toBe(circle);
+      expect(spinner).toContainElement(circle as HTMLElement);
+      expect(spinner?.children).toHaveLength(1);
+      expect(spinner?.children[0]).toBe(circle);
     });
   });
 
@@ -140,7 +140,7 @@ describe("LoadingSpinner", () => {
         <LoadingSpinner size="large" message="Please wait..." />,
       );
       const spinner = container.querySelector(".spinner");
-      expect(spinner.className).toContain("spinner--large");
+      expect(spinner?.className).toContain("spinner--large");
       expect(screen.getByText("Please wait...")).toBeInTheDocument();
     });
 
@@ -163,7 +163,7 @@ describe("LoadingSpinner", () => {
       const { container } = render(<LoadingSpinner />);
       const spinner = container.querySelector(".spinner");
       expect(spinner).toBeInTheDocument();
-      expect(spinner.className).toContain("spinner");
+      expect(spinner?.className).toContain("spinner");
     });
 
     it("should render spinner circle element", () => {
@@ -194,7 +194,7 @@ describe("LoadingSpinner", () => {
     });
 
     it("should render with null message", () => {
-      render(<LoadingSpinner message={null} />);
+      render(<LoadingSpinner message={null as unknown as string} />);
       expect(screen.getByRole("status")).toBeInTheDocument();
     });
 

@@ -4,12 +4,10 @@
 
 import React from "react";
 
-export interface CardProps {
+export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
-  className?: string;
   title?: string;
   subtitle?: string;
-  [key: string]: unknown;
 }
 
 export function Card({
