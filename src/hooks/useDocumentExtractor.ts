@@ -8,34 +8,53 @@ import {
   validateFile,
   validateDocumentText,
   validatePdfMagicBytes,
-} from "../utils/validation.js";
+} from "../utils/validation";
+
+/**
+ * Return type for useDocumentExtractor hook
+ */
+export interface UseDocumentExtractorReturn {
+  /** Extract text content from a URL */
+  extractFromUrl: (url: string) => Promise<string>;
+  /** Extract text content from a PDF file */
+  extractFromPdf: (file: File) => Promise<string>;
+  /** Whether extraction is currently in progress */
+  isExtracting: boolean;
+  /** Current error message, if any */
+  error: string | null;
+  /** Clear the error state */
+  clearError: () => void;
+}
 
 /**
  * Hook for document extraction
- * @returns {Object} Document extraction utilities
+ * @returns Document extraction utilities
  */
-export function useDocumentExtractor() {
-  const [isExtracting, setIsExtracting] = useState(false);
-  const [error, setError] = useState(null);
+export function useDocumentExtractor(): UseDocumentExtractorReturn {
+  const [isExtracting, setIsExtracting] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
   /**
    * Extracts text from a URL
-   * @param {string} url - URL to fetch
-   * @returns {Promise<string>} Extracted text
+   * @param url - URL to fetch
+   * @returns Extracted text
    */
-  const extractFromUrl = useCallback(async (url) => {
+  const extractFromUrl = useCallback(async (url: string): Promise<string> => {
     setIsExtracting(true);
     setError(null);
 
     try {
       // Use URLFetcher service which handles CORS proxy fallback
-      const { URLFetcher } = await import("../services/document/URLFetcher.js");
+      const { URLFetcher } = await import("../services/document/URLFetcher");
       const text = await URLFetcher.fetch(url);
 
       setIsExtracting(false);
       return text;
     } catch (err) {
-      setError(err.message || "Failed to extract text from URL");
+      const errorMessage =
+        (err instanceof Error ? err.message : null) ||
+        "Failed to extract text from URL";
+      setError(errorMessage);
       setIsExtracting(false);
       throw err;
     }
@@ -43,10 +62,10 @@ export function useDocumentExtractor() {
 
   /**
    * Extracts text from a PDF file
-   * @param {File} file - PDF file
-   * @returns {Promise<string>} Extracted text
+   * @param file - PDF file
+   * @returns Extracted text
    */
-  const extractFromPdf = useCallback(async (file) => {
+  const extractFromPdf = useCallback(async (file: File): Promise<string> => {
     setIsExtracting(true);
     setError(null);
 
@@ -85,7 +104,15 @@ export function useDocumentExtractor() {
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
         const textContent = await page.getTextContent();
-        const pageText = textContent.items.map((item) => item.str).join(" ");
+        const pageText = textContent.items
+          .map((item) => {
+            // Type guard for TextItem which has 'str' property
+            if ("str" in item) {
+              return item.str;
+            }
+            return "";
+          })
+          .join(" ");
         fullText += pageText + " ";
       }
 
@@ -100,7 +127,9 @@ export function useDocumentExtractor() {
       setIsExtracting(false);
       return cleanText;
     } catch (err) {
-      const errorMessage = err.message || "Failed to extract text from PDF";
+      const errorMessage =
+        (err instanceof Error ? err.message : null) ||
+        "Failed to extract text from PDF";
       setError(errorMessage);
       setIsExtracting(false);
       throw new Error(errorMessage);
@@ -110,7 +139,7 @@ export function useDocumentExtractor() {
   /**
    * Clears error state
    */
-  const clearError = useCallback(() => {
+  const clearError = useCallback((): void => {
     setError(null);
   }, []);
 

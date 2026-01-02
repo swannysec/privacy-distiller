@@ -9,20 +9,82 @@ import React, {
   useState,
   useCallback,
   useMemo,
+  ReactNode,
 } from "react";
 import { ANALYSIS_STATUS } from "../utils/constants.js";
 import { generateId } from "../utils/helpers.js";
 import { saveAnalysisToHistory } from "../utils/storage.js";
+import type { DocumentInput, AnalysisResult, AnalysisStatus } from "../types/index.js";
 
-const AnalysisContext = createContext(null);
+/**
+ * Internal state shape for analysis
+ */
+interface InternalAnalysisState {
+  status: AnalysisStatus;
+  result: AnalysisResult | null;
+  error: string | null;
+  progress: number;
+  currentStep: string | null;
+}
+
+/**
+ * State values exposed by context
+ */
+interface AnalysisStateValues extends InternalAnalysisState {
+  document: DocumentInput | null;
+}
+
+/**
+ * Actions available in context
+ */
+interface AnalysisActions {
+  setDocumentInput: (doc: DocumentInput) => void;
+  startAnalysis: () => void;
+  updateProgress: (progress: number, currentStep: string) => void;
+  setAnalyzing: () => void;
+  completeAnalysis: (result: AnalysisResult) => void;
+  setError: (error: string) => void;
+  resetAnalysis: () => void;
+  clearResults: () => void;
+  clearError: () => void;
+}
+
+/**
+ * Computed values derived from state
+ */
+interface AnalysisComputed {
+  isIdle: boolean;
+  isExtracting: boolean;
+  isAnalyzing: boolean;
+  isCompleted: boolean;
+  isError: boolean;
+  hasResult: boolean;
+}
+
+/**
+ * Complete context value type
+ */
+interface AnalysisContextValue extends AnalysisStateValues, AnalysisActions, AnalysisComputed {
+  // Grouped structure (preferred)
+  state: AnalysisStateValues;
+  actions: AnalysisActions;
+  computed: AnalysisComputed;
+}
+
+const AnalysisContext = createContext<AnalysisContextValue | undefined>(undefined);
+
+/**
+ * Analysis Provider Component Props
+ */
+interface AnalysisProviderProps {
+  children: ReactNode;
+}
 
 /**
  * Analysis Provider Component
- * @param {Object} props
- * @param {React.ReactNode} props.children
  */
-export function AnalysisProvider({ children }) {
-  const [state, setState] = useState({
+export function AnalysisProvider({ children }: AnalysisProviderProps) {
+  const [state, setState] = useState<InternalAnalysisState>({
     status: ANALYSIS_STATUS.IDLE,
     result: null,
     error: null,
@@ -30,13 +92,12 @@ export function AnalysisProvider({ children }) {
     currentStep: null,
   });
 
-  const [document, setDocument] = useState(null);
+  const [document, setDocument] = useState<DocumentInput | null>(null);
 
   /**
    * Sets the document to be analyzed
-   * @param {import('../types').DocumentInput} doc
    */
-  const setDocumentInput = useCallback((doc) => {
+  const setDocumentInput = useCallback((doc: DocumentInput) => {
     setDocument(doc);
     setState((prev) => ({
       ...prev,
@@ -63,10 +124,8 @@ export function AnalysisProvider({ children }) {
 
   /**
    * Updates analysis progress
-   * @param {number} progress - Progress percentage (0-100)
-   * @param {string} currentStep - Description of current step
    */
-  const updateProgress = useCallback((progress, currentStep) => {
+  const updateProgress = useCallback((progress: number, currentStep: string) => {
     setState((prev) => ({
       ...prev,
       progress,
@@ -88,10 +147,9 @@ export function AnalysisProvider({ children }) {
 
   /**
    * Completes the analysis with results
-   * @param {import('../types').AnalysisResult} result
    */
-  const completeAnalysis = useCallback((result) => {
-    const completeResult = {
+  const completeAnalysis = useCallback((result: AnalysisResult) => {
+    const completeResult: AnalysisResult = {
       ...result,
       id: result.id || generateId(),
       timestamp: result.timestamp || new Date(),
@@ -111,9 +169,8 @@ export function AnalysisProvider({ children }) {
 
   /**
    * Sets error state
-   * @param {string} error - Error message
    */
-  const setError = useCallback((error) => {
+  const setError = useCallback((error: string) => {
     setState((prev) => ({
       ...prev,
       status: ANALYSIS_STATUS.ERROR,
@@ -165,8 +222,8 @@ export function AnalysisProvider({ children }) {
   }, []);
 
   // Memoized context value to prevent unnecessary re-renders
-  const value = useMemo(() => {
-    const stateValues = {
+  const value = useMemo((): AnalysisContextValue => {
+    const stateValues: AnalysisStateValues = {
       status: state.status,
       result: state.result,
       error: state.error,
@@ -175,7 +232,7 @@ export function AnalysisProvider({ children }) {
       document,
     };
 
-    const actions = {
+    const actions: AnalysisActions = {
       setDocumentInput,
       startAnalysis,
       updateProgress,
@@ -187,7 +244,7 @@ export function AnalysisProvider({ children }) {
       clearError,
     };
 
-    const computed = {
+    const computed: AnalysisComputed = {
       isIdle: state.status === ANALYSIS_STATUS.IDLE,
       isExtracting: state.status === ANALYSIS_STATUS.EXTRACTING,
       isAnalyzing: state.status === ANALYSIS_STATUS.ANALYZING,
@@ -230,9 +287,9 @@ export function AnalysisProvider({ children }) {
 
 /**
  * Hook to use analysis context
- * @returns {Object} Analysis context value
+ * @throws Error if used outside AnalysisProvider
  */
-export function useAnalysis() {
+export function useAnalysis(): AnalysisContextValue {
   const context = useContext(AnalysisContext);
   if (!context) {
     throw new Error("useAnalysis must be used within AnalysisProvider");

@@ -10,6 +10,7 @@ import React, {
   useEffect,
   useCallback,
   useMemo,
+  ReactNode,
 } from "react";
 import { DEFAULT_LLM_CONFIG } from "../utils/constants.js";
 import { validateLLMConfig } from "../utils/validation.js";
@@ -18,21 +19,70 @@ import {
   getLLMConfig,
   removeLLMConfig,
 } from "../utils/storage.js";
+import type { LLMConfig, LLMProvider, ValidationError } from "../types/index.js";
 
-const LLMConfigContext = createContext(null);
+/**
+ * Validation result with simplified structure
+ */
+interface ValidationResultSimplified {
+  isValid: boolean;
+  errors: string[];
+}
+
+/**
+ * State values exposed by context
+ */
+interface LLMConfigStateValues {
+  config: LLMConfig;
+  validationErrors: ValidationError[];
+}
+
+/**
+ * Actions available in context
+ */
+interface LLMConfigActions {
+  updateConfig: (updates: Partial<LLMConfig>) => void;
+  setProvider: (provider: LLMProvider) => void;
+  validateConfig: () => ValidationResultSimplified;
+  resetConfig: () => void;
+}
+
+/**
+ * Computed values derived from state
+ */
+interface LLMConfigComputed {
+  isValid: boolean;
+}
+
+/**
+ * Complete context value type
+ */
+interface LLMConfigContextValue extends LLMConfigStateValues, LLMConfigActions, LLMConfigComputed {
+  // Grouped structure (preferred)
+  state: LLMConfigStateValues;
+  actions: LLMConfigActions;
+  computed: LLMConfigComputed;
+}
+
+const LLMConfigContext = createContext<LLMConfigContextValue | undefined>(undefined);
+
+/**
+ * LLM Configuration Provider Component Props
+ */
+interface LLMConfigProviderProps {
+  children: ReactNode;
+}
 
 /**
  * LLM Configuration Provider Component
- * @param {Object} props
- * @param {React.ReactNode} props.children
  */
-export function LLMConfigProvider({ children }) {
-  const [config, setConfig] = useState(() => {
+export function LLMConfigProvider({ children }: LLMConfigProviderProps) {
+  const [config, setConfig] = useState<LLMConfig>(() => {
     const saved = getLLMConfig();
     return saved || DEFAULT_LLM_CONFIG;
   });
 
-  const [validationErrors, setValidationErrors] = useState([]);
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
 
   // Persist config to sessionStorage whenever it changes
   useEffect(() => {
@@ -43,9 +93,8 @@ export function LLMConfigProvider({ children }) {
 
   /**
    * Updates LLM configuration
-   * @param {Partial<import('../types').LLMConfig>} updates
    */
-  const updateConfig = useCallback((updates) => {
+  const updateConfig = useCallback((updates: Partial<LLMConfig>) => {
     setConfig((prev) => ({
       ...prev,
       ...updates,
@@ -54,9 +103,8 @@ export function LLMConfigProvider({ children }) {
 
   /**
    * Validates current configuration
-   * @returns {boolean} Whether configuration is valid
    */
-  const validateConfig = useCallback(() => {
+  const validateConfig = useCallback((): ValidationResultSimplified => {
     const result = validateLLMConfig(config);
     setValidationErrors(result.errors);
     // Return object with isValid and errors (extracting messages from error objects)
@@ -77,32 +125,28 @@ export function LLMConfigProvider({ children }) {
 
   /**
    * Updates provider and sets corresponding defaults
-   * @param {import('../types').LLMProvider} provider
    */
-  const setProvider = useCallback((provider) => {
-    const providerDefaults = {
+  const setProvider = useCallback((provider: LLMProvider) => {
+    const providerDefaults: Record<LLMProvider, Partial<LLMConfig>> = {
       openrouter: {
         baseUrl: "https://openrouter.ai/api/v1",
         model: "anthropic/claude-3.5-sonnet",
-        contextWindow: null, // Auto-detect from OpenRouter API
-        maxTokens: 32000, // Cloud models support large responses
-        temperature: 0.7, // Recommended default
+        maxTokens: 32000,
+        temperature: 0.7,
       },
       ollama: {
         baseUrl: "http://localhost:11434",
         model: "llama3.1",
         apiKey: "",
-        contextWindow: 8192, // Conservative default - user should configure based on their model
-        maxTokens: 4096, // Conservative for local models
-        temperature: 0.7, // Recommended default
+        maxTokens: 4096,
+        temperature: 0.7,
       },
       lmstudio: {
         baseUrl: "http://localhost:1234/v1",
         model: "local-model",
         apiKey: "",
-        contextWindow: 8192, // Conservative default - user should configure based on their model
-        maxTokens: 4096, // Conservative for local models
-        temperature: 0.7, // Recommended default
+        maxTokens: 4096,
+        temperature: 0.7,
       },
     };
 
@@ -114,20 +158,20 @@ export function LLMConfigProvider({ children }) {
   }, []);
 
   // Memoize context value to prevent unnecessary re-renders
-  const value = useMemo(() => {
-    const stateValues = {
+  const value = useMemo((): LLMConfigContextValue => {
+    const stateValues: LLMConfigStateValues = {
       config,
       validationErrors,
     };
 
-    const actions = {
+    const actions: LLMConfigActions = {
       updateConfig,
       setProvider,
       validateConfig,
       resetConfig,
     };
 
-    const computed = {
+    const computed: LLMConfigComputed = {
       isValid: validationErrors.length === 0,
     };
 
@@ -153,9 +197,9 @@ export function LLMConfigProvider({ children }) {
 
 /**
  * Hook to use LLM configuration context
- * @returns {Object} LLM configuration context value
+ * @throws Error if used outside LLMConfigProvider
  */
-export function useLLMConfig() {
+export function useLLMConfig(): LLMConfigContextValue {
   const context = useContext(LLMConfigContext);
   if (!context) {
     throw new Error("useLLMConfig must be used within LLMConfigProvider");
