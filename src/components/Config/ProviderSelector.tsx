@@ -1,4 +1,5 @@
 import { LLM_PROVIDERS, FREE_TIER_ENABLED } from "../../utils/constants";
+import { HostedFreeTierProvider } from "../../services/llm/HostedFreeTierProvider";
 import type { LLMProvider } from "../../types";
 
 interface ProviderSelectorProps {
@@ -60,8 +61,24 @@ export function ProviderSelector({
               <strong className="provider-badge provider-badge--free">
                 Free &amp; No Setup Required
               </strong>{" "}
-              Analyze policies instantly using our hosted service. Rate-limited
-              to ensure fair usage. No API key needed.
+              Analyze policies instantly using{" "}
+              <strong>
+                {HostedFreeTierProvider.getFreeTierModelDisplayName()}
+              </strong>
+              . Rate-limited to ensure fair usage. No API key needed.
+              <br />
+              <span className="privacy-note">
+                🔒 <strong>Privacy:</strong> Uses OpenRouter&apos;s{" "}
+                <a
+                  href="https://openrouter.ai/docs/features/privacy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Zero Data Retention
+                </a>{" "}
+                endpoint. Your policy content is not stored or used for
+                training.
+              </span>
             </>
           )}
           {value === "openrouter" && (

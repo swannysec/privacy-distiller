@@ -15,6 +15,7 @@ import {
   ERROR_CODES,
   ANALYSIS_CONFIG,
   FREE_TIER_WORKER_URL,
+  FREE_TIER_MODEL,
 } from "../../utils/constants";
 
 /**
@@ -38,6 +39,29 @@ export class HostedFreeTierProvider extends BaseLLMProvider {
 
   getName(): string {
     return "Hosted Free";
+  }
+
+  /**
+   * Get the model being used by the free tier
+   * @returns The model identifier (e.g., "google/gemini-2.5-flash-preview-05-20")
+   */
+  static getFreeTierModel(): string {
+    return FREE_TIER_MODEL;
+  }
+
+  /**
+   * Get a human-readable model name for display
+   * @returns Formatted model name (e.g., "Gemini 2.5 Flash Preview")
+   */
+  static getFreeTierModelDisplayName(): string {
+    const model = FREE_TIER_MODEL;
+    // Extract the model name portion after the provider prefix
+    const modelName = model.includes("/") ? model.split("/")[1] : model;
+    // Convert to title case and clean up
+    return modelName
+      .replace(/-/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase())
+      .replace(/(\d+)\.(\d+)/g, "$1.$2"); // Keep version numbers intact
   }
 
   /**
@@ -86,7 +110,7 @@ export class HostedFreeTierProvider extends BaseLLMProvider {
     options: Record<string, unknown> = {},
   ): Promise<string> {
     const requestBody = {
-      model: this.config.model || "anthropic/claude-3.5-sonnet",
+      model: this.config.model || FREE_TIER_MODEL,
       messages: [{ role: "user", content: prompt }],
       temperature:
         (options.temperature as number | undefined) ?? this.config.temperature,
@@ -137,13 +161,15 @@ export class HostedFreeTierProvider extends BaseLLMProvider {
           const resetAt = errorData.reset_at || "tomorrow";
           throw new Error(
             `Rate limit exceeded. Free tier resets ${resetAt}. ` +
-              "You can add your own OpenRouter API key to continue.",
+              "To continue analyzing, switch to OpenRouter (bring your own API key) " +
+              "or use a local model like Ollama or LM Studio from the provider dropdown.",
           );
         }
         if (response.status === 402) {
           throw new Error(
             "Free tier budget exhausted for today. " +
-              "Please add your own OpenRouter API key to continue.",
+              "To continue analyzing, switch to OpenRouter (bring your own API key) " +
+              "or use a local model like Ollama or LM Studio from the provider dropdown.",
           );
         }
         if (response.status === 503) {

@@ -169,7 +169,7 @@ export const LLM_PROVIDERS: LLMProviders = {
     requiresApiKey: false,
     defaultModels: ["local-model"],
   },
-};;
+};
 
 // Default LLM configuration
 export const DEFAULT_LLM_CONFIG: DefaultLLMConfig = {
@@ -372,7 +372,8 @@ export const CLOUDFLARE_WORKER_URL: string =
  * This worker handles Turnstile verification, rate limiting, and API key management
  */
 export const FREE_TIER_WORKER_URL: string =
-  import.meta.env.VITE_FREE_TIER_WORKER_URL || "https://free.privacydistiller.com";
+  import.meta.env.VITE_FREE_TIER_WORKER_URL ||
+  "https://free.privacydistiller.com";
 
 /**
  * Turnstile site key for bot protection on free tier
@@ -386,6 +387,14 @@ export const TURNSTILE_SITE_KEY: string =
  */
 export const FREE_TIER_ENABLED: boolean =
   import.meta.env.VITE_FREE_TIER_ENABLED === "true";
+
+/**
+ * Free tier model to use via OpenRouter
+ * Uses a Zero Data Retention (ZDR) endpoint for privacy
+ * Default: nvidia/nemotron-3-nano-30b-a3b:free
+ */
+export const FREE_TIER_MODEL: string =
+  import.meta.env.VITE_FREE_TIER_MODEL || "nvidia/nemotron-3-nano-30b-a3b:free";
 
 // CORS proxy fallback chain
 // When CLOUDFLARE_WORKER_URL is set, it will be used exclusively
