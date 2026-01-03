@@ -23,8 +23,8 @@ enabled = false
 # KV namespace for rate limiting and balance caching
 # Create with: wrangler kv:namespace create "POLICY_ANALYZER_KV"
 [[kv_namespaces]]
-binding = "POLICY_ANALYZER_KV"
-id = "YOUR_KV_NAMESPACE_ID"  # Replace with actual ID after creation
+binding = "PRIVACY_DISTILLER_KV"
+id = "26009a2656614b4fb9e2ad6ac1c4821c"
 
 # Environment variables with defaults for self-hosted deployments
 # All protection features can be disabled by setting to "false" or "0"
