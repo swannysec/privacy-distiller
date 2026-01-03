@@ -88,7 +88,7 @@ function getCorsHeaders(
   const headers: Record<string, string> = {
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers":
-      "Content-Type, Accept, Authorization, X-Turnstile-Token, X-User-Api-Key",
+      "Content-Type, Accept, Authorization, X-Turnstile-Token, X-User-Api-Key, X-Session-Token",
     "Access-Control-Expose-Headers": "x-key-source, x-free-remaining",
     "Access-Control-Max-Age": "86400",
   };
