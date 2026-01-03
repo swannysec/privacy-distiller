@@ -3,11 +3,12 @@
  * @description Factory for creating LLM provider instances
  */
 
-import type { LLMConfig } from '../../types';
-import { BaseLLMProvider } from './BaseLLMProvider';
-import { OpenRouterProvider } from './OpenRouterProvider';
-import { OllamaProvider } from './OllamaProvider';
-import { LMStudioProvider } from './LMStudioProvider';
+import type { LLMConfig } from "../../types";
+import { BaseLLMProvider } from "./BaseLLMProvider";
+import { OpenRouterProvider } from "./OpenRouterProvider";
+import { OllamaProvider } from "./OllamaProvider";
+import { LMStudioProvider } from "./LMStudioProvider";
+import { HostedFreeTierProvider } from "./HostedFreeTierProvider";
 
 /**
  * Factory class for creating LLM provider instances
@@ -20,11 +21,13 @@ export class LLMProviderFactory {
    */
   static createProvider(config: LLMConfig): BaseLLMProvider {
     switch (config.provider) {
-      case 'openrouter':
+      case "hosted-free":
+        return new HostedFreeTierProvider(config);
+      case "openrouter":
         return new OpenRouterProvider(config);
-      case 'ollama':
+      case "ollama":
         return new OllamaProvider(config);
-      case 'lmstudio':
+      case "lmstudio":
         return new LMStudioProvider(config);
       default:
         throw new Error(`Unknown provider: ${config.provider}`);

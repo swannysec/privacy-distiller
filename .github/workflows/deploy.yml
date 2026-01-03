@@ -25,7 +25,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Install dependencies
         run: |
@@ -37,6 +37,10 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          VITE_FREE_TIER_ENABLED: ${{ vars.VITE_FREE_TIER_ENABLED }}
+          VITE_FREE_TIER_WORKER_URL: ${{ vars.VITE_FREE_TIER_WORKER_URL }}
+          VITE_TURNSTILE_SITE_KEY: ${{ vars.VITE_TURNSTILE_SITE_KEY }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

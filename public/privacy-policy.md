@@ -54,9 +54,22 @@ When you analyze a document, the text content is sent to your chosen LLM provide
 
 | Provider | Data Sent | Their Privacy Policy |
 |----------|-----------|---------------------|
+| **Hosted Free Tier** | Document text | Uses OpenRouter ZDR endpoint (see below) |
 | **OpenRouter** | Document text, API key | [openrouter.ai/privacy](https://openrouter.ai/privacy) |
 | **Ollama** (Local) | Document text | Runs locally on your machine - no external transmission |
 | **LM Studio** (Local) | Document text | Runs locally on your machine - no external transmission |
+
+**Hosted Free Tier Privacy:**
+
+The "Hosted Free" option uses OpenRouter's **Zero Data Retention (ZDR)** endpoint. This provides enhanced privacy protections:
+
+- **No Data Storage:** Your document content is processed and immediately discarded by OpenRouter
+- **No Model Training:** Your data is never used to train AI models
+- **Ephemeral Processing:** OpenRouter explicitly commits to not retaining prompt or completion data from ZDR requests
+- **Cloudflare Turnstile:** Bot verification is handled by Cloudflare Turnstile, which collects only technical signals (not personal data) to verify you are human
+- **Rate Limiting:** Our proxy service enforces daily limits but does not log or store your document content
+
+For more details, see [OpenRouter's ZDR documentation](https://openrouter.ai/docs/features/privacy).
 
 **Important Notes:**
 - When using cloud providers (OpenRouter), document content is transmitted over encrypted connections (HTTPS)
@@ -170,8 +183,8 @@ For privacy-related questions or concerns:
 |-----------|------------|---------------|--------------|
 | Personal Info | No | N/A | N/A |
 | Account Data | No | N/A | N/A |
-| Document Content | Temporarily | Your device (browser memory) | LLM provider (your choice) |
-| API Keys | Yes (user-provided) | Your device (session storage) | LLM provider only |
+| Document Content | Temporarily | Your device (browser memory) | LLM provider (your choice) - ZDR endpoint for free tier |
+| API Keys | Yes (user-provided) | Your device (session storage) | LLM provider only (not needed for free tier) |
 | Preferences | Yes | Your device (browser local storage) | No one |
 | URLs Analyzed | Temporarily | Your device (browser memory) | CORS proxy (if used) |
 

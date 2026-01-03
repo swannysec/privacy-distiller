@@ -7,6 +7,7 @@ A web application that uses LLMs to distill, break down, and summarize privacy p
 
 - **Multi-Source Input**: Analyze policies via URL or PDF upload
 - **LLM Integration**: Support for OpenRouter, Ollama, and LM Studio
+- **Hosted Free Tier**: Optional free access via Cloudflare Worker proxy
 - **Privacy Risk Detection**: Identify and highlight significant privacy concerns
 - **Plain Language Summaries**: Multiple detail levels (brief, detailed, full)
 - **Security-First**: Session-only local API key storage, XSS prevention
@@ -92,6 +93,15 @@ npm run preview
 2. Download a model
 3. Start local server
 4. Select LM Studio in app settings
+
+## Self-Hosting
+
+Want to deploy your own instance? See the **[Self-Hosting Guide](./docs/SELF-HOSTING.md)** for complete instructions, including:
+
+- Frontend-only deployment (users bring their own API keys)
+- Full deployment with free tier proxy (Cloudflare Worker)
+- Turnstile bot protection setup
+- Rate limiting and cost control
 
 ## Project Structure
 

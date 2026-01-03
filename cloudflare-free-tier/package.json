@@ -1,0 +1,27 @@
+{
+  "name": "privacy-policy-free-tier",
+  "version": "1.0.0",
+  "description": "Free tier LLM proxy for Privacy Policy Analyzer with configurable rate limiting and bot protection",
+  "main": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "typecheck": "tsc --noEmit",
+    "tail": "wrangler tail"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260103.0",
+    "@cloudflare/vitest-pool-workers": "^0.11.1",
+    "typescript": "^5.7.0",
+    "vitest": "^3.1.0",
+    "wrangler": "^4.54.0"
+  },
+  "license": "SEE LICENSE IN ../LICENSE",
+  "private": true,
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -1,4 +1,5 @@
-import { LLM_PROVIDERS } from "../../utils/constants";
+import { LLM_PROVIDERS, FREE_TIER_ENABLED } from "../../utils/constants";
+import { HostedFreeTierProvider } from "../../services/llm/HostedFreeTierProvider";
 import type { LLMProvider } from "../../types";
 
 interface ProviderSelectorProps {
@@ -14,7 +15,12 @@ export function ProviderSelector({
   disabled = false,
   className = "",
 }: ProviderSelectorProps) {
-  const providers = Object.values(LLM_PROVIDERS);
+  // Get providers, filtering out hosted-free if not enabled
+  const providers = Object.values(LLM_PROVIDERS).filter((p) => {
+    if (!p) return false;
+    if (p.id === "hosted-free" && !FREE_TIER_ENABLED) return false;
+    return true;
+  });
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     if (!disabled) {
@@ -22,7 +28,7 @@ export function ProviderSelector({
     }
   };
 
-  const currentProvider = LLM_PROVIDERS[value.toUpperCase()];
+  const currentProvider = LLM_PROVIDERS[value.toUpperCase().replace("-", "_")];
 
   return (
     <div className={`input-group ${className}`}>
@@ -41,14 +47,40 @@ export function ProviderSelector({
           .filter((p): p is NonNullable<typeof p> => p != null)
           .map((providerOption) => (
             <option key={providerOption.id} value={providerOption.id}>
-              {providerOption.name}
-              {providerOption.requiresApiKey ? "" : " (Local)"}
+              {providerOption.id === "hosted-free"
+                ? "✨ Hosted Free"
+                : `${providerOption.name}${providerOption.requiresApiKey ? "" : " (Local)"}`}
             </option>
           ))}
       </select>
 
       {currentProvider && (
         <p className="input-hint">
+          {value === "hosted-free" && (
+            <>
+              <strong className="provider-badge provider-badge--free">
+                Free &amp; No Setup Required
+              </strong>{" "}
+              Analyze policies instantly using{" "}
+              <strong>
+                {HostedFreeTierProvider.getFreeTierModelDisplayName()}
+              </strong>
+              . Rate-limited to ensure fair usage. No API key needed.
+              <br />
+              <span className="privacy-note">
+                🔒 <strong>Privacy:</strong> Uses OpenRouter&apos;s{" "}
+                <a
+                  href="https://openrouter.ai/docs/features/privacy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Zero Data Retention
+                </a>{" "}
+                endpoint. Your policy content is not stored or used for
+                training.
+              </span>
+            </>
+          )}
           {value === "openrouter" && (
             <>
               <strong>Recommended for large documents.</strong> Access Claude,

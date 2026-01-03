@@ -930,6 +930,44 @@ li {
   margin-top: var(--spacing-sm);
 }
 
+.input-hint a {
+  color: var(--accent-primary);
+  text-decoration: underline;
+}
+
+.input-hint a:hover {
+  color: var(--accent-secondary);
+}
+
+.provider-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.provider-badge--free {
+  background: linear-gradient(
+    135deg,
+    var(--accent-primary),
+    var(--accent-secondary)
+  );
+  color: white;
+}
+
+.privacy-note {
+  display: block;
+  margin-top: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--accent-primary);
+  font-size: 0.75rem;
+}
+
 .input__error {
   display: block;
   color: var(--color-error);
