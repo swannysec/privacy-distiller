@@ -1,0 +1,56 @@
+# Privacy Policy Analyzer - Free Tier LLM Proxy Worker
+#
+# This Worker provides a configurable proxy for LLM API requests with:
+# - Optional Cloudflare Turnstile validation (bot protection)
+# - Configurable global daily request limits
+# - Free API key with spending cap
+# - Seamless fallback to user-provided (BYOK) keys
+#
+# All features are toggleable via environment variables for self-hosted deployments.
+#
+# @license MIT License with Commercial Product Restriction
+# @copyright 2025-2026 John D. Swanson
+
+name = "privacy-policy-free-tier"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+# Privacy-first: disable all logging
+# No IP addresses, user data, or request details are tracked
+[observability]
+enabled = false
+
+# KV namespace for rate limiting and balance caching
+# Create with: wrangler kv:namespace create "POLICY_ANALYZER_KV"
+[[kv_namespaces]]
+binding = "POLICY_ANALYZER_KV"
+id = "YOUR_KV_NAMESPACE_ID"  # Replace with actual ID after creation
+
+# Environment variables with defaults for self-hosted deployments
+# All protection features can be disabled by setting to "false" or "0"
+[vars]
+# Turnstile bot protection - set to "false" to disable for self-hosted
+TURNSTILE_ENABLED = "true"
+
+# Global daily limit across all users - set to "false" to disable
+GLOBAL_LIMIT_ENABLED = "true"
+
+# Maximum requests per day when global limit is enabled
+GLOBAL_DAILY_LIMIT = "50"
+
+# Maximum spending on free API key (USD) before exhaustion
+FREE_KEY_SPENDING_CAP = "5.00"
+
+# Comma-separated list of allowed origins for CORS
+# Add localhost origins for development as needed
+ALLOWED_ORIGINS = "https://privacydistiller.com,https://www.privacydistiller.com"
+
+# Secrets (set via wrangler secret put):
+# - TURNSTILE_SECRET_KEY: Cloudflare Turnstile secret key for bot verification
+# - FREE_API_KEY: OpenRouter API key for free tier access
+
+# Development overrides (uncomment for local testing)
+# [env.development.vars]
+# TURNSTILE_ENABLED = "false"
+# GLOBAL_LIMIT_ENABLED = "false"
+# ALLOWED_ORIGINS = "http://localhost:5173,http://localhost:4173,http://127.0.0.1:5173"

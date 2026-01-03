@@ -6,7 +6,7 @@
 /**
  * Supported LLM providers
  */
-export type LLMProvider = "openrouter" | "ollama" | "lmstudio";
+export type LLMProvider = "openrouter" | "ollama" | "lmstudio" | "hosted-free";
 
 /**
  * Configuration for LLM provider

@@ -17,12 +17,13 @@
     <meta
       http-equiv="Content-Security-Policy"
       content="default-src 'self';
-               script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com;
+               script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://challenges.cloudflare.com;
                worker-src 'self' blob:;
                img-src 'self' blob: data:;
-               connect-src 'self' https://openrouter.ai https://*.openrouter.ai https://proxy.privacydistiller.com https://corsproxy.io https://api.allorigins.win http://localhost:* http://127.0.0.1:*;
+               connect-src 'self' https://openrouter.ai https://*.openrouter.ai https://proxy.privacydistiller.com https://free.privacydistiller.com https://challenges.cloudflare.com https://corsproxy.io https://api.allorigins.win http://localhost:* http://127.0.0.1:*;
                style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
                font-src 'self' https://fonts.gstatic.com;
+               frame-src https://challenges.cloudflare.com;
                frame-ancestors 'none';
                base-uri 'self';
                form-action 'self';"

@@ -1,5 +1,15 @@
 /// <reference types="vite/client" />
 
+interface ImportMetaEnv {
+  readonly VITE_TURNSTILE_SITE_KEY: string;
+  readonly VITE_FREE_TIER_ENABLED: string;
+  readonly VITE_FREE_TIER_WORKER_URL: string;
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}
+
 declare module "*.png" {
   const value: string;
   export default value;

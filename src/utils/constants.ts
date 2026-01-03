@@ -16,6 +16,7 @@ interface LLMProviders {
   OPENROUTER: ProviderConfig;
   OLLAMA: ProviderConfig;
   LMSTUDIO: ProviderConfig;
+  HOSTED_FREE: ProviderConfig;
   [key: string]: ProviderConfig | undefined;
 }
 
@@ -136,6 +137,13 @@ interface A11Y {
 
 // LLM Provider configurations
 export const LLM_PROVIDERS: LLMProviders = {
+  HOSTED_FREE: {
+    id: "hosted-free",
+    name: "Hosted Free",
+    baseUrl: "", // Uses FREE_TIER_WORKER_URL
+    requiresApiKey: false,
+    defaultModels: ["anthropic/claude-3.5-sonnet"],
+  },
   OPENROUTER: {
     id: "openrouter",
     name: "OpenRouter",
@@ -161,7 +169,7 @@ export const LLM_PROVIDERS: LLMProviders = {
     requiresApiKey: false,
     defaultModels: ["local-model"],
   },
-};
+};;
 
 // Default LLM configuration
 export const DEFAULT_LLM_CONFIG: DefaultLLMConfig = {
@@ -358,6 +366,26 @@ export const ERROR_MESSAGES: ErrorMessages = {
 // Cloudflare Worker proxies requests to bypass CORS restrictions
 export const CLOUDFLARE_WORKER_URL: string =
   "https://proxy.privacydistiller.com";
+
+/**
+ * Free tier Cloudflare Worker URL for hosted LLM proxy
+ * This worker handles Turnstile verification, rate limiting, and API key management
+ */
+export const FREE_TIER_WORKER_URL: string =
+  import.meta.env.VITE_FREE_TIER_WORKER_URL || "https://free.privacydistiller.com";
+
+/**
+ * Turnstile site key for bot protection on free tier
+ * Uses a test key if not configured (for development)
+ */
+export const TURNSTILE_SITE_KEY: string =
+  import.meta.env.VITE_TURNSTILE_SITE_KEY || "1x00000000000000000000AA";
+
+/**
+ * Whether the free tier is enabled
+ */
+export const FREE_TIER_ENABLED: boolean =
+  import.meta.env.VITE_FREE_TIER_ENABLED === "true";
 
 // CORS proxy fallback chain
 // When CLOUDFLARE_WORKER_URL is set, it will be used exclusively

@@ -137,6 +137,13 @@ export function LLMConfigProvider({ children }: LLMConfigProviderProps) {
    */
   const setProvider = useCallback((provider: LLMProvider) => {
     const providerDefaults: Record<LLMProvider, Partial<LLMConfig>> = {
+      "hosted-free": {
+        baseUrl: "", // Uses FREE_TIER_WORKER_URL at runtime
+        model: "anthropic/claude-3.5-sonnet",
+        apiKey: "", // Managed by worker
+        maxTokens: 32000,
+        temperature: 0.7,
+      },
       openrouter: {
         baseUrl: "https://openrouter.ai/api/v1",
         model: "anthropic/claude-3.5-sonnet",
