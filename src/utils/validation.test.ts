@@ -244,6 +244,18 @@ describe("validation utils", () => {
       expect(result.valid).toBe(true);
     });
 
+    it("should accept valid hosted-free config without baseUrl", () => {
+      const config = {
+        provider: "hosted-free",
+        model: "google/gemini-2.0-flash-exp:free",
+        temperature: 0.7,
+        maxTokens: 2000,
+      };
+      const result = validateLLMConfig(config);
+      expect(result.valid).toBe(true);
+      expect(result.errors).toEqual([]);
+    });
+
     it("should reject config without provider", () => {
       const config = {
         apiKey: "sk-1234567890abcdef",
