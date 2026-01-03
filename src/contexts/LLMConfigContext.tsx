@@ -141,7 +141,7 @@ export function LLMConfigProvider({ children }: LLMConfigProviderProps) {
         baseUrl: "", // Uses FREE_TIER_WORKER_URL at runtime
         model: "anthropic/claude-3.5-sonnet",
         apiKey: "", // Managed by worker
-        maxTokens: 32000,
+        maxTokens: 18000, // Fixed limit for free tier
         temperature: 0.7,
       },
       openrouter: {
