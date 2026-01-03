@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Skill(frontend-design)",
-      "Skill(session-lifecycle)"
+      "Skill(session-lifecycle)",
+      "SlashCommand(/git-safe-commit fix: integrate Turnstile token for hosted-free provider analysis)",
+      "SlashCommand(/git-safe-commit:*)"
     ]
   }
 }

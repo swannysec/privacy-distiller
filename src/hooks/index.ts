@@ -10,3 +10,5 @@ export type { UseLLMProviderReturn } from "./useLLMProvider";
 
 export { useAnalysisOrchestrator } from "./useAnalysisOrchestrator";
 export type { UseAnalysisOrchestratorReturn } from "./useAnalysisOrchestrator";
+
+export { useTurnstile } from "./useTurnstile";
