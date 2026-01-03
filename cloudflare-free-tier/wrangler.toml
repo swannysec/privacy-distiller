@@ -15,6 +15,12 @@ name = "privacy-policy-free-tier"
 main = "src/index.ts"
 compatibility_date = "2024-01-01"
 
+# Enable workers.dev subdomain for the Worker
+workers_dev = true
+
+# Disable preview URLs for security (production deployments only)
+preview_urls = false
+
 # Privacy-first: disable all logging
 # No IP addresses, user data, or request details are tracked
 [observability]
@@ -36,7 +42,7 @@ TURNSTILE_ENABLED = "true"
 GLOBAL_LIMIT_ENABLED = "true"
 
 # Maximum requests per day when global limit is enabled
-GLOBAL_DAILY_LIMIT = "50"
+GLOBAL_DAILY_LIMIT = "100"
 
 # Maximum spending on free API key (USD) before exhaustion
 FREE_KEY_SPENDING_CAP = "5.00"
