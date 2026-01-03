@@ -301,7 +301,7 @@ The Worker is designed with privacy in mind:
 
 ### OpenRouter
 
-- Varies by model; Claude 3.5 Sonnet ≈ $3-15 per 1M tokens
+- Varies by model; Gemini 2.5 Flash Preview ≈ $0.15-0.60 per 1M tokens
 - Set `FREE_KEY_SPENDING_CAP` to control costs
 - Monitor usage at [openrouter.ai/activity](https://openrouter.ai/activity)
 
