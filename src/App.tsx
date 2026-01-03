@@ -34,7 +34,7 @@ import "./globals.css";
 function AppContent(): ReactElement {
   const { config, validateConfig } = useLLMConfig();
   const { status, result, error, clearError, document } = useAnalysis();
-  const { startAnalysis } = useAnalysisOrchestrator();
+  const { startAnalysis, TurnstileComponent } = useAnalysisOrchestrator();
 
   const [showConfig, setShowConfig] = useState<boolean>(false);
   const [showAbout, setShowAbout] = useState<boolean>(false);
@@ -139,6 +139,9 @@ function AppContent(): ReactElement {
 
   return (
     <div className="app">
+      {/* Turnstile widget for hosted-free provider (invisible, but must be in DOM) */}
+      <TurnstileComponent />
+
       <Header
         onConfigOpen={() => setShowConfig(true)}
         onAboutOpen={() => setShowAbout(true)}

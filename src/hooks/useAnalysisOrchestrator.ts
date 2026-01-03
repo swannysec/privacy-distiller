@@ -3,11 +3,14 @@
  * @description Orchestrates the full analysis process, delegating to PolicyAnalyzer
  */
 
-import { useCallback, useRef, useEffect } from "react";
+import React, { useCallback, useRef, useEffect } from "react";
 import { useAnalysis } from "../contexts/AnalysisContext.jsx";
 import { useDocumentExtractor } from "./useDocumentExtractor";
 import { useLLMProvider } from "./useLLMProvider";
+import { useTurnstile } from "./useTurnstile";
 import { PolicyAnalyzer } from "../services/analysis/PolicyAnalyzer";
+import { HostedFreeTierProvider } from "../services/llm/HostedFreeTierProvider";
+import { TURNSTILE_SITE_KEY, FREE_TIER_ENABLED } from "../utils/constants";
 import type { LLMConfig, DocumentInput, AnalysisResult } from "../types";
 
 /**
@@ -80,6 +83,12 @@ export interface UseAnalysisOrchestratorReturn {
   isError: boolean;
   /** Whether there is a result */
   hasResult: boolean;
+  /** Turnstile component for hosted-free provider (render in DOM when using hosted-free) */
+  TurnstileComponent: React.FC;
+  /** Whether Turnstile is ready (has valid token or not required) */
+  isTurnstileReady: boolean;
+  /** Refresh Turnstile token (call after failed request or token expiry) */
+  refreshTurnstile: () => void;
 }
 
 // Default context windows for local providers (conservative estimates)
@@ -202,6 +211,41 @@ export function useAnalysisOrchestrator(): UseAnalysisOrchestratorReturn {
   const extractor = useDocumentExtractor();
   const llm = useLLMProvider();
 
+  // Determine if we need Turnstile (only for hosted-free provider)
+  const isHostedFree = llm.config.provider === "hosted-free";
+  const turnstileEnabled = isHostedFree && FREE_TIER_ENABLED;
+
+  // Initialize Turnstile hook
+  const {
+    token: turnstileToken,
+    isReady: turnstileIsReady,
+    refresh: refreshTurnstile,
+    TurnstileComponent,
+  } = useTurnstile({
+    siteKey: TURNSTILE_SITE_KEY,
+    enabled: turnstileEnabled,
+  });
+
+  // Turnstile is ready if: not using hosted-free, OR turnstile hook says ready
+  const isTurnstileReady = !turnstileEnabled || turnstileIsReady;
+
+  /**
+   * Creates a PolicyAnalyzer instance with proper provider setup
+   * For hosted-free, creates provider manually and sets Turnstile token
+   */
+  const createAnalyzer = useCallback((): PolicyAnalyzer => {
+    if (isHostedFree) {
+      // Create hosted-free provider manually and set Turnstile token
+      const provider = new HostedFreeTierProvider(llm.config);
+      if (turnstileToken) {
+        provider.setTurnstileToken(turnstileToken);
+      }
+      return new PolicyAnalyzer(llm.config, provider);
+    }
+    // For other providers, let PolicyAnalyzer create the provider
+    return new PolicyAnalyzer(llm.config);
+  }, [isHostedFree, llm.config, turnstileToken]);
+
   // Ref to hold simulated progress interval
   const simulatedProgressRef = useRef<ReturnType<typeof setInterval> | null>(
     null,
@@ -292,8 +336,8 @@ export function useAnalysisOrchestrator(): UseAnalysisOrchestratorReturn {
         // Start simulated progress during LLM analysis
         startSimulatedProgress(35, 85, "Analyzing policy with AI...");
 
-        // Create analyzer and delegate to PolicyAnalyzer
-        const analyzer = new PolicyAnalyzer(llm.config);
+        // Create analyzer with proper provider setup (handles Turnstile for hosted-free)
+        const analyzer = createAnalyzer();
         const analysisResult = await analyzer.analyze(
           rawText,
           (progress: number, message: string) => {
@@ -303,6 +347,11 @@ export function useAnalysisOrchestrator(): UseAnalysisOrchestratorReturn {
           true, // useParallel = true for Promise.allSettled
         );
         stopSimulatedProgress();
+
+        // Refresh Turnstile token after use (tokens are single-use)
+        if (isHostedFree) {
+          refreshTurnstile();
+        }
 
         // Transform PolicyAnalyzer result format to orchestrator format
         const result: AnalysisResult = {
@@ -336,7 +385,16 @@ export function useAnalysisOrchestrator(): UseAnalysisOrchestratorReturn {
         );
       }
     },
-    [analysis, extractor, llm, startSimulatedProgress, stopSimulatedProgress],
+    [
+      analysis,
+      extractor,
+      llm,
+      startSimulatedProgress,
+      stopSimulatedProgress,
+      createAnalyzer,
+      isHostedFree,
+      refreshTurnstile,
+    ],
   );
 
   /**
@@ -381,8 +439,8 @@ export function useAnalysisOrchestrator(): UseAnalysisOrchestratorReturn {
         // Start simulated progress during LLM analysis
         startSimulatedProgress(35, 85, "Analyzing policy with AI...");
 
-        // Create analyzer and delegate to PolicyAnalyzer
-        const analyzer = new PolicyAnalyzer(llm.config);
+        // Create analyzer with proper provider setup (handles Turnstile for hosted-free)
+        const analyzer = createAnalyzer();
         const analysisResult = await analyzer.analyze(
           rawText,
           (progress: number, message: string) => {
@@ -392,6 +450,11 @@ export function useAnalysisOrchestrator(): UseAnalysisOrchestratorReturn {
           true, // useParallel = true for Promise.allSettled
         );
         stopSimulatedProgress();
+
+        // Refresh Turnstile token after use (tokens are single-use)
+        if (isHostedFree) {
+          refreshTurnstile();
+        }
 
         // Transform PolicyAnalyzer result format to orchestrator format
         const result: AnalysisResult = {
@@ -426,7 +489,16 @@ export function useAnalysisOrchestrator(): UseAnalysisOrchestratorReturn {
         );
       }
     },
-    [analysis, extractor, llm, startSimulatedProgress, stopSimulatedProgress],
+    [
+      analysis,
+      extractor,
+      llm,
+      startSimulatedProgress,
+      stopSimulatedProgress,
+      createAnalyzer,
+      isHostedFree,
+      refreshTurnstile,
+    ],
   );
 
   /**
@@ -458,5 +530,9 @@ export function useAnalysisOrchestrator(): UseAnalysisOrchestratorReturn {
     analyzeUrl,
     analyzePdf,
     startAnalysis,
+    // Turnstile integration for hosted-free provider
+    TurnstileComponent,
+    isTurnstileReady,
+    refreshTurnstile,
   };
 }
