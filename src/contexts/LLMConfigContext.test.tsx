@@ -257,7 +257,7 @@ describe("LLMConfigContext", () => {
           "https://openrouter.ai/api/v1",
         );
         expect(screen.getByTestId("model")).toHaveTextContent(
-          "anthropic/claude-3.5-sonnet",
+          "google/gemini-3-flash-preview",
         );
       });
     });
@@ -334,7 +334,9 @@ describe("LLMConfigContext", () => {
     });
 
     it("should clear validation errors on reset", async () => {
-      const { validateLLMConfig } = await import("../utils/validation") as { validateLLMConfig: Mock };
+      const { validateLLMConfig } = (await import("../utils/validation")) as {
+        validateLLMConfig: Mock;
+      };
       validateLLMConfig.mockReturnValue({ valid: false, errors: ["Error 1"] });
 
       mockGetLLMConfig.mockReturnValue(null);
@@ -426,7 +428,9 @@ describe("LLMConfigContext", () => {
 
   describe("validation", () => {
     it("should track validation errors", async () => {
-      const { validateLLMConfig } = await import("../utils/validation") as { validateLLMConfig: Mock };
+      const { validateLLMConfig } = (await import("../utils/validation")) as {
+        validateLLMConfig: Mock;
+      };
       validateLLMConfig.mockReturnValue({
         valid: false,
         errors: ["API key is required", "Model is required"],
@@ -451,7 +455,9 @@ describe("LLMConfigContext", () => {
     });
 
     it("should return isValid true when no errors", async () => {
-      const { validateLLMConfig } = await import("../utils/validation") as { validateLLMConfig: Mock };
+      const { validateLLMConfig } = (await import("../utils/validation")) as {
+        validateLLMConfig: Mock;
+      };
       validateLLMConfig.mockReturnValue({ valid: true, errors: [] });
 
       mockGetLLMConfig.mockReturnValue(null);

@@ -146,7 +146,7 @@ export function LLMConfigProvider({ children }: LLMConfigProviderProps) {
       },
       openrouter: {
         baseUrl: "https://openrouter.ai/api/v1",
-        model: "anthropic/claude-3.5-sonnet",
+        model: "google/gemini-3-flash-preview",
         maxTokens: 32000,
         temperature: 0.7,
       },

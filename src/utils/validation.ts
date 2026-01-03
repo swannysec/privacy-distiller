@@ -9,7 +9,7 @@ import {
   ERROR_CODES,
   ERROR_MESSAGES,
 } from "./constants";
-import type { ValidationResult, LLMConfig } from '../types';
+import type { ValidationResult, LLMConfig } from "../types";
 
 /**
  * Validates a URL input
@@ -149,7 +149,9 @@ export function validateFile(file: File): ValidationResult {
  * @param file - File to validate
  * @returns Promise<ValidationResult>
  */
-export async function validatePdfMagicBytes(file: File): Promise<ValidationResult> {
+export async function validatePdfMagicBytes(
+  file: File,
+): Promise<ValidationResult> {
   const errors = [];
 
   if (!file) {
@@ -269,7 +271,7 @@ export function validateLLMConfig(config: LLMConfig): ValidationResult {
     });
   }
 
-  if (!config.baseUrl) {
+  if (!config.baseUrl && config.provider !== "hosted-free") {
     errors.push({
       field: "baseUrl",
       message: "Base URL is required",
