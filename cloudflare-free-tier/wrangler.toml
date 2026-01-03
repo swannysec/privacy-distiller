@@ -42,7 +42,9 @@ TURNSTILE_ENABLED = "true"
 GLOBAL_LIMIT_ENABLED = "true"
 
 # Maximum requests per day when global limit is enabled
-GLOBAL_DAILY_LIMIT = "100"
+# With 6 API calls per analysis, 300 = ~50 complete analyses/day
+# At current model pricing, $5 budget lasts ~1 month at this rate
+GLOBAL_DAILY_LIMIT = "300"
 
 # Maximum spending on free API key (USD) before exhaustion
 FREE_KEY_SPENDING_CAP = "5.00"

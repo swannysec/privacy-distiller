@@ -30,11 +30,23 @@ interface FreeTierStatus {
 }
 
 /**
+ * Response from the session endpoint
+ */
+interface SessionResponse {
+  success: boolean;
+  sessionToken?: string;
+  expiresIn?: number;
+  error?: string;
+}
+
+/**
  * Provider for the hosted free tier service
  * Uses Cloudflare Worker proxy with Turnstile validation
  */
 export class HostedFreeTierProvider extends BaseLLMProvider {
   private turnstileToken: string | null = null;
+  private sessionToken: string | null = null;
+  private sessionTokenPromise: Promise<string> | null = null;
   private userApiKey: string | null = null;
 
   getName(): string {
@@ -70,6 +82,9 @@ export class HostedFreeTierProvider extends BaseLLMProvider {
    */
   setTurnstileToken(token: string | null): void {
     this.turnstileToken = token;
+    // Clear session token when Turnstile token changes (new verification)
+    this.sessionToken = null;
+    this.sessionTokenPromise = null;
   }
 
   /**
@@ -78,6 +93,73 @@ export class HostedFreeTierProvider extends BaseLLMProvider {
    */
   setUserApiKey(apiKey: string | null): void {
     this.userApiKey = apiKey;
+  }
+
+  /**
+   * Obtain a session token from the backend using the Turnstile token.
+   * Session tokens are short-lived JWTs that can be used for multiple
+   * API calls within a single analysis (enables parallel requests).
+   *
+   * @returns Session token string
+   * @throws Error if session token cannot be obtained
+   */
+  async getSessionToken(): Promise<string> {
+    // Return existing session token if available
+    if (this.sessionToken) {
+      return this.sessionToken;
+    }
+
+    // If a fetch is already in progress, wait for it (prevents race condition)
+    if (this.sessionTokenPromise) {
+      return this.sessionTokenPromise;
+    }
+
+    if (!this.turnstileToken) {
+      throw new Error("Turnstile token required to obtain session token");
+    }
+
+    // Create the promise and store it to guard against concurrent calls
+    this.sessionTokenPromise = (async () => {
+      try {
+        const response = await fetch(`${FREE_TIER_WORKER_URL}/api/session`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Turnstile-Token": this.turnstileToken!,
+          },
+          body: JSON.stringify({ turnstileToken: this.turnstileToken }),
+        });
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            throw new Error("Turnstile verification failed. Please try again.");
+          }
+          throw new Error(`Failed to obtain session token: ${response.status}`);
+        }
+
+        const data: SessionResponse = await response.json();
+
+        if (!data.success || !data.sessionToken) {
+          throw new Error(data.error || "Failed to obtain session token");
+        }
+
+        this.sessionToken = data.sessionToken;
+        return this.sessionToken;
+      } finally {
+        // Clear the promise guard after completion (success or failure)
+        this.sessionTokenPromise = null;
+      }
+    })();
+
+    return this.sessionTokenPromise;
+  }
+
+  /**
+   * Clear the current session token (call after analysis completes)
+   */
+  clearSessionToken(): void {
+    this.sessionToken = null;
+    this.sessionTokenPromise = null;
   }
 
   /**
@@ -122,8 +204,11 @@ export class HostedFreeTierProvider extends BaseLLMProvider {
       "Content-Type": "application/json",
     };
 
-    // Add Turnstile token if available
-    if (this.turnstileToken) {
+    // Use session token if available (preferred for parallel requests)
+    // Otherwise fall back to Turnstile token for single requests
+    if (this.sessionToken) {
+      headers["X-Session-Token"] = this.sessionToken;
+    } else if (this.turnstileToken) {
       headers["X-Turnstile-Token"] = this.turnstileToken;
     }
 
@@ -149,9 +234,6 @@ export class HostedFreeTierProvider extends BaseLLMProvider {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        // Clear Turnstile token on any error (tokens are single-use)
-        this.turnstileToken = null;
-
         // Handle specific error cases
         if (response.status === 401) {
           throw new Error("Turnstile verification failed. Please try again.");
@@ -187,14 +269,9 @@ export class HostedFreeTierProvider extends BaseLLMProvider {
         throw new Error(ERROR_MESSAGES[ERROR_CODES.LLM_INVALID_RESPONSE]);
       }
 
-      // Clear Turnstile token after successful use (tokens are single-use)
-      this.turnstileToken = null;
-
       return data.choices[0].message.content;
     } catch (err) {
       clearTimeout(timeoutId);
-      // Clear Turnstile token on network errors too (tokens are single-use)
-      this.turnstileToken = null;
 
       if ((err as Error).name === "AbortError") {
         throw new Error(ERROR_MESSAGES[ERROR_CODES.LLM_TIMEOUT]);

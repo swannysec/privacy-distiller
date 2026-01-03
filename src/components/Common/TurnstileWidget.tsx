@@ -138,7 +138,11 @@ export const TurnstileWidget: React.FC<TurnstileWidgetProps> = ({
           onError?.('timeout');
         },
         theme,
-        appearance: invisible ? 'interaction-only' : 'always',
+        // Use 'always' appearance to auto-verify in the background
+        // 'interaction-only' requires user interaction which doesn't work for our use case
+        appearance: 'always',
+        // Size 'compact' or invisible styling handled by CSS when invisible=true
+        size: invisible ? 'compact' : 'normal',
       };
 
       widgetIdRef.current = window.turnstile.render(

@@ -231,15 +231,21 @@ export function useAnalysisOrchestrator(): UseAnalysisOrchestratorReturn {
 
   /**
    * Creates a PolicyAnalyzer instance with proper provider setup
-   * For hosted-free, creates provider manually and sets Turnstile token
+   * For hosted-free, creates provider manually, obtains session token,
+   * and configures the provider for parallel API calls.
    */
-  const createAnalyzer = useCallback((): PolicyAnalyzer => {
+  const createAnalyzer = useCallback(async (): Promise<PolicyAnalyzer> => {
     if (isHostedFree) {
-      // Create hosted-free provider manually and set Turnstile token
+      // Create hosted-free provider manually
       const provider = new HostedFreeTierProvider(llm.config);
+
       if (turnstileToken) {
         provider.setTurnstileToken(turnstileToken);
+        // Obtain session token for parallel requests
+        // This consumes the Turnstile token and returns a reusable JWT
+        await provider.getSessionToken();
       }
+
       return new PolicyAnalyzer(llm.config, provider);
     }
     // For other providers, let PolicyAnalyzer create the provider
@@ -301,6 +307,13 @@ export function useAnalysisOrchestrator(): UseAnalysisOrchestratorReturn {
   const analyzeUrl = useCallback(
     async (url: string): Promise<void> => {
       try {
+        // For hosted-free provider, ensure Turnstile token is available
+        if (isHostedFree && !turnstileToken) {
+          throw new Error(
+            "Verification in progress. Please wait a moment and try again.",
+          );
+        }
+
         // Set document input (format matches what startAnalysis expects for retry)
         analysis.setDocumentInput({
           type: "url",
@@ -337,7 +350,7 @@ export function useAnalysisOrchestrator(): UseAnalysisOrchestratorReturn {
         startSimulatedProgress(35, 85, "Analyzing policy with AI...");
 
         // Create analyzer with proper provider setup (handles Turnstile for hosted-free)
-        const analyzer = createAnalyzer();
+        const analyzer = await createAnalyzer();
         const analysisResult = await analyzer.analyze(
           rawText,
           (progress: number, message: string) => {
@@ -393,6 +406,7 @@ export function useAnalysisOrchestrator(): UseAnalysisOrchestratorReturn {
       stopSimulatedProgress,
       createAnalyzer,
       isHostedFree,
+      turnstileToken,
       refreshTurnstile,
     ],
   );
@@ -404,6 +418,13 @@ export function useAnalysisOrchestrator(): UseAnalysisOrchestratorReturn {
   const analyzePdf = useCallback(
     async (file: File): Promise<void> => {
       try {
+        // For hosted-free provider, ensure Turnstile token is available
+        if (isHostedFree && !turnstileToken) {
+          throw new Error(
+            "Verification in progress. Please wait a moment and try again.",
+          );
+        }
+
         // Set document input (format matches what startAnalysis expects for retry)
         analysis.setDocumentInput({
           type: "file",
@@ -440,7 +461,7 @@ export function useAnalysisOrchestrator(): UseAnalysisOrchestratorReturn {
         startSimulatedProgress(35, 85, "Analyzing policy with AI...");
 
         // Create analyzer with proper provider setup (handles Turnstile for hosted-free)
-        const analyzer = createAnalyzer();
+        const analyzer = await createAnalyzer();
         const analysisResult = await analyzer.analyze(
           rawText,
           (progress: number, message: string) => {
@@ -497,6 +518,7 @@ export function useAnalysisOrchestrator(): UseAnalysisOrchestratorReturn {
       stopSimulatedProgress,
       createAnalyzer,
       isHostedFree,
+      turnstileToken,
       refreshTurnstile,
     ],
   );
