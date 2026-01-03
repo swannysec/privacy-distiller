@@ -292,7 +292,7 @@ export async function exportToPDF(result: AnalysisResult): Promise<void> {
           doc.setTextColor(...primaryColor);
           const headingLines = doc.splitTextToSize(block.content, contentWidth);
           for (const line of headingLines) {
-            doc.text(line, margin, y);
+            doc.text(line, margin, y, { align: "left" });
             y += fontSize * 0.4;
           }
           y += 2; // Space after heading
@@ -308,7 +308,7 @@ export async function exportToPDF(result: AnalysisResult): Promise<void> {
           const paraLines = doc.splitTextToSize(block.content, contentWidth);
           for (const line of paraLines) {
             checkPageBreak(5);
-            doc.text(line, margin, y);
+            doc.text(line, margin, y, { align: "left" });
             y += 5;
           }
           y += 3; // Space after paragraph
@@ -325,10 +325,10 @@ export async function exportToPDF(result: AnalysisResult): Promise<void> {
             block.content,
             contentWidth - 8,
           );
-          doc.text("•", margin, y);
+          doc.text("•", margin, y, { align: "left" });
           for (let i = 0; i < bulletLines.length; i++) {
             checkPageBreak(5);
-            doc.text(bulletLines[i], margin + 6, y);
+            doc.text(bulletLines[i], margin + 6, y, { align: "left" });
             if (i < bulletLines.length - 1) y += 5;
           }
           y += 5;
@@ -345,10 +345,10 @@ export async function exportToPDF(result: AnalysisResult): Promise<void> {
             block.content,
             contentWidth - 10,
           );
-          doc.text(`${numberedIndex}.`, margin, y);
+          doc.text(`${numberedIndex}.`, margin, y, { align: "left" });
           for (let i = 0; i < numLines.length; i++) {
             checkPageBreak(5);
-            doc.text(numLines[i], margin + 8, y);
+            doc.text(numLines[i], margin + 8, y, { align: "left" });
             if (i < numLines.length - 1) y += 5;
           }
           y += 5;
@@ -363,7 +363,7 @@ export async function exportToPDF(result: AnalysisResult): Promise<void> {
   doc.setTextColor(...primaryColor);
   doc.setFont("helvetica", "bold");
   const title = getDocumentTitle(result.documentMetadata);
-  doc.text(title, margin, y);
+  doc.text(title, margin, y, { align: "left" });
   y += 10;
 
   // Metadata
@@ -371,9 +371,9 @@ export async function exportToPDF(result: AnalysisResult): Promise<void> {
   doc.setTextColor(...mutedColor);
   doc.setFont("helvetica", "normal");
   const source = result.documentMetadata?.source || "Unknown source";
-  doc.text(`Source: ${source}`, margin, y);
+  doc.text(`Source: ${source}`, margin, y, { align: "left" });
   y += 5;
-  doc.text(`Analyzed: ${formatDate(result.timestamp)}`, margin, y);
+  doc.text(`Analyzed: ${formatDate(result.timestamp)}`, margin, y, { align: "left" });
   y += 10;
 
   drawLine();
@@ -385,7 +385,7 @@ export async function exportToPDF(result: AnalysisResult): Promise<void> {
     doc.setFontSize(16);
     doc.setTextColor(...primaryColor);
     doc.setFont("helvetica", "bold");
-    doc.text("Privacy Scorecard", margin, y);
+    doc.text("Privacy Scorecard", margin, y, { align: "left" });
     y += 10;
 
     const overallScore =
@@ -396,8 +396,8 @@ export async function exportToPDF(result: AnalysisResult): Promise<void> {
     doc.setFontSize(12);
     doc.setTextColor(...textColor);
     doc.setFont("helvetica", "bold");
-    doc.text(`Overall Grade: ${grade}`, margin, y);
-    doc.text(`Privacy Score: ${overallScore}/100`, margin + 60, y);
+    doc.text(`Overall Grade: ${grade}`, margin, y, { align: "left" });
+    doc.text(`Privacy Score: ${overallScore}/100`, margin + 60, y, { align: "left" });
     y += 10;
 
     // Category scores
@@ -423,10 +423,10 @@ export async function exportToPDF(result: AnalysisResult): Promise<void> {
 
         doc.setTextColor(...textColor);
         doc.setFont("helvetica", "bold");
-        doc.text(`${config.label} (${config.weight}%):`, margin, y);
+        doc.text(`${config.label} (${config.weight}%):`, margin, y, { align: "left" });
 
         doc.setTextColor(...scoreColor);
-        doc.text(`${score}/10`, margin + 65, y);
+        doc.text(`${score}/10`, margin + 65, y, { align: "left" });
         y += 5;
 
         if (typedCategoryData.summary) {
@@ -437,7 +437,7 @@ export async function exportToPDF(result: AnalysisResult): Promise<void> {
             contentWidth,
           );
           for (const line of summaryLines) {
-            doc.text(line, margin + 4, y);
+            doc.text(line, margin + 4, y, { align: "left" });
             y += 4;
           }
         }
@@ -455,7 +455,7 @@ export async function exportToPDF(result: AnalysisResult): Promise<void> {
       doc.setTextColor(...dangerColor);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(11);
-      doc.text("Key Concerns:", margin, y);
+      doc.text("Key Concerns:", margin, y, { align: "left" });
       y += 6;
 
       doc.setFontSize(10);
@@ -464,9 +464,9 @@ export async function exportToPDF(result: AnalysisResult): Promise<void> {
       for (const concern of result.scorecard.topConcerns.slice(0, 3)) {
         checkPageBreak(8);
         const lines = doc.splitTextToSize(concern, contentWidth - 8);
-        doc.text("•", margin, y);
+        doc.text("•", margin, y, { align: "left" });
         for (let i = 0; i < lines.length; i++) {
-          doc.text(lines[i], margin + 6, y);
+          doc.text(lines[i], margin + 6, y, { align: "left" });
           if (i < lines.length - 1) y += 5;
         }
         y += 6;
@@ -483,7 +483,7 @@ export async function exportToPDF(result: AnalysisResult): Promise<void> {
       doc.setTextColor(...successColor);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(11);
-      doc.text("Positive Aspects:", margin, y);
+      doc.text("Positive Aspects:", margin, y, { align: "left" });
       y += 6;
 
       doc.setFontSize(10);
@@ -492,9 +492,9 @@ export async function exportToPDF(result: AnalysisResult): Promise<void> {
       for (const positive of result.scorecard.positiveAspects.slice(0, 3)) {
         checkPageBreak(8);
         const lines = doc.splitTextToSize(positive, contentWidth - 8);
-        doc.text("•", margin, y);
+        doc.text("•", margin, y, { align: "left" });
         for (let i = 0; i < lines.length; i++) {
-          doc.text(lines[i], margin + 6, y);
+          doc.text(lines[i], margin + 6, y, { align: "left" });
           if (i < lines.length - 1) y += 5;
         }
         y += 6;
@@ -511,7 +511,7 @@ export async function exportToPDF(result: AnalysisResult): Promise<void> {
   doc.setFontSize(16);
   doc.setTextColor(...primaryColor);
   doc.setFont("helvetica", "bold");
-  doc.text("Policy Summary", margin, y);
+  doc.text("Policy Summary", margin, y, { align: "left" });
   y += 10;
 
   // Use full summary, fall back to detailed, then brief
@@ -533,7 +533,7 @@ export async function exportToPDF(result: AnalysisResult): Promise<void> {
     doc.setFontSize(16);
     doc.setTextColor(...primaryColor);
     doc.setFont("helvetica", "bold");
-    doc.text(`Privacy Risks (${result.risks.length})`, margin, y);
+    doc.text(`Privacy Risks (${result.risks.length})`, margin, y, { align: "left" });
     y += 10;
 
     // Sort risks by severity
@@ -567,14 +567,14 @@ export async function exportToPDF(result: AnalysisResult): Promise<void> {
       doc.setFontSize(11);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(...textColor);
-      doc.text(risk.title || "Untitled Risk", margin, y);
+      doc.text(risk.title || "Untitled Risk", margin, y, { align: "left" });
       y += 5;
 
       // Severity label on its own line
       doc.setFontSize(9);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(...severityColor);
-      doc.text(`[${severityLabel}]`, margin, y);
+      doc.text(`[${severityLabel}]`, margin, y, { align: "left" });
       y += 5;
 
       // Description
@@ -587,7 +587,7 @@ export async function exportToPDF(result: AnalysisResult): Promise<void> {
       );
       for (const line of descLines) {
         checkPageBreak(6);
-        doc.text(line, margin, y);
+        doc.text(line, margin, y, { align: "left" });
         y += 5;
       }
 
@@ -604,7 +604,7 @@ export async function exportToPDF(result: AnalysisResult): Promise<void> {
     doc.setFontSize(16);
     doc.setTextColor(...primaryColor);
     doc.setFont("helvetica", "bold");
-    doc.text(`Key Terms Glossary (${result.keyTerms.length})`, margin, y);
+    doc.text(`Key Terms Glossary (${result.keyTerms.length})`, margin, y, { align: "left" });
     y += 10;
 
     for (const term of result.keyTerms) {
@@ -613,7 +613,7 @@ export async function exportToPDF(result: AnalysisResult): Promise<void> {
       doc.setFontSize(11);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(...textColor);
-      doc.text((term as KeyTerm).term || "Unknown Term", margin, y);
+      doc.text((term as KeyTerm).term || "Unknown Term", margin, y, { align: "left" });
       y += 6;
 
       doc.setFontSize(10);
@@ -625,7 +625,7 @@ export async function exportToPDF(result: AnalysisResult): Promise<void> {
       );
       for (const line of defLines) {
         checkPageBreak(6);
-        doc.text(line, margin, y);
+        doc.text(line, margin, y, { align: "left" });
         y += 5;
       }
 

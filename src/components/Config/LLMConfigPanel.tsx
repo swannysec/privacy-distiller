@@ -181,6 +181,9 @@ export function LLMConfigPanel({
 
   const currentProvider = LLM_PROVIDERS[config.provider.toUpperCase()];
   const requiresApiKey = currentProvider?.requiresApiKey ?? false;
+  const isHostedFree = config.provider === "hosted-free";
+  const isLocalProvider =
+    config.provider === "ollama" || config.provider === "lmstudio";
 
   return (
     <div className={`modal ${className}`}>
@@ -208,45 +211,59 @@ export function LLMConfigPanel({
           />
         </div>
 
-        <div className="form-section">
-          <h3 className="form-section__title">API Settings</h3>
+        {isHostedFree && (
+          <div className="config-info" style={{ marginBottom: "1rem" }}>
+            <span className="config-info__icon">✨</span>
+            <span className="config-info__text">
+              No configuration needed! The free tier is ready to use with
+              optimized settings.
+            </span>
+          </div>
+        )}
 
-          {requiresApiKey && (
-            <APIKeyInput
-              value={config.apiKey}
-              onChange={handleApiKeyChange}
-              provider={config.provider}
-              disabled={disabled}
-            />
-          )}
+        {!isHostedFree && (
+          <div className="form-section">
+            <h3 className="form-section__title">API Settings</h3>
 
-          {!requiresApiKey && (
-            <div className="input-group">
-              <label htmlFor="endpoint-url" className="input-label">
-                Endpoint URL
-              </label>
-              <input
-                type="text"
-                id="endpoint-url"
-                className="input-field"
-                value={config.baseUrl}
-                onChange={handleEndpointChange}
-                placeholder={
-                  currentProvider?.baseUrl || "http://localhost:11434"
-                }
+            {requiresApiKey && (
+              <APIKeyInput
+                value={config.apiKey}
+                onChange={handleApiKeyChange}
+                provider={config.provider}
                 disabled={disabled}
               />
-              <p className="input-hint">Default: {currentProvider?.baseUrl}</p>
-            </div>
-          )}
+            )}
 
-          <ModelSelector
-            provider={config.provider}
-            value={config.model}
-            onChange={handleModelChange}
-            disabled={disabled}
-          />
-        </div>
+            {isLocalProvider && (
+              <div className="input-group">
+                <label htmlFor="endpoint-url" className="input-label">
+                  Endpoint URL
+                </label>
+                <input
+                  type="text"
+                  id="endpoint-url"
+                  className="input-field"
+                  value={config.baseUrl}
+                  onChange={handleEndpointChange}
+                  placeholder={
+                    currentProvider?.baseUrl || "http://localhost:11434"
+                  }
+                  disabled={disabled}
+                />
+                <p className="input-hint">
+                  Default: {currentProvider?.baseUrl}
+                </p>
+              </div>
+            )}
+
+            <ModelSelector
+              provider={config.provider}
+              value={config.model}
+              onChange={handleModelChange}
+              disabled={disabled}
+            />
+          </div>
+        )}
 
         <div className="form-section">
           <h3 className="form-section__title">Advanced</h3>
@@ -276,25 +293,33 @@ export function LLMConfigPanel({
             <div className="input-group">
               <label htmlFor="max-tokens" className="input-label">
                 Max Response Length
+                {isHostedFree && (
+                  <span className="input-label__badge">
+                    (Fixed for free tier)
+                  </span>
+                )}
               </label>
               <input
                 type="number"
                 id="max-tokens"
-                className="input-field"
-                value={config.maxTokens}
+                className={`input-field ${isHostedFree ? "input-field--readonly" : ""}`}
+                value={isHostedFree ? 18000 : config.maxTokens}
                 onChange={handleMaxTokensChange}
                 step="1000"
                 min="1000"
                 max="32000"
-                disabled={disabled}
+                disabled={disabled || isHostedFree}
+                readOnly={isHostedFree}
               />
               <p className="input-hint">
-                Maximum tokens in each AI response (~750 words per 1K tokens)
+                {isHostedFree
+                  ? "Fixed at 18,000 tokens for the free tier"
+                  : "Maximum tokens in each AI response (~750 words per 1K tokens)"}
               </p>
             </div>
           </div>
 
-          {!requiresApiKey && (
+          {isLocalProvider && (
             <div className="input-group" style={{ marginTop: "1rem" }}>
               <label htmlFor="context-window" className="input-label">
                 Model Context Window
@@ -334,7 +359,7 @@ export function LLMConfigPanel({
           )}
         </div>
 
-        {!requiresApiKey && (
+        {isLocalProvider && (
           <div className="config-alert config-alert--warning">
             <span>⚠️</span>
             <div>
