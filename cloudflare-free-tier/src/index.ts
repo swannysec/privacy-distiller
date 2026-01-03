@@ -27,6 +27,7 @@ import { parseEnvBoolean, parseEnvList } from "./types";
 import { validateTurnstileToken } from "./turnstile";
 import { checkRateLimit } from "./ratelimit";
 import { selectApiKey, getFreeStatus } from "./keySelector";
+import { createSessionToken, verifySessionToken } from "./session";
 
 /**
  * OpenAI-compatible message format
@@ -55,7 +56,26 @@ interface AnalyzeRequestBody {
   temperature?: number;
   max_tokens?: number;
   turnstileToken?: string;
+  sessionToken?: string;
   userApiKey?: string;
+}
+
+/**
+ * Request body for the /api/session endpoint
+ */
+interface SessionRequestBody {
+  turnstileToken: string;
+}
+
+/**
+ * Response from the /api/session endpoint
+ */
+interface SessionResponse {
+  success: boolean;
+  sessionToken?: string;
+  expiresIn?: number;
+  error?: string;
+  errorCode?: FreeTierErrorCode;
 }
 
 /**
@@ -170,6 +190,7 @@ async function parseAnalyzeRequest(
       temperature,
       max_tokens,
       turnstileToken,
+      sessionToken,
       userApiKey,
     } = body as Record<string, unknown>;
 
@@ -202,6 +223,12 @@ async function parseAnalyzeRequest(
       headerToken ||
       (typeof turnstileToken === "string" ? turnstileToken.trim() : undefined);
 
+    // Get session token from header or body
+    const headerSessionToken = request.headers.get("X-Session-Token");
+    const finalSessionToken =
+      headerSessionToken ||
+      (typeof sessionToken === "string" ? sessionToken.trim() : undefined);
+
     // Get user API key from header or body
     const headerApiKey = request.headers.get("X-User-Api-Key");
     const finalUserApiKey =
@@ -214,6 +241,7 @@ async function parseAnalyzeRequest(
       temperature: typeof temperature === "number" ? temperature : undefined,
       max_tokens: typeof max_tokens === "number" ? max_tokens : undefined,
       turnstileToken: finalTurnstileToken || undefined,
+      sessionToken: finalSessionToken || undefined,
       userApiKey: finalUserApiKey || undefined,
     };
   } catch {
@@ -244,28 +272,46 @@ async function handleAnalyze(
   }
 
   // Check if Turnstile validation is required
+  // Accept either a valid session token OR a fresh Turnstile token
   const turnstileEnabled = parseEnvBoolean(env.TURNSTILE_ENABLED);
   if (turnstileEnabled && env.TURNSTILE_SECRET_KEY) {
-    if (!analyzeRequest.turnstileToken) {
-      return errorResponse(
-        "Turnstile token required",
-        "TURNSTILE_FAILED",
-        401,
-        corsHeaders,
+    let isValidated = false;
+
+    // First, check for session token (preferred for multi-request analyses)
+    if (analyzeRequest.sessionToken) {
+      const sessionResult = await verifySessionToken(
+        analyzeRequest.sessionToken,
+        env.TURNSTILE_SECRET_KEY,
       );
+      if (sessionResult.valid) {
+        isValidated = true;
+      }
+      // If session token is invalid/expired, fall through to try Turnstile token
     }
 
-    const turnstileResult = await validateTurnstileToken(
-      analyzeRequest.turnstileToken,
-      env,
-    );
-    if (!turnstileResult.success) {
-      return errorResponse(
-        "Turnstile verification failed",
-        "TURNSTILE_FAILED",
-        401,
-        corsHeaders,
+    // If no valid session token, require Turnstile token
+    if (!isValidated) {
+      if (!analyzeRequest.turnstileToken) {
+        return errorResponse(
+          "Session token or Turnstile token required",
+          "TURNSTILE_FAILED",
+          401,
+          corsHeaders,
+        );
+      }
+
+      const turnstileResult = await validateTurnstileToken(
+        analyzeRequest.turnstileToken,
+        env,
       );
+      if (!turnstileResult.success) {
+        return errorResponse(
+          "Turnstile verification failed",
+          "TURNSTILE_FAILED",
+          401,
+          corsHeaders,
+        );
+      }
     }
   }
 
@@ -393,6 +439,81 @@ async function handleAnalyze(
 }
 
 /**
+ * Handle POST /api/session - Create session token endpoint
+ *
+ * Validates a Turnstile token and returns a short-lived session JWT.
+ * The session token can be used for multiple /api/analyze calls within
+ * its validity period (3 minutes), enabling parallel analysis requests.
+ */
+async function handleSession(
+  request: Request,
+  env: Env,
+  corsHeaders: HeadersInit,
+): Promise<Response> {
+  // Check if Turnstile is enabled
+  const turnstileEnabled = parseEnvBoolean(env.TURNSTILE_ENABLED);
+  if (!turnstileEnabled || !env.TURNSTILE_SECRET_KEY) {
+    // If Turnstile is disabled, session tokens aren't needed
+    return errorResponse(
+      "Session tokens not required when Turnstile is disabled",
+      "INVALID_REQUEST",
+      400,
+      corsHeaders,
+    );
+  }
+
+  // Parse request body
+  let turnstileToken: string | undefined;
+  try {
+    const body = await request.json();
+    if (typeof body === "object" && body !== null) {
+      const { turnstileToken: token } = body as Record<string, unknown>;
+      if (typeof token === "string" && token.trim().length > 0) {
+        turnstileToken = token.trim();
+      }
+    }
+  } catch {
+    // Also check header
+  }
+
+  // Check header if not in body
+  if (!turnstileToken) {
+    turnstileToken = request.headers.get("X-Turnstile-Token") || undefined;
+  }
+
+  if (!turnstileToken) {
+    return errorResponse(
+      "Turnstile token required",
+      "TURNSTILE_FAILED",
+      401,
+      corsHeaders,
+    );
+  }
+
+  // Validate Turnstile token (this consumes the token)
+  const turnstileResult = await validateTurnstileToken(turnstileToken, env);
+  if (!turnstileResult.success) {
+    return errorResponse(
+      "Turnstile verification failed",
+      "TURNSTILE_FAILED",
+      401,
+      corsHeaders,
+    );
+  }
+
+  // Create session token (3 minute expiry)
+  const sessionToken = await createSessionToken(env.TURNSTILE_SECRET_KEY);
+
+  const response: SessionResponse = {
+    success: true,
+    sessionToken,
+    expiresIn: 180, // 3 minutes in seconds
+  };
+
+  return jsonResponse(response, 200, corsHeaders);
+}
+
+/**
  * Handle GET /api/status - Free tier status endpoint
  *
  * Returns current availability of free tier features.
@@ -471,6 +592,11 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
   // Route handling
   const path = url.pathname;
 
+  // POST /api/session - Create session token for multi-request analyses
+  if (path === "/api/session" && request.method === "POST") {
+    return handleSession(request, env, corsHeaders);
+  }
+
   // POST /api/analyze - Main LLM proxy endpoint
   if (path === "/api/analyze" && request.method === "POST") {
     return handleAnalyze(request, env, corsHeaders);
@@ -487,12 +613,17 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
   }
 
   // Method not allowed for known paths
-  if (path === "/api/analyze" || path === "/api/status") {
+  if (path === "/api/analyze" || path === "/api/status" || path === "/api/session") {
+    const allowedMethods: Record<string, string> = {
+      "/api/analyze": "POST, OPTIONS",
+      "/api/status": "GET, OPTIONS",
+      "/api/session": "POST, OPTIONS",
+    };
     return new Response(JSON.stringify({ error: "Method not allowed" }), {
       status: 405,
       headers: {
         "Content-Type": "application/json",
-        Allow: path === "/api/analyze" ? "POST, OPTIONS" : "GET, OPTIONS",
+        Allow: allowedMethods[path] || "OPTIONS",
         ...corsHeaders,
       },
     });
