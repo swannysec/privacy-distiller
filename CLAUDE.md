@@ -729,6 +729,31 @@ Never write tests based on what the API *should* look like. Test what it *actual
 
 3. **Missing links** - Connect related ConPort items to build the knowledge graph.
 
+### Configuration Mismatch Pitfalls
+
+**Critical Pattern:** Defaults set in one place must match constraints enforced elsewhere. When a component has hard requirements (e.g., only certain models work with a service tier), those requirements must be enforced at the point of use, not assumed from configuration.
+
+1. **Fallback operator misuse** - `config.value || DEFAULT` only falls back when `config.value` is falsy. If config has a value (even a wrong one), the fallback won't trigger.
+
+   ```typescript
+   // BAD - Assumes config.model will be falsy for free tier
+   model: this.config.model || FREE_TIER_MODEL
+   
+   // GOOD - Enforces constraint regardless of config
+   model: FREE_TIER_MODEL  // Free tier is constrained to this model
+   ```
+
+2. **Distributed defaults** - When defaults are set in multiple places (context providers, constants, component props), they can drift apart. Changes to one location may not propagate to others.
+
+3. **Service tier constraints** - Free/paid tier differences often involve hard constraints (specific models, rate limits, features). These must be enforced server-side or at the provider level, not derived from user-configurable settings.
+
+**MANDATORY: When Implementing Tiered Services**
+
+1. **Identify hard constraints** - What MUST be true for this tier to work? (specific models, endpoints, headers)
+2. **Enforce at point of use** - Don't rely on config defaults; explicitly set constrained values
+3. **Align UI defaults** - UI should display accurate values, but enforcement happens in the provider
+4. **Test with wrong config** - Verify the system behaves correctly even if config values are incorrect
+
 ### Component Development Pitfalls
 
 **Critical Pattern:** New UI components require both functional code AND styling to be considered complete. Styling is not an afterthought.

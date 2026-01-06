@@ -232,7 +232,7 @@ export function useAnalysisOrchestrator(): UseAnalysisOrchestratorReturn {
   /**
    * Creates a PolicyAnalyzer instance with proper provider setup
    * For hosted-free, creates provider manually, obtains session token,
-   * and configures the provider for parallel API calls.
+   * checks and caches tier status, and configures the provider for parallel API calls.
    */
   const createAnalyzer = useCallback(async (): Promise<PolicyAnalyzer> => {
     if (isHostedFree) {
@@ -245,6 +245,10 @@ export function useAnalysisOrchestrator(): UseAnalysisOrchestratorReturn {
         // This consumes the Turnstile token and returns a reusable JWT
         await provider.getSessionToken();
       }
+
+      // Check and cache tier status BEFORE starting analysis
+      // This commits us to one tier (paid-central or free) for all 7 parallel requests
+      await provider.checkAndCacheStatus();
 
       return new PolicyAnalyzer(llm.config, provider);
     }

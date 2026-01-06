@@ -12,7 +12,7 @@ import {
   useMemo,
   ReactNode,
 } from "react";
-import { DEFAULT_LLM_CONFIG } from "../utils/constants.js";
+import { DEFAULT_LLM_CONFIG, FREE_TIER_MODEL } from "../utils/constants.js";
 import { validateLLMConfig } from "../utils/validation.js";
 import {
   saveLLMConfig,
@@ -139,7 +139,7 @@ export function LLMConfigProvider({ children }: LLMConfigProviderProps) {
     const providerDefaults: Record<LLMProvider, Partial<LLMConfig>> = {
       "hosted-free": {
         baseUrl: "", // Uses FREE_TIER_WORKER_URL at runtime
-        model: "anthropic/claude-3.5-sonnet",
+        model: FREE_TIER_MODEL, // Must use the free tier model
         apiKey: "", // Managed by worker
         maxTokens: 18000, // Fixed limit for free tier
         temperature: 0.7,

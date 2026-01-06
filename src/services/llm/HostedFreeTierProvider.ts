@@ -19,14 +19,26 @@ import {
 } from "../../utils/constants";
 
 /**
+ * Service tier indicating the level of service and privacy guarantees
+ * Matches the worker's ServiceTier type
+ */
+export type ServiceTier = "paid-central" | "free" | "paid-user";
+
+/**
  * Response from the free tier status endpoint
  */
-interface FreeTierStatus {
+export interface FreeTierStatus {
   free_available: boolean;
   daily_remaining: number;
   daily_limit: number;
   balance_remaining: number | null;
   reset_at: string;
+  /** Current service tier (paid-central with ZDR, free with telemetry, or paid-user BYOK) */
+  tier: ServiceTier;
+  /** Whether Zero Data Retention is enabled for this tier */
+  zdrEnabled: boolean;
+  /** Whether the paid budget is exhausted (triggers fallback to free tier) */
+  paidBudgetExhausted: boolean;
 }
 
 /**
@@ -48,6 +60,8 @@ export class HostedFreeTierProvider extends BaseLLMProvider {
   private sessionToken: string | null = null;
   private sessionTokenPromise: Promise<string> | null = null;
   private userApiKey: string | null = null;
+  /** Cached tier status for the current analysis session */
+  private cachedStatus: FreeTierStatus | null = null;
 
   getName(): string {
     return "Hosted Free";
@@ -163,6 +177,48 @@ export class HostedFreeTierProvider extends BaseLLMProvider {
   }
 
   /**
+   * Check and cache the current tier status.
+   * Call this BEFORE starting analysis to commit to a tier for all requests.
+   * @returns The cached status
+   */
+  async checkAndCacheStatus(): Promise<FreeTierStatus> {
+    const status = await this.getStatus();
+    this.cachedStatus = status;
+    return status;
+  }
+
+  /**
+   * Get the cached tier status (for UI display)
+   * @returns Cached status or null if not yet fetched
+   */
+  getCachedStatus(): FreeTierStatus | null {
+    return this.cachedStatus;
+  }
+
+  /**
+   * Clear cached status (call after analysis completes)
+   */
+  clearCachedStatus(): void {
+    this.cachedStatus = null;
+  }
+
+  /**
+   * Check if ZDR is enabled for current cached tier
+   * @returns true if ZDR is enabled, false otherwise
+   */
+  isZdrEnabled(): boolean {
+    return this.cachedStatus?.zdrEnabled ?? false;
+  }
+
+  /**
+   * Get current service tier from cached status
+   * @returns The current tier or null if status not cached
+   */
+  getCurrentTier(): ServiceTier | null {
+    return this.cachedStatus?.tier ?? null;
+  }
+
+  /**
    * Get the current free tier status
    * @returns Status information about free tier availability
    */
@@ -191,8 +247,11 @@ export class HostedFreeTierProvider extends BaseLLMProvider {
     prompt: string,
     options: Record<string, unknown> = {},
   ): Promise<string> {
+    // Worker controls model selection based on tier (paid-central vs free)
+    // We still send a model field for BYOK compatibility, but the worker
+    // will override it for hosted free tier requests
     const requestBody = {
-      model: this.config.model || FREE_TIER_MODEL,
+      model: FREE_TIER_MODEL, // Worker overrides this for hosted free tier
       messages: [{ role: "user", content: prompt }],
       temperature:
         (options.temperature as number | undefined) ?? this.config.temperature,
