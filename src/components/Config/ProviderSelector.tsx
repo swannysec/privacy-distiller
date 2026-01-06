@@ -70,14 +70,15 @@ export function ProviderSelector({
               <span className="privacy-note">
                 🔒 <strong>Privacy:</strong> Uses OpenRouter&apos;s{" "}
                 <a
-                  href="https://openrouter.ai/docs/features/privacy"
+                  href="https://openrouter.ai/docs/guides/features/zdr"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
                   Zero Data Retention
                 </a>{" "}
-                endpoint. Your policy content is not stored or used for
-                training.
+                when available. Your policy content is not stored or used for
+                training. If ZDR budget is exhausted, falls back to free tier
+                (telemetry may be collected).
               </span>
             </>
           )}

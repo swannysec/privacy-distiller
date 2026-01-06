@@ -89,7 +89,8 @@ function getCorsHeaders(
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers":
       "Content-Type, Accept, Authorization, X-Turnstile-Token, X-User-Api-Key, X-Session-Token",
-    "Access-Control-Expose-Headers": "x-key-source, x-free-remaining",
+    "Access-Control-Expose-Headers":
+      "x-key-source, x-free-remaining, x-service-tier, x-zdr-enabled",
     "Access-Control-Max-Age": "86400",
   };
 
@@ -358,13 +359,27 @@ async function handleAnalyze(
     );
   }
 
+  // Worker controls model selection for hosted free tier
+  // BYOK users can specify their own model (keySelection.model will be empty)
+  const modelToUse =
+    keySelection.source === "byok"
+      ? analyzeRequest.model // BYOK users control their own model
+      : keySelection.model; // Worker controls model for hosted free
+
   // Prepare OpenRouter request
-  const openRouterRequest: ChatCompletionRequest = {
-    model: analyzeRequest.model,
+  const openRouterRequest: ChatCompletionRequest & {
+    provider?: { zdr: boolean };
+  } = {
+    model: modelToUse,
     messages: analyzeRequest.messages,
     temperature: analyzeRequest.temperature ?? 0.7,
     max_tokens: analyzeRequest.max_tokens ?? 32000,
   };
+
+  // Add Zero Data Retention (ZDR) for paid-central tier
+  if (keySelection.zdrEnabled) {
+    openRouterRequest.provider = { zdr: true };
+  }
 
   try {
     // Proxy to OpenRouter
@@ -410,6 +425,8 @@ async function handleAnalyze(
 
     const additionalHeaders: Record<string, string> = {
       "x-key-source": keySelection.source,
+      "x-service-tier": keySelection.tier,
+      "x-zdr-enabled": String(keySelection.zdrEnabled),
     };
 
     if (
@@ -522,18 +539,9 @@ async function handleStatus(
   env: Env,
   corsHeaders: HeadersInit,
 ): Promise<Response> {
-  const turnstileEnabled = parseEnvBoolean(env.TURNSTILE_ENABLED);
-
   try {
-    const freeStatus = await getFreeStatus(env);
-
-    const status: FreeTierStatus = {
-      freeAvailable: freeStatus.free_available,
-      dailyRemaining: freeStatus.daily_remaining,
-      balanceRemaining: freeStatus.balance_remaining ?? 0,
-      turnstileRequired: turnstileEnabled && !!env.TURNSTILE_SECRET_KEY,
-      lastBalanceCheck: new Date().toISOString(),
-    };
+    // getFreeStatus returns snake_case fields that match frontend expectations
+    const status: FreeTierStatus = await getFreeStatus(env);
 
     return jsonResponse(status, 200, corsHeaders);
   } catch (error) {
@@ -542,12 +550,16 @@ async function handleStatus(
       error instanceof Error ? error.message : "Unknown",
     );
 
-    // Return minimal status on error
+    // Return minimal status on error - default to free tier (no ZDR)
     const status: FreeTierStatus = {
-      freeAvailable: false,
-      dailyRemaining: 0,
-      balanceRemaining: 0,
-      turnstileRequired: turnstileEnabled && !!env.TURNSTILE_SECRET_KEY,
+      free_available: false,
+      daily_remaining: 0,
+      daily_limit: 0,
+      balance_remaining: null,
+      reset_at: new Date().toISOString(),
+      tier: "free",
+      zdrEnabled: false,
+      paidBudgetExhausted: true,
     };
 
     return jsonResponse(status, 200, corsHeaders);
@@ -613,7 +625,11 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
   }
 
   // Method not allowed for known paths
-  if (path === "/api/analyze" || path === "/api/status" || path === "/api/session") {
+  if (
+    path === "/api/analyze" ||
+    path === "/api/status" ||
+    path === "/api/session"
+  ) {
     const allowedMethods: Record<string, string> = {
       "/api/analyze": "POST, OPTIONS",
       "/api/status": "GET, OPTIONS",

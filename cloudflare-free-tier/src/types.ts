@@ -29,7 +29,27 @@ export interface Env {
 /**
  * Source of the API key used for the request
  */
-export type KeySource = 'free' | 'byok' | 'none';
+export type KeySource = "free" | "byok" | "none";
+
+/**
+ * Service tier indicating the level of service and privacy guarantees
+ * - 'paid-central': Using centralized paid API key with ZDR (Zero Data Retention)
+ * - 'free': Using free model tier (telemetry may be collected by OpenRouter)
+ * - 'paid-user': User provided their own API key (BYOK)
+ */
+export type ServiceTier = "paid-central" | "free" | "paid-user";
+
+/**
+ * Model configuration for each service tier
+ * Worker controls model selection - frontend should not override these
+ */
+export const TIER_MODELS = {
+  /** Paid tier model (without :free suffix) - ZDR enabled */
+  PAID_CENTRAL: "nvidia/nemotron-3-nano-30b-a3b",
+
+  /** Free tier model (with :free suffix) - telemetry collected */
+  FREE: "nvidia/nemotron-3-nano-30b-a3b:free",
+} as const;
 
 /**
  * Request body for the /api/analyze endpoint
@@ -39,7 +59,7 @@ export interface AnalyzeRequest {
   content: string;
 
   // Type of content being sent
-  contentType: 'text' | 'url';
+  contentType: "text" | "url";
 
   // LLM model to use (e.g., "openai/gpt-4o-mini")
   model: string;
@@ -76,10 +96,10 @@ export interface AnalyzeResponse {
  */
 export interface AnalyzeResponseHeaders {
   // Source of the API key used: 'free' or 'byok'
-  'x-key-source': KeySource;
+  "x-key-source": KeySource;
 
   // Remaining free tier requests for the day (only when using free key)
-  'x-free-remaining'?: string;
+  "x-free-remaining"?: string;
 }
 
 /**
@@ -87,19 +107,28 @@ export interface AnalyzeResponseHeaders {
  */
 export interface FreeTierStatus {
   // Whether free tier is currently available
-  freeAvailable: boolean;
+  free_available: boolean;
 
   // Remaining requests in daily global limit
-  dailyRemaining: number;
+  daily_remaining: number;
 
-  // Remaining balance on free API key (USD)
-  balanceRemaining: number;
+  // Daily limit configured
+  daily_limit: number;
 
-  // Whether Turnstile verification is required
-  turnstileRequired: boolean;
+  // Remaining balance on free API key (USD) - internal use, not exposed to frontend for budget decisions
+  balance_remaining: number | null;
 
-  // Timestamp of last balance check
-  lastBalanceCheck?: string;
+  // Timestamp when daily limit resets (ISO 8601)
+  reset_at: string;
+
+  // Current service tier (paid-central, free, or paid-user)
+  tier: ServiceTier;
+
+  // Whether Zero Data Retention is enabled for this tier
+  zdrEnabled: boolean;
+
+  // Whether the paid budget is exhausted (triggers fallback to free tier)
+  paidBudgetExhausted: boolean;
 }
 
 /**
@@ -131,13 +160,13 @@ export interface BalanceInfo {
  * Error codes for free tier specific errors
  */
 export type FreeTierErrorCode =
-  | 'TURNSTILE_FAILED'
-  | 'DAILY_LIMIT_REACHED'
-  | 'FREE_KEY_EXHAUSTED'
-  | 'NO_API_KEY'
-  | 'INVALID_REQUEST'
-  | 'ORIGIN_NOT_ALLOWED'
-  | 'INTERNAL_ERROR';
+  | "TURNSTILE_FAILED"
+  | "DAILY_LIMIT_REACHED"
+  | "FREE_KEY_EXHAUSTED"
+  | "NO_API_KEY"
+  | "INVALID_REQUEST"
+  | "ORIGIN_NOT_ALLOWED"
+  | "INTERNAL_ERROR";
 
 /**
  * Structured error response
@@ -153,7 +182,7 @@ export interface ErrorResponse {
  */
 export interface TurnstileVerifyResponse {
   success: boolean;
-  'error-codes'?: string[];
+  "error-codes"?: string[];
   challenge_ts?: string;
   hostname?: string;
 }
@@ -173,8 +202,8 @@ export interface OpenRouterBalanceResponse {
  * KV storage keys used by the worker
  */
 export const KV_KEYS = {
-  DAILY_RATE_LIMIT: 'rate:daily',
-  BALANCE_CACHE: 'balance:cache',
+  DAILY_RATE_LIMIT: "rate:daily",
+  BALANCE_CACHE: "balance:cache",
 } as const;
 
 /**
@@ -183,13 +212,16 @@ export const KV_KEYS = {
 export function parseEnvBoolean(value: string | undefined): boolean {
   if (!value) return false;
   const lowered = value.toLowerCase().trim();
-  return lowered === 'true' || lowered === '1' || lowered === 'yes';
+  return lowered === "true" || lowered === "1" || lowered === "yes";
 }
 
 /**
  * Helper to parse numeric environment variables
  */
-export function parseEnvNumber(value: string | undefined, defaultValue: number): number {
+export function parseEnvNumber(
+  value: string | undefined,
+  defaultValue: number,
+): number {
   if (!value) return defaultValue;
   const parsed = parseFloat(value);
   return isNaN(parsed) ? defaultValue : parsed;
@@ -201,7 +233,7 @@ export function parseEnvNumber(value: string | undefined, defaultValue: number):
 export function parseEnvList(value: string | undefined): string[] {
   if (!value) return [];
   return value
-    .split(',')
+    .split(",")
     .map((item) => item.trim())
     .filter((item) => item.length > 0);
 }
