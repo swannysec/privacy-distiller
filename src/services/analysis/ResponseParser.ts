@@ -60,7 +60,8 @@ export class ResponseParser {
           continue;
         }
 
-        if (char === '"' && !escapeNext) {
+        // Note: escapeNext is always false here due to the continue above
+        if (char === '"') {
           inString = !inString;
           continue;
         }
@@ -128,7 +129,8 @@ export class ResponseParser {
           continue;
         }
 
-        if (char === '"' && !escapeNext) {
+        // Note: escapeNext is always false here due to the continue above
+        if (char === '"') {
           inString = !inString;
           continue;
         }
@@ -168,29 +170,49 @@ export class ResponseParser {
   }
 
   /**
+   * Maximum number of items allowed in parsed arrays to prevent memory exhaustion
+   */
+  private static readonly MAX_ARRAY_ITEMS = 100;
+
+  /**
+   * Maximum string length for individual fields to prevent excessive memory use
+   */
+  private static readonly MAX_FIELD_LENGTH = 10000;
+
+  /**
    * Parses privacy risks from LLM response
    * @param responseText - LLM response
    * @returns Parsed risks
    */
   static parseRisks(responseText: string): PrivacyRisk[] {
     try {
-      // Robustly extract JSON array from response
-      const risks = this.extractJsonArray<any>(responseText);
+      // Clean markdown and robustly extract JSON array from response
+      const cleanedText = this.cleanMarkdownCodeBlocks(responseText);
+      const risks = this.extractJsonArray<any>(cleanedText);
 
       if (!risks) {
         return [];
       }
 
-      // Validate and transform
+      // Validate and transform (with array length limit)
       return risks
+        .slice(0, this.MAX_ARRAY_ITEMS)
         .filter((risk: any) => risk.title && risk.description && risk.severity)
         .map((risk: any) => ({
           id: generateId(),
-          title: risk.title.trim(),
-          description: risk.description.trim(),
+          title: String(risk.title).trim().slice(0, this.MAX_FIELD_LENGTH),
+          description: String(risk.description)
+            .trim()
+            .slice(0, this.MAX_FIELD_LENGTH),
           severity: this.normalizeSeverity(risk.severity),
-          location: risk.location?.trim() || "General",
-          recommendation: risk.recommendation?.trim() || "",
+          location: (risk.location?.trim() || "General").slice(
+            0,
+            this.MAX_FIELD_LENGTH,
+          ),
+          recommendation: (risk.recommendation?.trim() || "").slice(
+            0,
+            this.MAX_FIELD_LENGTH,
+          ),
         }));
     } catch (error) {
       console.error("Failed to parse risks:", error);
@@ -205,20 +227,27 @@ export class ResponseParser {
    */
   static parseKeyTerms(responseText: string): KeyTerm[] {
     try {
-      // Robustly extract JSON array from response
-      const terms = this.extractJsonArray<any>(responseText);
+      // Clean markdown and robustly extract JSON array from response
+      const cleanedText = this.cleanMarkdownCodeBlocks(responseText);
+      const terms = this.extractJsonArray<any>(cleanedText);
 
       if (!terms) {
         return [];
       }
 
-      // Validate and transform
+      // Validate and transform (with array length limit)
       return terms
+        .slice(0, this.MAX_ARRAY_ITEMS)
         .filter((term: any) => term.term && term.definition)
         .map((term: any) => ({
-          term: term.term.trim(),
-          definition: term.definition.trim(),
-          location: term.location?.trim() || "General",
+          term: String(term.term).trim().slice(0, this.MAX_FIELD_LENGTH),
+          definition: String(term.definition)
+            .trim()
+            .slice(0, this.MAX_FIELD_LENGTH),
+          location: (term.location?.trim() || "General").slice(
+            0,
+            this.MAX_FIELD_LENGTH,
+          ),
         }));
     } catch (error) {
       console.error("Failed to parse key terms:", error);
