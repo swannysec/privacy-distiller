@@ -142,7 +142,8 @@ export const LLM_PROVIDERS: LLMProviders = {
     name: "Hosted Free",
     baseUrl: "", // Uses FREE_TIER_WORKER_URL
     requiresApiKey: false,
-    defaultModels: ["anthropic/claude-3.5-sonnet"],
+    // Note: This must match FREE_TIER_MODEL defined below
+    defaultModels: ["nvidia/nemotron-3-nano-30b-a3b:free"],
   },
   OPENROUTER: {
     id: "openrouter",

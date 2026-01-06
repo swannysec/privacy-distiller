@@ -192,7 +192,9 @@ export class HostedFreeTierProvider extends BaseLLMProvider {
     options: Record<string, unknown> = {},
   ): Promise<string> {
     const requestBody = {
-      model: this.config.model || FREE_TIER_MODEL,
+      // Always use FREE_TIER_MODEL - the hosted free tier is constrained to specific free models
+      // regardless of what model is configured in the UI
+      model: FREE_TIER_MODEL,
       messages: [{ role: "user", content: prompt }],
       temperature:
         (options.temperature as number | undefined) ?? this.config.temperature,
