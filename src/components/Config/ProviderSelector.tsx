@@ -107,7 +107,9 @@ export function ProviderSelector({
               </strong>{" "}
               Analyze policies instantly using{" "}
               <strong>
-                {HostedFreeTierProvider.getFreeTierModelDisplayName()}
+                {tierStatus?.model
+                  ? HostedFreeTierProvider.formatModelDisplayName(tierStatus.model)
+                  : HostedFreeTierProvider.getFreeTierModelDisplayName()}
               </strong>
               . Rate-limited to ensure fair usage. No API key needed.
               <br />

@@ -44,6 +44,28 @@ describe('HostedFreeTierProvider', () => {
     });
   });
 
+  describe('static formatModelDisplayName', () => {
+    it('formats model name with provider prefix', () => {
+      const displayName = HostedFreeTierProvider.formatModelDisplayName('openai/gpt-oss-120b');
+      expect(displayName).toBe('Gpt Oss 120b');
+    });
+
+    it('formats model name with :free suffix', () => {
+      const displayName = HostedFreeTierProvider.formatModelDisplayName('openai/gpt-oss-120b:free');
+      expect(displayName).toBe('Gpt Oss 120b:Free');
+    });
+
+    it('handles model name without provider prefix', () => {
+      const displayName = HostedFreeTierProvider.formatModelDisplayName('gpt-4-turbo');
+      expect(displayName).toBe('Gpt 4 Turbo');
+    });
+
+    it('preserves version numbers with decimals', () => {
+      const displayName = HostedFreeTierProvider.formatModelDisplayName('anthropic/claude-3.5-sonnet');
+      expect(displayName).toBe('Claude 3.5 Sonnet');
+    });
+  });
+
   describe('tier caching methods', () => {
     describe('getCachedStatus', () => {
       it('returns null when no status has been cached', () => {
@@ -63,6 +85,7 @@ describe('HostedFreeTierProvider', () => {
           tier: 'paid-central',
           zdrEnabled: true,
           paidBudgetExhausted: false,
+          model: 'openai/gpt-oss-120b',
         };
 
         vi.spyOn(provider, 'getStatus').mockResolvedValue(mockStatus);
@@ -86,6 +109,7 @@ describe('HostedFreeTierProvider', () => {
           tier: 'paid-central',
           zdrEnabled: true,
           paidBudgetExhausted: false,
+          model: 'openai/gpt-oss-120b',
         };
 
         vi.spyOn(provider, 'getStatus').mockResolvedValue(mockStatus);
@@ -112,6 +136,7 @@ describe('HostedFreeTierProvider', () => {
           tier: 'paid-central',
           zdrEnabled: true,
           paidBudgetExhausted: false,
+          model: 'openai/gpt-oss-120b',
         };
 
         vi.spyOn(provider, 'getStatus').mockResolvedValue(mockStatus);
@@ -130,6 +155,7 @@ describe('HostedFreeTierProvider', () => {
           tier: 'free',
           zdrEnabled: false,
           paidBudgetExhausted: true,
+          model: 'openai/gpt-oss-120b:free',
         };
 
         vi.spyOn(provider, 'getStatus').mockResolvedValue(mockStatus);
@@ -154,6 +180,7 @@ describe('HostedFreeTierProvider', () => {
           tier: 'paid-central',
           zdrEnabled: true,
           paidBudgetExhausted: false,
+          model: 'openai/gpt-oss-120b',
         };
 
         vi.spyOn(provider, 'getStatus').mockResolvedValue(mockStatus);
@@ -172,6 +199,7 @@ describe('HostedFreeTierProvider', () => {
           tier: 'free',
           zdrEnabled: false,
           paidBudgetExhausted: true,
+          model: 'openai/gpt-oss-120b:free',
         };
 
         vi.spyOn(provider, 'getStatus').mockResolvedValue(mockStatus);
@@ -190,6 +218,7 @@ describe('HostedFreeTierProvider', () => {
           tier: 'paid-user',
           zdrEnabled: false,
           paidBudgetExhausted: false,
+          model: '', // BYOK users control their own model
         };
 
         vi.spyOn(provider, 'getStatus').mockResolvedValue(mockStatus);

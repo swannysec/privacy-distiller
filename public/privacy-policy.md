@@ -69,7 +69,7 @@ When our monthly privacy budget is available, your requests use OpenRouter's **Z
 - **No Data Storage:** Your document content is processed and immediately discarded by OpenRouter
 - **No Model Training:** Your data is never used to train AI models
 - **Ephemeral Processing:** OpenRouter explicitly commits to not retaining prompt or completion data from ZDR requests
-- **Model Used:** `nvidia/nemotron-3-nano-30b-a3b` (non-free endpoint with ZDR)
+- **Model Used:** `openai/gpt-oss-120b` (non-free endpoint with ZDR)
 
 For more details, see [OpenRouter's Privacy documentation](https://openrouter.ai/docs/features/privacy).
 
@@ -77,7 +77,7 @@ For more details, see [OpenRouter's Privacy documentation](https://openrouter.ai
 When our monthly ZDR budget is exhausted, the service automatically falls back to OpenRouter's free tier:
 
 - **Telemetry Collection:** OpenRouter or the model provider may collect telemetry data on free tier models
-- **Model Used:** `nvidia/nemotron-3-nano-30b-a3b:free` (free endpoint)
+- **Model Used:** `openai/gpt-oss-120b:free` (free endpoint)
 - **Still Encrypted:** All data is transmitted over HTTPS
 
 The application displays your current tier status so you always know which privacy level applies to your analysis.
