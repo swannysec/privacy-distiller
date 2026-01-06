@@ -119,7 +119,7 @@ function ProcedureCard({ procedure }: ProcedureCardProps) {
           className={`take-action__procedure-toggle ${isExpanded ? "take-action__procedure-toggle--expanded" : ""}`}
           aria-hidden="true"
         >
-          {isExpanded ? "−" : "+"}
+          {isExpanded ? "▲" : "▼"}
         </span>
       </button>
 
