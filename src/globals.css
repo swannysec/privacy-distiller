@@ -3966,6 +3966,24 @@ li {
   outline-offset: 2px;
 }
 
+.take-action__link--disabled {
+  cursor: default;
+  opacity: 0.7;
+  background: var(--bg-tertiary);
+}
+
+.take-action__link--disabled:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--border-color);
+}
+
+.take-action__link-unavailable {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-left: auto;
+}
+
 /* Contact Information */
 .take-action__contacts {
   display: flex;

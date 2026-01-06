@@ -340,3 +340,124 @@ export function validateApiKey(apiKey: string): ValidationResult {
 
   return { valid: errors.length === 0, errors };
 }
+
+
+/**
+ * Simple boolean check if a URL has a safe protocol (http/https only)
+ * Use this for rendering LLM-generated URLs to prevent javascript: XSS
+ * @param url - URL string to check
+ * @returns true if URL is safe to render as href
+ */
+export function isSafeUrl(url: string): boolean {
+  if (!url || typeof url !== "string") {
+    return false;
+  }
+
+  const trimmed = url.trim();
+  if (trimmed.length === 0 || trimmed.length > URL_CONSTRAINTS.MAX_LENGTH) {
+    return false;
+  }
+
+  try {
+    const urlObject = new URL(trimmed);
+    return URL_CONSTRAINTS.ALLOWED_PROTOCOLS.includes(urlObject.protocol);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Simple boolean check if an email address is safe to use in mailto: links
+ * Validates format and prevents header injection attacks
+ * @param email - Email string to check
+ * @returns true if email is safe to use in mailto: href
+ */
+export function isSafeEmail(email: string): boolean {
+  if (!email || typeof email !== "string") {
+    return false;
+  }
+
+  const trimmed = email.trim();
+
+  // Basic length check
+  if (trimmed.length === 0 || trimmed.length > 254) {
+    return false;
+  }
+
+  // Check for header injection attempts (newlines, carriage returns)
+  if (/[\r\n]/.test(trimmed)) {
+    return false;
+  }
+
+  // Check for URL-encoded newlines that could bypass the above check
+  if (/%0[aAdD]/i.test(trimmed)) {
+    return false;
+  }
+
+  // Basic email format validation
+  // Must have exactly one @, with content before and after, and a dot after @
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(trimmed);
+}
+
+/**
+ * Full email validation with detailed error reporting
+ * Use this for form validation; use isSafeEmail() for rendering
+ * @param email - Email to validate
+ * @returns ValidationResult
+ */
+export function validateEmail(email: string): ValidationResult {
+  const errors = [];
+
+  if (!email || typeof email !== "string") {
+    errors.push({
+      field: "email",
+      message: "Email is required",
+      code: ERROR_CODES.INVALID_URL, // Reusing code, could add INVALID_EMAIL
+    });
+    return { valid: false, errors };
+  }
+
+  const trimmed = email.trim();
+
+  if (trimmed.length === 0) {
+    errors.push({
+      field: "email",
+      message: "Email cannot be empty",
+      code: ERROR_CODES.INVALID_URL,
+    });
+    return { valid: false, errors };
+  }
+
+  if (trimmed.length > 254) {
+    errors.push({
+      field: "email",
+      message: "Email is too long (max 254 characters)",
+      code: ERROR_CODES.INVALID_URL,
+    });
+    return { valid: false, errors };
+  }
+
+  // Check for injection attempts
+  if (/[\r\n]/.test(trimmed) || /%0[aAdD]/i.test(trimmed)) {
+    errors.push({
+      field: "email",
+      message: "Email contains invalid characters",
+      code: ERROR_CODES.INVALID_URL,
+    });
+    return { valid: false, errors };
+  }
+
+  // Format validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(trimmed)) {
+    errors.push({
+      field: "email",
+      message: "Email format is invalid",
+      code: ERROR_CODES.INVALID_URL,
+    });
+    return { valid: false, errors };
+  }
+
+  return { valid: true, errors: [] };
+}

@@ -164,6 +164,18 @@ export class ResponseParser {
 
 
   /**
+   * Length limits for privacy rights fields to prevent DoS
+   */
+  private static readonly PRIVACY_RIGHTS_LIMITS = {
+    MAX_URL_LENGTH: 2000,
+    MAX_LABEL_LENGTH: 200,
+    MAX_VALUE_LENGTH: 500,
+    MAX_STEP_LENGTH: 1000,
+    MAX_TIMEFRAME_LENGTH: 200,
+    MAX_ITEMS_PER_ARRAY: 20,
+  } as const;
+
+  /**
    * Valid purposes for privacy links
    */
   private static readonly VALID_LINK_PURPOSES = [
@@ -222,16 +234,16 @@ export class ResponseParser {
 
       const parsed = JSON.parse(jsonMatch[0]);
 
-      // Validate and normalize links
+      // Validate and normalize links (with length limits)
       const links: PrivacyLink[] = [];
       if (Array.isArray(parsed.links)) {
-        for (const link of parsed.links) {
+        for (const link of parsed.links.slice(0, this.PRIVACY_RIGHTS_LIMITS.MAX_ITEMS_PER_ARRAY)) {
           if (link && typeof link.url === "string" && link.url.trim()) {
-            // Only allow http/https URLs
-            const url = link.url.trim();
+            // Only allow http/https URLs within length limit
+            const url = link.url.trim().slice(0, this.PRIVACY_RIGHTS_LIMITS.MAX_URL_LENGTH);
             if (url.startsWith("http://") || url.startsWith("https://")) {
               links.push({
-                label: String(link.label || "Privacy Link").trim(),
+                label: String(link.label || "Privacy Link").trim().slice(0, this.PRIVACY_RIGHTS_LIMITS.MAX_LABEL_LENGTH),
                 url: url,
                 purpose: this.VALID_LINK_PURPOSES.includes(link.purpose)
                   ? link.purpose
@@ -242,45 +254,47 @@ export class ResponseParser {
         }
       }
 
-      // Validate and normalize contacts
+      // Validate and normalize contacts (with length limits)
       const contacts: PrivacyContact[] = [];
       if (Array.isArray(parsed.contacts)) {
-        for (const contact of parsed.contacts) {
+        for (const contact of parsed.contacts.slice(0, this.PRIVACY_RIGHTS_LIMITS.MAX_ITEMS_PER_ARRAY)) {
           if (contact && typeof contact.value === "string" && contact.value.trim()) {
             contacts.push({
               type: this.VALID_CONTACT_TYPES.includes(contact.type)
                 ? contact.type
                 : "email",
-              value: String(contact.value).trim(),
-              purpose: String(contact.purpose || "Privacy inquiries").trim(),
+              value: String(contact.value).trim().slice(0, this.PRIVACY_RIGHTS_LIMITS.MAX_VALUE_LENGTH),
+              purpose: String(contact.purpose || "Privacy inquiries").trim().slice(0, this.PRIVACY_RIGHTS_LIMITS.MAX_LABEL_LENGTH),
             });
           }
         }
       }
 
-      // Validate and normalize procedures
+      // Validate and normalize procedures (with length limits)
       const procedures: PrivacyProcedure[] = [];
       if (Array.isArray(parsed.procedures)) {
-        for (const proc of parsed.procedures) {
+        for (const proc of parsed.procedures.slice(0, this.PRIVACY_RIGHTS_LIMITS.MAX_ITEMS_PER_ARRAY)) {
           if (proc && Array.isArray(proc.steps) && proc.steps.length > 0) {
             const steps = proc.steps
+              .slice(0, this.PRIVACY_RIGHTS_LIMITS.MAX_ITEMS_PER_ARRAY)
               .filter((s: unknown) => typeof s === "string" && s.trim())
-              .map((s: string) => s.trim());
+              .map((s: string) => s.trim().slice(0, this.PRIVACY_RIGHTS_LIMITS.MAX_STEP_LENGTH));
 
             if (steps.length > 0) {
               const procedure: PrivacyProcedure = {
                 right: this.VALID_RIGHTS.includes(proc.right)
                   ? proc.right
                   : "other",
-                title: String(proc.title || "Privacy Procedure").trim(),
+                title: String(proc.title || "Privacy Procedure").trim().slice(0, this.PRIVACY_RIGHTS_LIMITS.MAX_LABEL_LENGTH),
                 steps: steps,
               };
 
-              // Add requirements if present
+              // Add requirements if present (with limits)
               if (Array.isArray(proc.requirements) && proc.requirements.length > 0) {
                 procedure.requirements = proc.requirements
+                  .slice(0, this.PRIVACY_RIGHTS_LIMITS.MAX_ITEMS_PER_ARRAY)
                   .filter((r: unknown) => typeof r === "string" && r.trim())
-                  .map((r: string) => r.trim());
+                  .map((r: string) => r.trim().slice(0, this.PRIVACY_RIGHTS_LIMITS.MAX_STEP_LENGTH));
               }
 
               procedures.push(procedure);
@@ -289,12 +303,12 @@ export class ResponseParser {
         }
       }
 
-      // Validate and normalize timeframes
+      // Validate and normalize timeframes (with length limits)
       const timeframes: string[] = [];
       if (Array.isArray(parsed.timeframes)) {
-        for (const tf of parsed.timeframes) {
+        for (const tf of parsed.timeframes.slice(0, this.PRIVACY_RIGHTS_LIMITS.MAX_ITEMS_PER_ARRAY)) {
           if (typeof tf === "string" && tf.trim()) {
-            timeframes.push(tf.trim());
+            timeframes.push(tf.trim().slice(0, this.PRIVACY_RIGHTS_LIMITS.MAX_TIMEFRAME_LENGTH));
           }
         }
       }
