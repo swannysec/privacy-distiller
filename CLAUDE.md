@@ -575,20 +575,35 @@ mcp__conport__log_custom_data(
 
 ### Automatic Triggers
 
-These agents should be invoked WITHOUT user prompting:
+These agents should be invoked WITHOUT user prompting.
 
-| Trigger Condition | Agent/Skill to Invoke |
-|-------------------|----------------------|
-| About to write UI code | `frontend-design` skill |
-| Working with PDFs | `pdf` skill |
-| About to commit code | `pre-commit-check` skill (runs sub-agents for review) |
-| Completing significant code chunk | `pr-review-toolkit:code-reviewer` agent |
-| Library loading errors | `troubleshooting-bundler-compatibility` skill |
-| Adding/updating dependencies | `dependency-management:legacy-modernizer` agent |
-| Security-sensitive code | `security-pro:security-auditor` agent |
-| UI changes with user input | `frontend-mobile-security:frontend-security-coder` agent |
-| API/backend changes | `backend-api-security:backend-security-coder` agent |
-| Structural/architectural changes | `code-review-ai:architect-review` agent |
+**CRITICAL: Timing Matters**
+
+Skills and agents should be invoked at the RIGHT TIME during development, not just before commit:
+
+| Phase | Trigger | Agent/Skill |
+|-------|---------|-------------|
+| **BEFORE writing code** | Planning any UI component | `frontend-design` skill |
+| **BEFORE writing code** | Planning feature with external/LLM data | `security-pro:security-auditor` |
+| **DURING development** | Working with PDFs | `pdf` skill |
+| **DURING development** | Adding/updating dependencies | `dependency-management:legacy-modernizer` |
+| **DURING development** | Library loading errors | `troubleshooting-bundler-compatibility` skill |
+| **AFTER completing code** | Any significant code chunk | `pr-review-toolkit:code-reviewer` |
+| **AFTER completing code** | UI changes with user input | `frontend-mobile-security:frontend-security-coder` |
+| **AFTER completing code** | API/backend changes | `backend-api-security:backend-security-coder` |
+| **AFTER completing code** | Structural/architectural changes | `code-review-ai:architect-review` |
+| **BEFORE commit** | Any staged changes | `pre-commit-check` skill |
+| **AFTER bug fix** | Any bug resolution | `post-bug-reflection` skill |
+
+### Why Timing Matters
+
+**Anti-pattern:** Invoking `frontend-design` only at pre-commit time after component is written
+- Result: Component lacks proper styling, requires rework
+
+**Anti-pattern:** Invoking security agents only at pre-commit for LLM-rendering features
+- Result: Insecure patterns baked in, security added as afterthought
+
+**Correct pattern:** Invoke guidance skills BEFORE writing code, review skills AFTER completing code, reflection skills AFTER fixing bugs
 | **After completing any bug fix** | `post-bug-reflection` skill (updates project guidance) |
 
 ### Context7 Mandatory Usage
@@ -714,6 +729,66 @@ Never write tests based on what the API *should* look like. Test what it *actual
 
 3. **Missing links** - Connect related ConPort items to build the knowledge graph.
 
+### Component Development Pitfalls
+
+**Critical Pattern:** New UI components require both functional code AND styling to be considered complete. Styling is not an afterthought.
+
+1. **Creating components without CSS** - A component that renders but lacks styling is incomplete. This includes proper spacing, colors, interactive states, and accessibility features.
+
+2. **Review skills invoked only at commit time** - The `frontend-design` skill should be invoked BEFORE writing component code (for design guidance) and DURING development (for consistency), not just at the end.
+
+**MANDATORY: When Creating Any New UI Component**
+
+1. **Invoke `frontend-design` skill BEFORE writing the component** to understand design patterns
+2. **Plan styling requirements** alongside functional requirements:
+   - Base styles (layout, spacing, colors)
+   - Interactive states (hover, active, focus-visible)
+   - Responsive behavior
+   - Accessibility (focus indicators, ARIA attributes)
+3. **Write CSS in parallel with component code**, not after
+4. **Invoke frontend agent for review** when the component is functionally complete
+
+**Red Flag:** If you're about to commit a new `.tsx` component file without corresponding CSS additions, STOP. The component is incomplete.
+
+### LLM Output Security Pitfalls
+
+**Critical Pattern:** LLM-generated content must be treated as untrusted input, just like user input. LLMs can be manipulated to produce malicious output.
+
+1. **Rendering LLM URLs without validation** - LLM output may contain `javascript:`, `data:`, or other dangerous URL protocols.
+
+   ```typescript
+   // DANGEROUS - LLM could output javascript:alert(1)
+   <a href={llmData.url}>Click here</a>
+   
+   // SAFE - validate protocol before rendering
+   {isSafeUrl(llmData.url) && (
+     <a href={llmData.url}>Click here</a>
+   )}
+   ```
+
+2. **Rendering LLM emails in mailto: links** - LLM output may contain header injection attempts (`%0ABcc:attacker@evil.com`).
+
+3. **No length limits on parsed data** - LLM could produce excessively long strings causing DoS.
+
+**MANDATORY: When Building Features That Render LLM/External Data**
+
+1. **Invoke security agents DURING feature development**, not just at commit:
+   ```
+   Task(subagent_type="security-pro:security-auditor", 
+        prompt="Review this component design for security: it renders LLM-generated URLs and emails...")
+   ```
+
+2. **Apply validation before rendering**:
+   - URLs: Use `isSafeUrl()` from `utils/validation.ts`
+   - Emails: Use `isSafeEmail()` from `utils/validation.ts`
+   - All strings: Apply reasonable length limits
+
+3. **Validate at parsing layer too** (defense in depth):
+   - Add length limits when parsing LLM responses
+   - Validate expected formats/patterns
+
+**Red Flag:** Any `href={data.url}` or `href={\`mailto:${data.email}\`}` where `data` comes from LLM output needs validation.
+
 ### Data Flow and Field Propagation Pitfalls
 
 **Critical Pattern:** When data flows through multiple layers (Service → Hook → Context → Component), fields can be silently dropped at transformation boundaries.
@@ -774,6 +849,9 @@ Before considering the feature complete:
 - ❌ DO NOT start any vite server - only run `npm run build` and `npm test`
 - ❌ DO NOT skip `pre-commit-check` skill after feature additions or major fixes
 - ❌ DO NOT commit significant changes without using `/git-safe-commit` command
+- ❌ DO NOT skip `post-bug-reflection` skill after any bug fix - this is how we prevent recurring bugs
+- ❌ DO NOT create new UI components without corresponding CSS styles
+- ❌ DO NOT render LLM/external data in `href` attributes without validation
 
 ## Agent Invocation Reminders
 
