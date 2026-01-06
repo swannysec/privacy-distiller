@@ -23,7 +23,7 @@ import type {
   ErrorResponse,
   FreeTierErrorCode,
 } from "./types";
-import { parseEnvBoolean, parseEnvList } from "./types";
+import { parseEnvBoolean, parseEnvList, TIER_MODELS } from "./types";
 import { validateTurnstileToken } from "./turnstile";
 import { checkRateLimit } from "./ratelimit";
 import { selectApiKey, getFreeStatus } from "./keySelector";
@@ -560,6 +560,7 @@ async function handleStatus(
       tier: "free",
       zdrEnabled: false,
       paidBudgetExhausted: true,
+      model: TIER_MODELS.FREE,
     };
 
     return jsonResponse(status, 200, corsHeaders);

@@ -39,6 +39,8 @@ export interface FreeTierStatus {
   zdrEnabled: boolean;
   /** Whether the paid budget is exhausted (triggers fallback to free tier) */
   paidBudgetExhausted: boolean;
+  /** The model being used for this tier (for display purposes) */
+  model: string;
 }
 
 /**
@@ -81,6 +83,21 @@ export class HostedFreeTierProvider extends BaseLLMProvider {
    */
   static getFreeTierModelDisplayName(): string {
     const model = FREE_TIER_MODEL;
+    // Extract the model name portion after the provider prefix
+    const modelName = model.includes("/") ? model.split("/")[1] : model;
+    // Convert to title case and clean up
+    return modelName
+      .replace(/-/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase())
+      .replace(/(\d+)\.(\d+)/g, "$1.$2"); // Keep version numbers intact
+  }
+
+  /**
+   * Format any model name for display
+   * @param model - Full model ID (e.g., "openai/gpt-oss-120b:free")
+   * @returns Human-readable model name (e.g., "Gpt Oss 120b:free")
+   */
+  static formatModelDisplayName(model: string): string {
     // Extract the model name portion after the provider prefix
     const modelName = model.includes("/") ? model.split("/")[1] : model;
     // Convert to title case and clean up

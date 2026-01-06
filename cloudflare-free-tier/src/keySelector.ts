@@ -155,6 +155,7 @@ export async function getFreeStatus(env: Env): Promise<{
   tier: ServiceTier;
   zdrEnabled: boolean;
   paidBudgetExhausted: boolean;
+  model: string;
 }> {
   const dailyLimit = parseInt(env.GLOBAL_DAILY_LIMIT || "50", 10);
 
@@ -174,6 +175,7 @@ export async function getFreeStatus(env: Env): Promise<{
   const paidBudgetExhausted = !balance.available;
   const tier: ServiceTier = paidBudgetExhausted ? "free" : "paid-central";
   const zdrEnabled = !paidBudgetExhausted;
+  const model = paidBudgetExhausted ? TIER_MODELS.FREE : TIER_MODELS.PAID_CENTRAL;
 
   return {
     free_available: rateLimit.allowed && balance.available,
@@ -184,5 +186,6 @@ export async function getFreeStatus(env: Env): Promise<{
     tier,
     zdrEnabled,
     paidBudgetExhausted,
+    model,
   };
 }

@@ -129,6 +129,9 @@ export interface FreeTierStatus {
 
   // Whether the paid budget is exhausted (triggers fallback to free tier)
   paidBudgetExhausted: boolean;
+
+  // The model being used for this tier (for display purposes)
+  model: string;
 }
 
 /**
