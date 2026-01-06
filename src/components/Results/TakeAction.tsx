@@ -5,6 +5,7 @@ import type {
   PrivacyContact,
   PrivacyProcedure,
 } from "../../types";
+import { isSafeUrl, isSafeEmail } from "../../utils/validation";
 
 interface TakeActionProps {
   privacyRights?: PrivacyRightsInfo | null;
@@ -119,7 +120,7 @@ function ProcedureCard({ procedure }: ProcedureCardProps) {
           className={`take-action__procedure-toggle ${isExpanded ? "take-action__procedure-toggle--expanded" : ""}`}
           aria-hidden="true"
         >
-          {isExpanded ? "−" : "+"}
+          {isExpanded ? "▲" : "▼"}
         </span>
       </button>
 
@@ -218,29 +219,42 @@ export function TakeAction({
             <span aria-hidden="true">🔗</span> Quick Links
           </h3>
           <div className="take-action__links">
-            {links.map((link, index) => (
-              <a
-                key={index}
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="take-action__link"
-              >
-                <span
-                  className="take-action__link-icon"
-                  aria-hidden="true"
+            {links.map((link, index) =>
+              isSafeUrl(link.url) ? (
+                <a
+                  key={index}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="take-action__link"
                 >
-                  {getLinkIcon(link.purpose)}
+                  <span
+                    className="take-action__link-icon"
+                    aria-hidden="true"
+                  >
+                    {getLinkIcon(link.purpose)}
+                  </span>
+                  <span className="take-action__link-label">{link.label}</span>
+                  <span
+                    className="take-action__link-arrow"
+                    aria-hidden="true"
+                  >
+                    →
+                  </span>
+                </a>
+              ) : (
+                <span key={index} className="take-action__link take-action__link--disabled">
+                  <span
+                    className="take-action__link-icon"
+                    aria-hidden="true"
+                  >
+                    {getLinkIcon(link.purpose)}
+                  </span>
+                  <span className="take-action__link-label">{link.label}</span>
+                  <span className="take-action__link-unavailable">(link unavailable)</span>
                 </span>
-                <span className="take-action__link-label">{link.label}</span>
-                <span
-                  className="take-action__link-arrow"
-                  aria-hidden="true"
-                >
-                  →
-                </span>
-              </a>
-            ))}
+              )
+            )}
           </div>
         </section>
       )}
@@ -264,7 +278,7 @@ export function TakeAction({
                   <span className="take-action__contact-type">
                     {getContactLabel(contact.type)}:
                   </span>
-                  {contact.type === "email" ? (
+                  {contact.type === "email" && isSafeEmail(contact.value) ? (
                     <a
                       href={`mailto:${contact.value}`}
                       className="take-action__contact-value take-action__contact-value--email"

@@ -5,6 +5,9 @@ import {
   validateDocumentText,
   validateApiKey,
   validateLLMConfig,
+  isSafeUrl,
+  isSafeEmail,
+  validateEmail,
 } from "./validation";
 
 describe("validation utils", () => {
@@ -338,6 +341,117 @@ describe("validation utils", () => {
     it("should reject empty config object", () => {
       const result = validateLLMConfig({});
       expect(result.valid).toBe(false);
+    });
+  });
+
+  describe("isSafeUrl", () => {
+    it("should accept valid HTTPS URLs", () => {
+      expect(isSafeUrl("https://example.com")).toBe(true);
+      expect(isSafeUrl("https://example.com/path?query=1")).toBe(true);
+    });
+
+    it("should accept valid HTTP URLs", () => {
+      expect(isSafeUrl("http://example.com")).toBe(true);
+    });
+
+    it("should reject javascript: protocol (XSS prevention)", () => {
+      expect(isSafeUrl("javascript:alert(1)")).toBe(false);
+      expect(isSafeUrl("javascript:alert('xss')")).toBe(false);
+      expect(isSafeUrl("JAVASCRIPT:alert(1)")).toBe(false);
+    });
+
+    it("should reject data: protocol", () => {
+      expect(isSafeUrl("data:text/html,<script>alert(1)</script>")).toBe(false);
+    });
+
+    it("should reject vbscript: protocol", () => {
+      expect(isSafeUrl("vbscript:msgbox(1)")).toBe(false);
+    });
+
+    it("should reject invalid URLs", () => {
+      expect(isSafeUrl("not a url")).toBe(false);
+      expect(isSafeUrl("")).toBe(false);
+      expect(isSafeUrl("   ")).toBe(false);
+    });
+
+    it("should reject null/undefined", () => {
+      expect(isSafeUrl(null as unknown as string)).toBe(false);
+      expect(isSafeUrl(undefined as unknown as string)).toBe(false);
+    });
+
+    it("should reject URLs exceeding max length", () => {
+      const longUrl = "https://example.com/" + "a".repeat(3000);
+      expect(isSafeUrl(longUrl)).toBe(false);
+    });
+  });
+
+  describe("isSafeEmail", () => {
+    it("should accept valid email addresses", () => {
+      expect(isSafeEmail("user@example.com")).toBe(true);
+      expect(isSafeEmail("privacy@company.org")).toBe(true);
+      expect(isSafeEmail("data.protection@sub.domain.com")).toBe(true);
+    });
+
+    it("should reject header injection attempts with newlines", () => {
+      expect(isSafeEmail("test@example.com\nBcc:attacker@evil.com")).toBe(false);
+      expect(isSafeEmail("test@example.com\r\nBcc:attacker@evil.com")).toBe(false);
+    });
+
+    it("should reject URL-encoded header injection", () => {
+      expect(isSafeEmail("test@example.com%0ABcc:attacker@evil.com")).toBe(false);
+      expect(isSafeEmail("test@example.com%0DBcc:attacker@evil.com")).toBe(false);
+      expect(isSafeEmail("test@example.com%0aBcc:attacker@evil.com")).toBe(false);
+      expect(isSafeEmail("test@example.com%0dBcc:attacker@evil.com")).toBe(false);
+    });
+
+    it("should reject invalid email formats", () => {
+      expect(isSafeEmail("notanemail")).toBe(false);
+      expect(isSafeEmail("@example.com")).toBe(false);
+      expect(isSafeEmail("user@")).toBe(false);
+      expect(isSafeEmail("user@domain")).toBe(false);
+      expect(isSafeEmail("")).toBe(false);
+    });
+
+    it("should reject null/undefined", () => {
+      expect(isSafeEmail(null as unknown as string)).toBe(false);
+      expect(isSafeEmail(undefined as unknown as string)).toBe(false);
+    });
+
+    it("should reject emails exceeding max length", () => {
+      const longEmail = "a".repeat(250) + "@example.com";
+      expect(isSafeEmail(longEmail)).toBe(false);
+    });
+  });
+
+  describe("validateEmail", () => {
+    it("should return valid for proper email addresses", () => {
+      const result = validateEmail("user@example.com");
+      expect(result.valid).toBe(true);
+      expect(result.errors).toEqual([]);
+    });
+
+    it("should return error for empty email", () => {
+      const result = validateEmail("");
+      expect(result.valid).toBe(false);
+      expect(result.errors[0].message).toContain("required");
+    });
+
+    it("should return error for invalid format", () => {
+      const result = validateEmail("notanemail");
+      expect(result.valid).toBe(false);
+      expect(result.errors[0].message).toContain("format");
+    });
+
+    it("should return error for injection attempts", () => {
+      const result = validateEmail("test@example.com%0ABcc:attacker@evil.com");
+      expect(result.valid).toBe(false);
+      expect(result.errors[0].message).toContain("invalid characters");
+    });
+
+    it("should return error for too long email", () => {
+      const result = validateEmail("a".repeat(250) + "@example.com");
+      expect(result.valid).toBe(false);
+      expect(result.errors[0].message).toContain("too long");
     });
   });
 });

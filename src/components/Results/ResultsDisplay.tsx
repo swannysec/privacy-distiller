@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useCallback } from "react";
 import { SummaryView } from "./SummaryView";
 import { RiskHighlights } from "./RiskHighlights";
 import { KeyTermsGlossary } from "./KeyTermsGlossary";
@@ -76,6 +76,16 @@ export function ResultsDisplay({
   className = "",
 }: ResultsDisplayProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("summary");
+  const tabsRef = useRef<HTMLDivElement>(null);
+
+  // Navigate to Take Action tab and scroll into view
+  const navigateToAction = useCallback(() => {
+    setViewMode("action");
+    // Use requestAnimationFrame to ensure DOM has updated before scrolling
+    requestAnimationFrame(() => {
+      tabsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, []);
 
   // Guard against missing or incomplete result data
   if (!result || !result.documentMetadata) {
@@ -214,7 +224,7 @@ ${result.keyTerms?.map((t) => `- ${t.term}: ${t.definition}`).join("\n") || "No 
           scorecard={result.scorecard}
           onNavigateToAction={
             result.privacyRights?.hasActionableInfo
-              ? () => setViewMode("action")
+              ? navigateToAction
               : undefined
           }
         />
@@ -222,6 +232,7 @@ ${result.keyTerms?.map((t) => `- ${t.term}: ${t.definition}`).join("\n") || "No 
 
       {/* View Mode Tabs - only shown when not in "all" mode */}
       <div
+        ref={tabsRef}
         className="results-tabs tabs"
         role="tablist"
         aria-label="Results view mode"
@@ -277,7 +288,7 @@ ${result.keyTerms?.map((t) => `- ${t.term}: ${t.definition}`).join("\n") || "No 
             className={`tab ${viewMode === "action" ? "tab--active" : ""}`}
             onClick={() => setViewMode("action")}
           >
-            <span aria-hidden="true">🔑</span> Take Action
+            Take Action
           </button>
         )}
         <button
