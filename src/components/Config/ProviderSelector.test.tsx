@@ -2,28 +2,32 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { ProviderSelector } from "./ProviderSelector";
 
-vi.mock("../../utils/constants", () => ({
-  LLM_PROVIDERS: {
-    OPENROUTER: {
-      id: "openrouter",
-      name: "OpenRouter",
-      requiresApiKey: true,
-      baseUrl: "https://openrouter.ai/api/v1",
+vi.mock("../../utils/constants", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../utils/constants")>();
+  return {
+    ...actual,
+    LLM_PROVIDERS: {
+      OPENROUTER: {
+        id: "openrouter",
+        name: "OpenRouter",
+        requiresApiKey: true,
+        baseUrl: "https://openrouter.ai/api/v1",
+      },
+      OLLAMA: {
+        id: "ollama",
+        name: "Ollama",
+        requiresApiKey: false,
+        baseUrl: "http://localhost:11434",
+      },
+      LMSTUDIO: {
+        id: "lmstudio",
+        name: "LM Studio",
+        requiresApiKey: false,
+        baseUrl: "http://localhost:1234/v1",
+      },
     },
-    OLLAMA: {
-      id: "ollama",
-      name: "Ollama",
-      requiresApiKey: false,
-      baseUrl: "http://localhost:11434",
-    },
-    LMSTUDIO: {
-      id: "lmstudio",
-      name: "LM Studio",
-      requiresApiKey: false,
-      baseUrl: "http://localhost:1234/v1",
-    },
-  },
-}));
+  };
+});
 
 describe("ProviderSelector", () => {
   const mockOnChange = vi.fn();
@@ -42,22 +46,34 @@ describe("ProviderSelector", () => {
     it("should render select dropdown", () => {
       render(<ProviderSelector value="openrouter" onChange={mockOnChange} />);
 
-      expect(screen.getByRole("combobox", { name: /LLM Provider/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("combobox", { name: /LLM Provider/i }),
+      ).toBeInTheDocument();
     });
 
     it("should render all provider options", () => {
       render(<ProviderSelector value="openrouter" onChange={mockOnChange} />);
 
-      expect(screen.getByRole("option", { name: /OpenRouter/i })).toBeInTheDocument();
-      expect(screen.getByRole("option", { name: /Ollama/i })).toBeInTheDocument();
-      expect(screen.getByRole("option", { name: /LM Studio/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("option", { name: /OpenRouter/i }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("option", { name: /Ollama/i }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("option", { name: /LM Studio/i }),
+      ).toBeInTheDocument();
     });
 
     it("should show (Local) suffix for local providers", () => {
       render(<ProviderSelector value="openrouter" onChange={mockOnChange} />);
 
-      expect(screen.getByRole("option", { name: "Ollama (Local)" })).toBeInTheDocument();
-      expect(screen.getByRole("option", { name: "LM Studio (Local)" })).toBeInTheDocument();
+      expect(
+        screen.getByRole("option", { name: "Ollama (Local)" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("option", { name: "LM Studio (Local)" }),
+      ).toBeInTheDocument();
     });
 
     it("should have the correct option selected", () => {
@@ -85,22 +101,32 @@ describe("ProviderSelector", () => {
     it("should show OpenRouter info when OpenRouter is selected", () => {
       render(<ProviderSelector value="openrouter" onChange={mockOnChange} />);
 
-      expect(screen.getByText(/Recommended for large documents/i)).toBeInTheDocument();
-      expect(screen.getByRole("link", { name: /openrouter.ai\/keys/i })).toBeInTheDocument();
+      expect(
+        screen.getByText(/Recommended for large documents/i),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("link", { name: /openrouter.ai\/keys/i }),
+      ).toBeInTheDocument();
     });
 
     it("should show Ollama info when Ollama is selected", () => {
       render(<ProviderSelector value="ollama" onChange={mockOnChange} />);
 
       expect(screen.getByText(/Runs models locally/i)).toBeInTheDocument();
-      expect(screen.getByRole("link", { name: /ollama.ai/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("link", { name: /ollama.ai/i }),
+      ).toBeInTheDocument();
     });
 
     it("should show LM Studio info when LM Studio is selected", () => {
       render(<ProviderSelector value="lmstudio" onChange={mockOnChange} />);
 
-      expect(screen.getByText(/Desktop app for local models/i)).toBeInTheDocument();
-      expect(screen.getByRole("link", { name: /lmstudio.ai/i })).toBeInTheDocument();
+      expect(
+        screen.getByText(/Desktop app for local models/i),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("link", { name: /lmstudio.ai/i }),
+      ).toBeInTheDocument();
     });
 
     it('should have links with target="_blank" and rel="noopener noreferrer"', () => {
@@ -203,7 +229,12 @@ describe("ProviderSelector", () => {
     });
 
     it("should render without onChange (edge case)", () => {
-      render(<ProviderSelector value="openrouter" onChange={undefined as unknown as (value: string) => void} />);
+      render(
+        <ProviderSelector
+          value="openrouter"
+          onChange={undefined as unknown as (value: string) => void}
+        />,
+      );
 
       const select = screen.getByRole("combobox", { name: /LLM Provider/i });
       expect(select).toBeInTheDocument();

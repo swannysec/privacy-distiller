@@ -1,5 +1,13 @@
-import { LLM_PROVIDERS, FREE_TIER_ENABLED } from "../../utils/constants";
-import { HostedFreeTierProvider } from "../../services/llm/HostedFreeTierProvider";
+import { useState, useEffect } from "react";
+import {
+  LLM_PROVIDERS,
+  FREE_TIER_ENABLED,
+  TIER_MESSAGES,
+} from "../../utils/constants";
+import {
+  HostedFreeTierProvider,
+  type FreeTierStatus,
+} from "../../services/llm/HostedFreeTierProvider";
 import type { LLMProvider } from "../../types";
 
 interface ProviderSelectorProps {
@@ -15,6 +23,29 @@ export function ProviderSelector({
   disabled = false,
   className = "",
 }: ProviderSelectorProps) {
+  const [tierStatus, setTierStatus] = useState<FreeTierStatus | null>(null);
+  const [statusLoading, setStatusLoading] = useState(false);
+
+  // Fetch tier status when hosted-free is selected
+  useEffect(() => {
+    if (value === "hosted-free" && FREE_TIER_ENABLED) {
+      setStatusLoading(true);
+      const provider = new HostedFreeTierProvider({});
+      provider
+        .getStatus()
+        .then((status) => {
+          setTierStatus(status);
+        })
+        .catch(() => {
+          // On error, leave status as null (will show "unknown" messaging)
+          setTierStatus(null);
+        })
+        .finally(() => {
+          setStatusLoading(false);
+        });
+    }
+  }, [value]);
+
   // Get providers, filtering out hosted-free if not enabled
   const providers = Object.values(LLM_PROVIDERS).filter((p) => {
     if (!p) return false;
@@ -29,6 +60,19 @@ export function ProviderSelector({
   };
 
   const currentProvider = LLM_PROVIDERS[value.toUpperCase().replace("-", "_")];
+
+  // Get tier-specific messaging
+  const getTierMessage = () => {
+    if (statusLoading) {
+      return TIER_MESSAGES.unknown;
+    }
+    if (!tierStatus) {
+      return TIER_MESSAGES.unknown;
+    }
+    return TIER_MESSAGES[tierStatus.tier] || TIER_MESSAGES.unknown;
+  };
+
+  const tierMessage = getTierMessage();
 
   return (
     <div className={`input-group ${className}`}>
@@ -68,17 +112,35 @@ export function ProviderSelector({
               . Rate-limited to ensure fair usage. No API key needed.
               <br />
               <span className="privacy-note">
-                🔒 <strong>Privacy:</strong> Uses OpenRouter&apos;s{" "}
-                <a
-                  href="https://openrouter.ai/docs/guides/features/zdr"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Zero Data Retention
-                </a>{" "}
-                when available. Your policy content is not stored or used for
-                training. If ZDR budget is exhausted, falls back to free tier
-                (telemetry may be collected).
+                🔒 <strong>Privacy:</strong>{" "}
+                {tierMessage.zdrLink ? (
+                  <>
+                    {tierMessage.privacyNote.split("Zero Data Retention")[0]}
+                    <a
+                      href={tierMessage.zdrLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Zero Data Retention
+                    </a>
+                    {tierMessage.privacyNote.includes("Zero Data Retention")
+                      ? tierMessage.privacyNote.split("Zero Data Retention")[1]
+                      : ""}
+                    {!tierMessage.privacyNote.includes("Zero Data Retention") &&
+                      ` ${tierMessage.privacyNote}`}
+                  </>
+                ) : (
+                  tierMessage.privacyNote
+                )}
+                {tierStatus && (
+                  <span
+                    className={`tier-badge tier-badge--${tierStatus.tier}`}
+                    title={`Current tier: ${tierStatus.tier}`}
+                  >
+                    {" "}
+                    [{tierMessage.badge}]
+                  </span>
+                )}
               </span>
             </>
           )}

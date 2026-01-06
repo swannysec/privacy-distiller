@@ -61,15 +61,30 @@ When you analyze a document, the text content is sent to your chosen LLM provide
 
 **Hosted Free Tier Privacy:**
 
-The "Hosted Free" option uses OpenRouter's **Zero Data Retention (ZDR)** endpoint. This provides enhanced privacy protections:
+The "Hosted Free" option operates on a **two-tier system** designed to balance privacy protection with service sustainability:
+
+**Paid-Central Tier (Primary):**
+When our monthly privacy budget is available, your requests use OpenRouter's **Zero Data Retention (ZDR)** endpoint:
 
 - **No Data Storage:** Your document content is processed and immediately discarded by OpenRouter
 - **No Model Training:** Your data is never used to train AI models
 - **Ephemeral Processing:** OpenRouter explicitly commits to not retaining prompt or completion data from ZDR requests
+- **Model Used:** `nvidia/nemotron-3-nano-30b-a3b` (non-free endpoint with ZDR)
+
+For more details, see [OpenRouter's Privacy documentation](https://openrouter.ai/docs/features/privacy).
+
+**Free Tier (Fallback):**
+When our monthly ZDR budget is exhausted, the service automatically falls back to OpenRouter's free tier:
+
+- **Telemetry Collection:** OpenRouter or the model provider may collect telemetry data on free tier models
+- **Model Used:** `nvidia/nemotron-3-nano-30b-a3b:free` (free endpoint)
+- **Still Encrypted:** All data is transmitted over HTTPS
+
+The application displays your current tier status so you always know which privacy level applies to your analysis.
+
+**Both Tiers:**
 - **Cloudflare Turnstile:** Bot verification is handled by Cloudflare Turnstile, which collects only technical signals (not personal data) to verify you are human
 - **Rate Limiting:** Our proxy service enforces daily limits but does not log or store your document content
-
-For more details, see [OpenRouter's ZDR documentation](https://openrouter.ai/docs/features/privacy).
 
 **Important Notes:**
 - When using cloud providers (OpenRouter), document content is transmitted over encrypted connections (HTTPS)
@@ -183,7 +198,7 @@ For privacy-related questions or concerns:
 |-----------|------------|---------------|--------------|
 | Personal Info | No | N/A | N/A |
 | Account Data | No | N/A | N/A |
-| Document Content | Temporarily | Your device (browser memory) | LLM provider (your choice) - ZDR endpoint for free tier |
+| Document Content | Temporarily | Your device (browser memory) | LLM provider (your choice) - ZDR when available on free tier, telemetry on fallback |
 | API Keys | Yes (user-provided) | Your device (session storage) | LLM provider only (not needed for free tier) |
 | Preferences | Yes | Your device (browser local storage) | No one |
 | URLs Analyzed | Temporarily | Your device (browser memory) | CORS proxy (if used) |

@@ -397,6 +397,53 @@ export const FREE_TIER_ENABLED: boolean =
 export const FREE_TIER_MODEL: string =
   import.meta.env.VITE_FREE_TIER_MODEL || "nvidia/nemotron-3-nano-30b-a3b:free";
 
+/**
+ * Service tier types for hosted free provider
+ */
+export type ServiceTier = "paid-central" | "free" | "paid-user";
+
+/**
+ * Tier-specific messaging for UI display
+ * Used by ProviderSelector to show appropriate privacy information
+ */
+export interface TierMessage {
+  badge: string;
+  privacyNote: string;
+  zdrLink?: string;
+}
+
+export interface TierMessages {
+  "paid-central": TierMessage;
+  free: TierMessage;
+  "paid-user": TierMessage;
+  unknown: TierMessage;
+}
+
+export const TIER_MESSAGES: TierMessages = {
+  "paid-central": {
+    badge: "ZDR Active",
+    privacyNote:
+      "Your policy content is not stored or used for training thanks to Zero Data Retention.",
+    zdrLink: "https://openrouter.ai/docs/features/privacy",
+  },
+  free: {
+    badge: "Free Tier",
+    privacyNote:
+      "Telemetry may be collected by OpenRouter or the model provider on free tier models.",
+  },
+  "paid-user": {
+    badge: "Your API Key",
+    privacyNote:
+      "Privacy settings depend on your OpenRouter account configuration.",
+    zdrLink: "https://openrouter.ai/docs/features/privacy",
+  },
+  unknown: {
+    badge: "Checking...",
+    privacyNote:
+      "Checking service status. Privacy protection depends on availability.",
+  },
+};
+
 // CORS proxy fallback chain
 // When CLOUDFLARE_WORKER_URL is set, it will be used exclusively
 // When empty, falls back to direct fetch only (no third-party proxies)
