@@ -12,6 +12,7 @@ import type {
   LLMConfig,
   AnalysisResult,
   PrivacyScorecard,
+  PrivacyRightsInfo,
   PartialFailure,
 } from "../../types";
 
@@ -28,6 +29,7 @@ interface PolicyAnalyzerResult {
   risks: AnalysisResult["risks"];
   keyTerms: AnalysisResult["keyTerms"];
   scorecard: PrivacyScorecard | null;
+  privacyRights: PrivacyRightsInfo | null;
   timestamp: Date;
   llmConfig: LLMConfig;
   partialFailures: PartialFailure[];
@@ -110,6 +112,8 @@ export class PolicyAnalyzer {
     const risksPrompt = PromptTemplates.privacyRisks(truncatedText);
     const termsPrompt = PromptTemplates.keyTerms(truncatedText);
     const scorecardPrompt = PromptTemplates.privacyScorecard(truncatedText);
+    const privacyRightsPrompt =
+      PromptTemplates.exercisePrivacyRights(truncatedText);
 
     // Execute all requests in parallel with graceful degradation
     const results = await Promise.allSettled([
@@ -119,6 +123,7 @@ export class PolicyAnalyzer {
       this.provider.complete(risksPrompt),
       this.provider.complete(termsPrompt),
       this.provider.complete(scorecardPrompt),
+      this.provider.complete(privacyRightsPrompt),
     ]);
 
     if (progressCallback) {
@@ -156,6 +161,11 @@ export class PolicyAnalyzer {
         ? ResponseParser.parseScorecard(results[5].value)
         : null;
 
+    const privacyRights =
+      results[6].status === "fulfilled"
+        ? ResponseParser.parsePrivacyRights(results[6].value)
+        : null;
+
     // Track partial failures
     const partialFailures: PartialFailure[] = [];
     const sectionNames = [
@@ -165,6 +175,7 @@ export class PolicyAnalyzer {
       "privacy risks",
       "key terms",
       "privacy scorecard",
+      "take action",
     ];
     results.forEach((result, index) => {
       if (result.status === "rejected") {
@@ -198,6 +209,7 @@ export class PolicyAnalyzer {
       risks,
       keyTerms,
       scorecard,
+      privacyRights,
       timestamp: new Date(),
       llmConfig: this.config,
       partialFailures,
@@ -255,11 +267,23 @@ export class PolicyAnalyzer {
 
     // Generate privacy scorecard
     if (progressCallback) {
-      progressCallback(88, "Calculating privacy scorecard...");
+      progressCallback(82, "Calculating privacy scorecard...");
     }
     const scorecardPrompt = PromptTemplates.privacyScorecard(truncatedText);
     const scorecardResponse = await this.provider.complete(scorecardPrompt);
     const scorecard = ResponseParser.parseScorecard(scorecardResponse);
+
+    // Extract actionable privacy rights info
+    if (progressCallback) {
+      progressCallback(92, "Extracting actionable rights info...");
+    }
+    const privacyRightsPrompt =
+      PromptTemplates.exercisePrivacyRights(truncatedText);
+    const privacyRightsResponse =
+      await this.provider.complete(privacyRightsPrompt);
+    const privacyRights = ResponseParser.parsePrivacyRights(
+      privacyRightsResponse,
+    );
 
     // Build result
     return {
@@ -284,6 +308,7 @@ export class PolicyAnalyzer {
       risks,
       keyTerms,
       scorecard,
+      privacyRights,
       timestamp: new Date(),
       llmConfig: this.config,
       partialFailures: [],

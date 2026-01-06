@@ -159,6 +159,73 @@ export interface PrivacyScorecard {
 }
 
 /**
+ * Link to a privacy-related page or dashboard
+ */
+export interface PrivacyLink {
+  /** What the link is for (e.g., "Privacy Settings Dashboard") */
+  label: string;
+  /** The URL */
+  url: string;
+  /** What action this enables */
+  purpose:
+    | "settings"
+    | "data-request"
+    | "opt-out"
+    | "deletion"
+    | "general"
+    | "other";
+}
+
+/**
+ * Contact information for privacy requests
+ */
+export interface PrivacyContact {
+  /** Type of contact */
+  type: "email" | "address" | "phone" | "form" | "dpo";
+  /** The contact value (email address, physical address, etc.) */
+  value: string;
+  /** What this contact is for */
+  purpose: string;
+}
+
+/**
+ * Step-by-step procedure for exercising a privacy right
+ */
+export interface PrivacyProcedure {
+  /** The right this procedure exercises */
+  right:
+    | "access"
+    | "deletion"
+    | "portability"
+    | "opt-out"
+    | "correction"
+    | "objection"
+    | "other";
+  /** Human-readable title */
+  title: string;
+  /** Simplified step-by-step instructions */
+  steps: string[];
+  /** Any requirements or conditions mentioned */
+  requirements?: string[];
+}
+
+/**
+ * Actionable privacy rights information extracted from policy
+ */
+export interface PrivacyRightsInfo {
+  /** Direct links to privacy-related pages/dashboards */
+  links: PrivacyLink[];
+  /** Contact information for privacy requests */
+  contacts: PrivacyContact[];
+  /** Step-by-step procedures for exercising rights */
+  procedures: PrivacyProcedure[];
+  /** Response timeframes mentioned in policy */
+  timeframes: string[];
+  /** Whether meaningful actionable info was found */
+  hasActionableInfo: boolean;
+}
+
+/**
  * Partial failure from Promise.allSettled analysis
  */
 export interface PartialFailure {
@@ -205,6 +272,8 @@ export interface AnalysisResult {
   keyTerms: KeyTerm[];
   /** Privacy scorecard with scores per category (null if unavailable) */
   scorecard?: PrivacyScorecard | null;
+  /** Actionable privacy rights info (null if unavailable) */
+  privacyRights?: PrivacyRightsInfo | null;
   /** When the analysis was completed */
   timestamp: Date;
   /** LLM configuration used */
