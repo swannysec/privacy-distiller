@@ -45,10 +45,10 @@ export type ServiceTier = "paid-central" | "free" | "paid-user";
  */
 export const TIER_MODELS = {
   /** Paid tier model (without :free suffix) - ZDR enabled */
-  PAID_CENTRAL: "nvidia/nemotron-3-nano-30b-a3b",
+  PAID_CENTRAL: "openai/gpt-oss-120b",
 
   /** Free tier model (with :free suffix) - telemetry collected */
-  FREE: "nvidia/nemotron-3-nano-30b-a3b:free",
+  FREE: "openai/gpt-oss-120b:free",
 } as const;
 
 /**
