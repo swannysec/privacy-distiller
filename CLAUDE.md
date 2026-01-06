@@ -476,7 +476,8 @@ Before declaring a bug fix "done":
 - [ ] **Build passes**: `npm run build` succeeds
 - [ ] **Existing tests pass**: No regressions introduced
 - [ ] **Debug journal closed**: If used, root cause and solution documented
-- [ ] **Committed**: Used `/git-safe-commit` command
+- [ ] **Post-bug reflection completed**: Invoke `post-bug-reflection` skill to analyze root cause and update project guidance
+- [ ] **Committed**: Used `/git-safe-commit` command (include any documentation updates from reflection)
 
 ### Refactoring Complete Checklist
 
@@ -516,6 +517,7 @@ Before ending any session:
 
 **Project Skills**:
 - **`troubleshooting-bundler-compatibility`** - Use for library loading failures, CDN issues, worker errors, or bundler compatibility problems
+- **`post-bug-reflection`** - **MANDATORY after any bug fix.** Analyzes root causes and updates CLAUDE.md/skills/commands to prevent recurrence. Invoked automatically per Agent Triggering Rules.
 
 ### Quick Fix vs Deep Investigation Decision Tree
 
@@ -587,6 +589,7 @@ These agents should be invoked WITHOUT user prompting:
 | UI changes with user input | `frontend-mobile-security:frontend-security-coder` agent |
 | API/backend changes | `backend-api-security:backend-security-coder` agent |
 | Structural/architectural changes | `code-review-ai:architect-review` agent |
+| **After completing any bug fix** | `post-bug-reflection` skill (updates project guidance) |
 
 ### Context7 Mandatory Usage
 
