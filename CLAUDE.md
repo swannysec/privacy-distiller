@@ -476,7 +476,8 @@ Before declaring a bug fix "done":
 - [ ] **Build passes**: `npm run build` succeeds
 - [ ] **Existing tests pass**: No regressions introduced
 - [ ] **Debug journal closed**: If used, root cause and solution documented
-- [ ] **Committed**: Used `/git-safe-commit` command
+- [ ] **Post-bug reflection completed**: Invoke `post-bug-reflection` skill to analyze root cause and update project guidance
+- [ ] **Committed**: Used `/git-safe-commit` command (include any documentation updates from reflection)
 
 ### Refactoring Complete Checklist
 
@@ -516,6 +517,7 @@ Before ending any session:
 
 **Project Skills**:
 - **`troubleshooting-bundler-compatibility`** - Use for library loading failures, CDN issues, worker errors, or bundler compatibility problems
+- **`post-bug-reflection`** - **MANDATORY after any bug fix.** Analyzes root causes and updates CLAUDE.md/skills/commands to prevent recurrence. Invoked automatically per Agent Triggering Rules.
 
 ### Quick Fix vs Deep Investigation Decision Tree
 
@@ -587,6 +589,7 @@ These agents should be invoked WITHOUT user prompting:
 | UI changes with user input | `frontend-mobile-security:frontend-security-coder` agent |
 | API/backend changes | `backend-api-security:backend-security-coder` agent |
 | Structural/architectural changes | `code-review-ai:architect-review` agent |
+| **After completing any bug fix** | `post-bug-reflection` skill (updates project guidance) |
 
 ### Context7 Mandatory Usage
 
@@ -685,6 +688,24 @@ After launching parallel agents:
 
 3. **Return type assumptions** - Check actual return types; `null` is not the same as `{}` or `[]`.
 
+**MANDATORY: Before Writing Any Test**
+
+```
+# Step 1: Get overview of the file being tested
+mcp__plugin_serena_serena__get_symbols_overview(relative_path="src/path/to/file.ts", depth=1)
+
+# Step 2: Inspect specific method signatures and implementations
+mcp__plugin_serena_serena__find_symbol(name_path_pattern="ClassName/methodName", include_body=true)
+
+# Step 3: Only then write tests that match the ACTUAL:
+#   - Method signatures (static vs instance)
+#   - Parameter types and names
+#   - Return types (null vs undefined vs empty object/array)
+#   - Property names in return objects
+```
+
+Never write tests based on what the API *should* look like. Test what it *actually* looks like.
+
 ### Context Management Pitfalls
 
 1. **Forgetting to log decisions** - Log decisions IMMEDIATELY when making them, not at end of session.
@@ -692,6 +713,50 @@ After launching parallel agents:
 2. **Stale progress entries** - Update progress status in real-time as work completes.
 
 3. **Missing links** - Connect related ConPort items to build the knowledge graph.
+
+### Data Flow and Field Propagation Pitfalls
+
+**Critical Pattern:** When data flows through multiple layers (Service → Hook → Context → Component), fields can be silently dropped at transformation boundaries.
+
+1. **Manual object transformation drops new fields** - When code explicitly lists fields during transformation (instead of using spread operators), new fields added upstream won't propagate downstream.
+
+   ```typescript
+   // FRAGILE - new fields must be manually added here
+   const result: AnalysisResult = {
+     id: analysisResult.id,
+     risks: analysisResult.risks,
+     // privacyRights was added to PolicyAnalyzerResult but forgotten here
+   };
+   
+   // BETTER - new fields automatically included
+   const result: AnalysisResult = {
+     ...analysisResult,
+     documentMetadata: { ... },  // Only override what differs
+   };
+   ```
+
+2. **Assuming intermediate layers "just work"** - Never assume that adding a field to a service automatically makes it available in the UI. Trace the full path.
+
+**MANDATORY: When Adding a New Field to Any Data Type**
+
+Before considering the feature complete:
+
+1. **Trace the full data path** - Use Serena to identify all transformation points:
+   ```
+   search_for_pattern("TypeName = {")
+   find_referencing_symbols("TypeName")
+   ```
+
+2. **Verify at each transformation boundary** - Check that the field is explicitly included or spread operator is used.
+
+3. **Test end-to-end** - Add a simple test or manual verification that the field arrives at the consumption point.
+
+4. **Common transformation locations in this codebase:**
+   - `src/hooks/useAnalysisOrchestrator.ts` - transforms `PolicyAnalyzerResult` → `AnalysisResult`
+   - `src/contexts/AnalysisContext.tsx` - spreads results (usually safe)
+   - `src/utils/pdfExport.ts` - consumes fields for PDF generation
+
+**Red Flag:** Any code that looks like `{ field1: source.field1, field2: source.field2, ... }` is a maintenance risk. Either refactor to use spread operators or add a comment marking it as a transformation boundary that needs updating when new fields are added.
 
 ## Forbidden Actions
 
