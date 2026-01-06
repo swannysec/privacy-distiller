@@ -10,6 +10,10 @@ import type {
   RiskLevel,
   PrivacyScorecard,
   ScorecardCategory,
+  PrivacyRightsInfo,
+  PrivacyLink,
+  PrivacyContact,
+  PrivacyProcedure,
 } from "../../types";
 
 export class ResponseParser {
@@ -154,6 +158,162 @@ export class ResponseParser {
       return scorecard;
     } catch (error) {
       console.error("Failed to parse scorecard:", error);
+      return null;
+    }
+  }
+
+
+  /**
+   * Valid purposes for privacy links
+   */
+  private static readonly VALID_LINK_PURPOSES = [
+    "settings",
+    "data-request",
+    "opt-out",
+    "deletion",
+    "general",
+    "other",
+  ] as const;
+
+  /**
+   * Valid contact types
+   */
+  private static readonly VALID_CONTACT_TYPES = [
+    "email",
+    "address",
+    "phone",
+    "form",
+    "dpo",
+  ] as const;
+
+  /**
+   * Valid rights for procedures
+   */
+  private static readonly VALID_RIGHTS = [
+    "access",
+    "deletion",
+    "portability",
+    "opt-out",
+    "correction",
+    "objection",
+    "other",
+  ] as const;
+
+  /**
+   * Parse privacy rights info from LLM response
+   * @param responseText - Raw LLM response
+   * @returns Parsed privacy rights info or null if parsing fails
+   */
+  static parsePrivacyRights(responseText: string): PrivacyRightsInfo | null {
+    try {
+      // Clean the response - remove markdown code blocks if present
+      const cleanedText = responseText
+        .replace(/```json\s*/gi, "")
+        .replace(/```\s*/g, "")
+        .trim();
+
+      // Try to extract JSON object from response
+      const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
+
+      if (!jsonMatch) {
+        console.error("No JSON object found in privacy rights response");
+        return null;
+      }
+
+      const parsed = JSON.parse(jsonMatch[0]);
+
+      // Validate and normalize links
+      const links: PrivacyLink[] = [];
+      if (Array.isArray(parsed.links)) {
+        for (const link of parsed.links) {
+          if (link && typeof link.url === "string" && link.url.trim()) {
+            // Only allow http/https URLs
+            const url = link.url.trim();
+            if (url.startsWith("http://") || url.startsWith("https://")) {
+              links.push({
+                label: String(link.label || "Privacy Link").trim(),
+                url: url,
+                purpose: this.VALID_LINK_PURPOSES.includes(link.purpose)
+                  ? link.purpose
+                  : "other",
+              });
+            }
+          }
+        }
+      }
+
+      // Validate and normalize contacts
+      const contacts: PrivacyContact[] = [];
+      if (Array.isArray(parsed.contacts)) {
+        for (const contact of parsed.contacts) {
+          if (contact && typeof contact.value === "string" && contact.value.trim()) {
+            contacts.push({
+              type: this.VALID_CONTACT_TYPES.includes(contact.type)
+                ? contact.type
+                : "email",
+              value: String(contact.value).trim(),
+              purpose: String(contact.purpose || "Privacy inquiries").trim(),
+            });
+          }
+        }
+      }
+
+      // Validate and normalize procedures
+      const procedures: PrivacyProcedure[] = [];
+      if (Array.isArray(parsed.procedures)) {
+        for (const proc of parsed.procedures) {
+          if (proc && Array.isArray(proc.steps) && proc.steps.length > 0) {
+            const steps = proc.steps
+              .filter((s: unknown) => typeof s === "string" && s.trim())
+              .map((s: string) => s.trim());
+
+            if (steps.length > 0) {
+              const procedure: PrivacyProcedure = {
+                right: this.VALID_RIGHTS.includes(proc.right)
+                  ? proc.right
+                  : "other",
+                title: String(proc.title || "Privacy Procedure").trim(),
+                steps: steps,
+              };
+
+              // Add requirements if present
+              if (Array.isArray(proc.requirements) && proc.requirements.length > 0) {
+                procedure.requirements = proc.requirements
+                  .filter((r: unknown) => typeof r === "string" && r.trim())
+                  .map((r: string) => r.trim());
+              }
+
+              procedures.push(procedure);
+            }
+          }
+        }
+      }
+
+      // Validate and normalize timeframes
+      const timeframes: string[] = [];
+      if (Array.isArray(parsed.timeframes)) {
+        for (const tf of parsed.timeframes) {
+          if (typeof tf === "string" && tf.trim()) {
+            timeframes.push(tf.trim());
+          }
+        }
+      }
+
+      // Determine if we have actionable info
+      const hasActionableInfo =
+        links.length > 0 ||
+        contacts.length > 0 ||
+        procedures.length > 0;
+
+      return {
+        links,
+        contacts,
+        procedures,
+        timeframes,
+        hasActionableInfo,
+      };
+    } catch (error) {
+      console.error("Failed to parse privacy rights:", error);
       return null;
     }
   }

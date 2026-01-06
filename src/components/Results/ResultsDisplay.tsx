@@ -3,6 +3,7 @@ import { SummaryView } from "./SummaryView";
 import { RiskHighlights } from "./RiskHighlights";
 import { KeyTermsGlossary } from "./KeyTermsGlossary";
 import { PrivacyScorecard } from "./PrivacyScorecard";
+import { TakeAction } from "./TakeAction";
 import { Button } from "../Common";
 import { formatDate } from "../../utils/formatting";
 import type { AnalysisResult, PrivacyRisk } from "../../types";
@@ -14,7 +15,7 @@ interface ResultsDisplayProps {
   className?: string;
 }
 
-type ViewMode = "summary" | "risks" | "terms" | "all";
+type ViewMode = "summary" | "risks" | "terms" | "action" | "all";
 
 interface RiskCounts {
   critical: number;
@@ -208,7 +209,16 @@ ${result.keyTerms?.map((t) => `- ${t.term}: ${t.definition}`).join("\n") || "No 
       </div>
 
       {/* Privacy Scorecard - prominently displayed */}
-      {result.scorecard && <PrivacyScorecard scorecard={result.scorecard} />}
+      {result.scorecard && (
+        <PrivacyScorecard
+          scorecard={result.scorecard}
+          onNavigateToAction={
+            result.privacyRights?.hasActionableInfo
+              ? () => setViewMode("action")
+              : undefined
+          }
+        />
+      )}
 
       {/* View Mode Tabs - only shown when not in "all" mode */}
       <div
@@ -259,6 +269,17 @@ ${result.keyTerms?.map((t) => `- ${t.term}: ${t.definition}`).join("\n") || "No 
             <span className="tab__count">{result.keyTerms.length}</span>
           )}
         </button>
+        {result.privacyRights?.hasActionableInfo && (
+          <button
+            type="button"
+            role="tab"
+            aria-selected={viewMode === "action"}
+            className={`tab ${viewMode === "action" ? "tab--active" : ""}`}
+            onClick={() => setViewMode("action")}
+          >
+            <span aria-hidden="true">🔑</span> Take Action
+          </button>
+        )}
         <button
           type="button"
           role="tab"
@@ -283,6 +304,11 @@ ${result.keyTerms?.map((t) => `- ${t.term}: ${t.definition}`).join("\n") || "No 
         {(viewMode === "terms" || viewMode === "all") && (
           <KeyTermsGlossary keyTerms={result.keyTerms} />
         )}
+
+        {(viewMode === "action" || viewMode === "all") &&
+          result.privacyRights?.hasActionableInfo && (
+            <TakeAction privacyRights={result.privacyRights} />
+          )}
       </div>
     </div>
   );

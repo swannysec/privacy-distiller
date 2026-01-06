@@ -12,6 +12,8 @@ type DisplayScorecard = Partial<ScorecardType>;
 interface PrivacyScorecardProps {
   scorecard: DisplayScorecard;
   className?: string;
+  /** Callback to navigate to Take Action tab (only passed when actionable info exists) */
+  onNavigateToAction?: () => void;
 }
 
 interface CategoryConfig {
@@ -111,12 +113,14 @@ const CATEGORY_KEYS: (keyof Omit<
 interface CategoryRowProps {
   category: string;
   data: ScorecardCategory | undefined;
+  /** Callback for action link (only for userRights category) */
+  onActionClick?: () => void;
 }
 
 /**
  * Individual category score row component
  */
-function CategoryRow({ category, data }: CategoryRowProps) {
+function CategoryRow({ category, data, onActionClick }: CategoryRowProps) {
   const config = CATEGORY_CONFIG[category];
   const score = data?.score || 5;
   const percentage = (score / 10) * 100;
@@ -147,6 +151,16 @@ function CategoryRow({ category, data }: CategoryRowProps) {
       {data?.summary && (
         <p className="scorecard__category-summary">{data.summary}</p>
       )}
+      {category === "userRights" && onActionClick && (
+        <button
+          type="button"
+          className="scorecard__action-link"
+          onClick={onActionClick}
+          aria-label="View how to exercise your privacy rights"
+        >
+          <span aria-hidden="true">🔑</span> See how to exercise your rights →
+        </button>
+      )}
     </div>
   );
 }
@@ -158,6 +172,7 @@ function CategoryRow({ category, data }: CategoryRowProps) {
 export function PrivacyScorecard({
   scorecard,
   className = "",
+  onNavigateToAction,
 }: PrivacyScorecardProps) {
   // Calculate overall score if not provided
   const overallScore = useMemo(() => {
@@ -241,6 +256,9 @@ export function PrivacyScorecard({
             key={category}
             category={category}
             data={scorecard[category]}
+            onActionClick={
+              category === "userRights" ? onNavigateToAction : undefined
+            }
           />
         ))}
       </div>

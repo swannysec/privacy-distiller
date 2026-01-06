@@ -6,6 +6,10 @@ import type {
   PrivacyScorecard,
   PrivacyRisk,
   KeyTerm,
+  PrivacyRightsInfo,
+  PrivacyLink,
+  PrivacyContact,
+  PrivacyProcedure,
 } from "../types";
 
 interface CategoryConfig {
@@ -631,6 +635,172 @@ export async function exportToPDF(result: AnalysisResult): Promise<void> {
 
       y += 4;
     }
+  }
+
+  // ===== TAKE ACTION (Privacy Rights) =====
+  if (result.privacyRights && result.privacyRights.hasActionableInfo) {
+    checkPageBreak(30);
+
+    doc.setFontSize(16);
+    doc.setTextColor(...primaryColor);
+    doc.setFont("helvetica", "bold");
+    doc.text("Take Action", margin, y, { align: "left" });
+    y += 10;
+
+    const privacyRights = result.privacyRights as PrivacyRightsInfo;
+
+    // Links section
+    if (privacyRights.links && privacyRights.links.length > 0) {
+      checkPageBreak(20);
+
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(...textColor);
+      doc.text("Privacy Links", margin, y, { align: "left" });
+      y += 7;
+
+      for (const link of privacyRights.links) {
+        checkPageBreak(12);
+        const typedLink = link as PrivacyLink;
+
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(...textColor);
+        doc.text(`• ${typedLink.label}`, margin + 4, y, { align: "left" });
+        y += 5;
+
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(...mutedColor);
+        const urlLines = doc.splitTextToSize(typedLink.url, contentWidth - 8);
+        for (const line of urlLines) {
+          checkPageBreak(5);
+          doc.text(line, margin + 8, y, { align: "left" });
+          y += 5;
+        }
+        y += 2;
+      }
+      y += 4;
+    }
+
+    // Contacts section
+    if (privacyRights.contacts && privacyRights.contacts.length > 0) {
+      checkPageBreak(20);
+
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(...textColor);
+      doc.text("Privacy Contacts", margin, y, { align: "left" });
+      y += 7;
+
+      for (const contact of privacyRights.contacts) {
+        checkPageBreak(12);
+        const typedContact = contact as PrivacyContact;
+
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(...textColor);
+        const contactLabel = typedContact.type === "dpo" ? "DPO" : typedContact.type.charAt(0).toUpperCase() + typedContact.type.slice(1);
+        doc.text(`• ${contactLabel}: ${typedContact.value}`, margin + 4, y, { align: "left" });
+        y += 5;
+
+        if (typedContact.purpose) {
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(...mutedColor);
+          const purposeLines = doc.splitTextToSize(typedContact.purpose, contentWidth - 8);
+          for (const line of purposeLines) {
+            checkPageBreak(5);
+            doc.text(line, margin + 8, y, { align: "left" });
+            y += 5;
+          }
+        }
+        y += 2;
+      }
+      y += 4;
+    }
+
+    // Procedures section
+    if (privacyRights.procedures && privacyRights.procedures.length > 0) {
+      checkPageBreak(20);
+
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(...textColor);
+      doc.text("How to Exercise Your Rights", margin, y, { align: "left" });
+      y += 7;
+
+      for (const procedure of privacyRights.procedures) {
+        checkPageBreak(18);
+        const typedProcedure = procedure as PrivacyProcedure;
+
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(...textColor);
+        doc.text(typedProcedure.title, margin + 4, y, { align: "left" });
+        y += 6;
+
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(...mutedColor);
+
+        // Numbered steps
+        for (let i = 0; i < typedProcedure.steps.length; i++) {
+          checkPageBreak(6);
+          const stepLines = doc.splitTextToSize(`${i + 1}. ${typedProcedure.steps[i]}`, contentWidth - 12);
+          for (const line of stepLines) {
+            checkPageBreak(5);
+            doc.text(line, margin + 8, y, { align: "left" });
+            y += 5;
+          }
+        }
+
+        // Requirements if any
+        if (typedProcedure.requirements && typedProcedure.requirements.length > 0) {
+          checkPageBreak(10);
+          doc.setFont("helvetica", "italic");
+          doc.text("Requirements:", margin + 8, y, { align: "left" });
+          y += 5;
+
+          for (const req of typedProcedure.requirements) {
+            checkPageBreak(5);
+            const reqLines = doc.splitTextToSize(`- ${req}`, contentWidth - 16);
+            for (const line of reqLines) {
+              checkPageBreak(5);
+              doc.text(line, margin + 12, y, { align: "left" });
+              y += 5;
+            }
+          }
+        }
+        y += 4;
+      }
+      y += 2;
+    }
+
+    // Timeframes section
+    if (privacyRights.timeframes && privacyRights.timeframes.length > 0) {
+      checkPageBreak(20);
+
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(...textColor);
+      doc.text("Response Timeframes", margin, y, { align: "left" });
+      y += 7;
+
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(...mutedColor);
+
+      for (const timeframe of privacyRights.timeframes) {
+        checkPageBreak(6);
+        const timeframeLines = doc.splitTextToSize(`• ${timeframe}`, contentWidth - 4);
+        for (const line of timeframeLines) {
+          checkPageBreak(5);
+          doc.text(line, margin + 4, y, { align: "left" });
+          y += 5;
+        }
+      }
+      y += 4;
+    }
+
+    drawLine();
   }
 
   // ===== FOOTER =====
