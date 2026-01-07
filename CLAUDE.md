@@ -879,6 +879,7 @@ Before considering the feature complete:
 - ❌ DO NOT skip `post-bug-reflection` skill after any bug fix - this is how we prevent recurring bugs
 - ❌ DO NOT create new UI components without corresponding CSS styles
 - ❌ DO NOT render LLM/external data in `href` attributes without validation
+- ❌ DO NOT push directly to `main` branch - always create a PR unless explicitly directed otherwise by the user
 
 ## Agent Invocation Reminders
 
