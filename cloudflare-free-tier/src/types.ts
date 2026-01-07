@@ -43,11 +43,11 @@ export type ServiceTier = "paid-central" | "free" | "paid-user";
  * Worker controls model selection - frontend should not override these
  */
 export const TIER_MODELS = {
-  /** Paid tier model (without :free suffix) - ZDR enabled */
-  PAID_CENTRAL: "openai/gpt-oss-120b",
+  /** Paid tier model (without :free suffix) - ZDR enabled via DeepInfra */
+  PAID_CENTRAL: "nvidia/nemotron-3-nano-30b-a3b",
 
   /** Free tier model (with :free suffix) - telemetry collected */
-  FREE: "openai/gpt-oss-120b:free",
+  FREE: "nvidia/nemotron-3-nano-30b-a3b:free",
 } as const;
 
 /**

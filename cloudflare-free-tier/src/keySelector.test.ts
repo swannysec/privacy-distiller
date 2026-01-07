@@ -201,7 +201,7 @@ describe("keySelector", () => {
       expect(result.free_available).toBe(true);
       expect(result.daily_remaining).toBe(75);
       expect(result.balance_remaining).toBe(4.25);
-      expect(result.model).toBe("openai/gpt-oss-120b");
+      expect(result.model).toBe("nvidia/nemotron-3-nano-30b-a3b");
     });
 
     it("returns free tier status when balance is exhausted", async () => {
@@ -214,7 +214,7 @@ describe("keySelector", () => {
       expect(result.zdrEnabled).toBe(false);
       expect(result.paidBudgetExhausted).toBe(true);
       expect(result.free_available).toBe(false);
-      expect(result.model).toBe("openai/gpt-oss-120b:free");
+      expect(result.model).toBe("nvidia/nemotron-3-nano-30b-a3b:free");
     });
 
     it("returns unavailable when rate limit exceeded", async () => {
