@@ -24,7 +24,7 @@ preview_urls = false
 # Privacy-first: disable all logging
 # No IP addresses, user data, or request details are tracked
 [observability]
-enabled = true
+enabled = false
 
 # KV namespace for rate limiting and balance caching
 # Create with: wrangler kv:namespace create "PRIVACY_DISTILLER_KV"
