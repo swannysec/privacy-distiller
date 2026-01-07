@@ -412,8 +412,9 @@ async function handleAnalyze(
         );
       }
 
+      // Include OpenRouter error details for debugging
       return errorResponse(
-        "Failed to process request",
+        `Failed to process request: ${openRouterResponse.status} - ${errorText.substring(0, 200)}`,
         "INTERNAL_ERROR",
         502,
         corsHeaders,

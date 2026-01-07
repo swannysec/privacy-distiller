@@ -8,6 +8,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Build a simple web application hosted on GitHub Pages that uses LLMs (local or OpenRouter) to analyze, break down, and summarize privacy policies via URL or PDF upload for laypeople, including highlighting significant privacy risks.
 
+**Production URL:** https://privacydistiller.com
+
 ## Development Environment
 
 **This project uses devcontainers** - Anthropic's recommended best practice for Claude Code.

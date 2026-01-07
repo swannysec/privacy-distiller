@@ -8,8 +8,7 @@
  * @copyright 2025-2026 John D. Swanson
  */
 
-import type { Env } from './types';
-import { parseEnvNumber } from './types';
+import type { Env } from "./types";
 
 /**
  * Result of a balance check operation
@@ -55,7 +54,7 @@ interface OpenRouterBalanceData {
 /**
  * KV key for balance cache storage
  */
-const BALANCE_CACHE_KEY = 'balance:free_key';
+const BALANCE_CACHE_KEY = "balance:free_key";
 
 /**
  * Cache TTL in seconds (5 minutes)
@@ -70,26 +69,32 @@ const CACHE_TTL = 300;
  * @param env - Cloudflare Worker environment bindings
  * @returns Cached balance result or null if unavailable
  */
-export async function getCachedBalance(env: Env): Promise<BalanceResult | null> {
+export async function getCachedBalance(
+  env: Env,
+): Promise<BalanceResult | null> {
   try {
-    const cached = await env.POLICY_ANALYZER_KV.get<BalanceCacheEntry>(BALANCE_CACHE_KEY, 'json');
+    const cached = await env.PRIVACY_DISTILLER_KV.get<BalanceCacheEntry>(
+      BALANCE_CACHE_KEY,
+      "json",
+    );
 
     if (!cached) {
       return null;
     }
 
-    const spendingCap = parseEnvNumber(env.FREE_KEY_SPENDING_CAP, 5.0);
-    const available = cached.remaining > 0 && cached.remaining > cached.limit - spendingCap;
+    // Available if there's meaningful balance remaining
+    // Threshold of $0.30 avoids edge cases near zero
+    const available = cached.remaining > 0.3;
 
     return {
       available,
       remaining: cached.remaining,
-      limit: spendingCap,
+      limit: cached.limit,
       cached: true,
       checkedAt: cached.checkedAt,
     };
   } catch (error) {
-    console.warn('Failed to read cached balance:', error);
+    console.warn("Failed to read cached balance:", error);
     return null;
   }
 }
@@ -104,29 +109,29 @@ export async function getCachedBalance(env: Env): Promise<BalanceResult | null> 
  * @returns Fresh balance result from API
  */
 export async function refreshBalance(env: Env): Promise<BalanceResult> {
-  const spendingCap = parseEnvNumber(env.FREE_KEY_SPENDING_CAP, 5.0);
-
   try {
     if (!env.FREE_API_KEY) {
-      throw new Error('FREE_API_KEY not configured');
+      throw new Error("FREE_API_KEY not configured");
     }
 
     // Call OpenRouter balance endpoint
-    const response = await fetch('https://openrouter.ai/api/v1/auth/key', {
-      method: 'GET',
+    const response = await fetch("https://openrouter.ai/api/v1/auth/key", {
+      method: "GET",
       headers: {
         Authorization: `Bearer ${env.FREE_API_KEY}`,
       },
     });
 
     if (!response.ok) {
-      throw new Error(`OpenRouter API returned ${response.status}: ${response.statusText}`);
+      throw new Error(
+        `OpenRouter API returned ${response.status}: ${response.statusText}`,
+      );
     }
 
     const data = (await response.json()) as OpenRouterBalanceData;
 
-    if (!data.data || typeof data.data.limit_remaining !== 'number') {
-      throw new Error('Invalid response format from OpenRouter API');
+    if (!data.data || typeof data.data.limit_remaining !== "number") {
+      throw new Error("Invalid response format from OpenRouter API");
     }
 
     const { limit, usage, limit_remaining } = data.data;
@@ -140,38 +145,42 @@ export async function refreshBalance(env: Env): Promise<BalanceResult> {
       checkedAt,
     };
 
-    await env.POLICY_ANALYZER_KV.put(BALANCE_CACHE_KEY, JSON.stringify(cacheEntry), {
-      expirationTtl: CACHE_TTL,
-    });
+    await env.PRIVACY_DISTILLER_KV.put(
+      BALANCE_CACHE_KEY,
+      JSON.stringify(cacheEntry),
+      {
+        expirationTtl: CACHE_TTL,
+      },
+    );
 
     // Determine if balance is available
-    // Available if: remaining > 0 AND remaining > (limit - spending_cap)
-    // This ensures we stop before hitting the spending cap
-    const available = limit_remaining > 0 && limit_remaining > limit - spendingCap;
+    // Threshold of $0.30 avoids edge cases near zero
+    // Budget is controlled via OpenRouter key settings, not in code
+    const available = limit_remaining > 0.3;
 
     return {
       available,
       remaining: limit_remaining,
-      limit: spendingCap,
+      limit,
       cached: false,
       checkedAt,
     };
   } catch (error) {
-    console.error('Failed to refresh balance from OpenRouter:', error);
+    console.error("Failed to refresh balance from OpenRouter:", error);
 
     // Try to use cached value as fallback
     const cached = await getCachedBalance(env);
     if (cached) {
-      console.warn('Using stale cached balance after API failure');
+      console.warn("Using stale cached balance after API failure");
       return cached;
     }
 
     // If no cache and API failed, fail open with a warning
-    console.warn('No cached balance available, failing open');
+    console.warn("No cached balance available, failing open");
     return {
       available: true, // Fail open - allow request to proceed
-      remaining: spendingCap,
-      limit: spendingCap,
+      remaining: 1.0, // Assume some balance available
+      limit: 10.0, // Default limit
       cached: false,
       checkedAt: new Date().toISOString(),
     };

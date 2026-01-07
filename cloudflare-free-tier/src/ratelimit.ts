@@ -98,7 +98,7 @@ export async function getRateLimitStatus(env: Env): Promise<RateLimitResult> {
   const resetAt = getNextMidnightUTC();
 
   try {
-    const value = await env.POLICY_ANALYZER_KV.get<RateLimitEntry>(key, "json");
+    const value = await env.PRIVACY_DISTILLER_KV.get<RateLimitEntry>(key, "json");
 
     if (!value) {
       // No requests yet today
@@ -170,7 +170,7 @@ export async function checkRateLimit(env: Env): Promise<RateLimitResult> {
 
   try {
     // Get current count
-    const value = await env.POLICY_ANALYZER_KV.get<RateLimitEntry>(key, "json");
+    const value = await env.PRIVACY_DISTILLER_KV.get<RateLimitEntry>(key, "json");
     const currentCount = value?.count || 0;
 
     // Check if we're at or over the limit
@@ -194,7 +194,7 @@ export async function checkRateLimit(env: Env): Promise<RateLimitResult> {
 
     // Store with 24-hour TTL for automatic cleanup
     // expirationTtl is in seconds
-    await env.POLICY_ANALYZER_KV.put(key, JSON.stringify(entry), {
+    await env.PRIVACY_DISTILLER_KV.put(key, JSON.stringify(entry), {
       expirationTtl: 86400, // 24 hours
     });
 

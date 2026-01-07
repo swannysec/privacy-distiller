@@ -12,13 +12,12 @@
  */
 export interface Env {
   // KV Namespace for rate limiting and balance caching
-  POLICY_ANALYZER_KV: KVNamespace;
+  PRIVACY_DISTILLER_KV: KVNamespace;
 
   // Environment variables (strings in Workers)
   TURNSTILE_ENABLED: string;
   GLOBAL_LIMIT_ENABLED: string;
   GLOBAL_DAILY_LIMIT: string;
-  FREE_KEY_SPENDING_CAP: string;
   ALLOWED_ORIGINS: string;
 
   // Secrets (set via wrangler secret put)

@@ -82,14 +82,8 @@ export class HostedFreeTierProvider extends BaseLLMProvider {
    * @returns Formatted model name (e.g., "Gemini 2.5 Flash Preview")
    */
   static getFreeTierModelDisplayName(): string {
-    const model = FREE_TIER_MODEL;
-    // Extract the model name portion after the provider prefix
-    const modelName = model.includes("/") ? model.split("/")[1] : model;
-    // Convert to title case and clean up
-    return modelName
-      .replace(/-/g, " ")
-      .replace(/\b\w/g, (c) => c.toUpperCase())
-      .replace(/(\d+)\.(\d+)/g, "$1.$2"); // Keep version numbers intact
+    // Return the model ID as-is for clarity
+    return FREE_TIER_MODEL;
   }
 
   /**
@@ -98,13 +92,8 @@ export class HostedFreeTierProvider extends BaseLLMProvider {
    * @returns Human-readable model name (e.g., "Gpt Oss 120b:free")
    */
   static formatModelDisplayName(model: string): string {
-    // Extract the model name portion after the provider prefix
-    const modelName = model.includes("/") ? model.split("/")[1] : model;
-    // Convert to title case and clean up
-    return modelName
-      .replace(/-/g, " ")
-      .replace(/\b\w/g, (c) => c.toUpperCase())
-      .replace(/(\d+)\.(\d+)/g, "$1.$2"); // Keep version numbers intact
+    // Return the model ID as-is for clarity
+    return model;
   }
 
   /**

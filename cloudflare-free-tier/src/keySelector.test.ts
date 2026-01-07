@@ -26,11 +26,10 @@ const mockCheckBalance = vi.mocked(checkBalance);
 describe("keySelector", () => {
   // Mock environment with free tier configured
   const mockEnv: Env = {
-    POLICY_ANALYZER_KV: {} as KVNamespace,
+    PRIVACY_DISTILLER_KV: {} as KVNamespace,
     TURNSTILE_ENABLED: "true",
     GLOBAL_LIMIT_ENABLED: "true",
     GLOBAL_DAILY_LIMIT: "100",
-    FREE_KEY_SPENDING_CAP: "5.00",
     ALLOWED_ORIGINS: "*",
     TURNSTILE_SECRET_KEY: "turnstile-secret",
     FREE_API_KEY: "sk-free-test-key",

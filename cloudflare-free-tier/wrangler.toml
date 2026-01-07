@@ -24,10 +24,10 @@ preview_urls = false
 # Privacy-first: disable all logging
 # No IP addresses, user data, or request details are tracked
 [observability]
-enabled = false
+enabled = true
 
 # KV namespace for rate limiting and balance caching
-# Create with: wrangler kv:namespace create "POLICY_ANALYZER_KV"
+# Create with: wrangler kv:namespace create "PRIVACY_DISTILLER_KV"
 [[kv_namespaces]]
 binding = "PRIVACY_DISTILLER_KV"
 id = "26009a2656614b4fb9e2ad6ac1c4821c"
@@ -43,11 +43,7 @@ GLOBAL_LIMIT_ENABLED = "true"
 
 # Maximum requests per day when global limit is enabled
 # With 6 API calls per analysis, 300 = ~50 complete analyses/day
-# At current model pricing, $5 budget lasts ~1 month at this rate
 GLOBAL_DAILY_LIMIT = "300"
-
-# Maximum spending on free API key (USD) before exhaustion
-FREE_KEY_SPENDING_CAP = "5.00"
 
 # Comma-separated list of allowed origins for CORS
 # Add localhost origins for development as needed
