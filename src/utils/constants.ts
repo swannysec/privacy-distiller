@@ -143,7 +143,7 @@ export const LLM_PROVIDERS: LLMProviders = {
     baseUrl: "", // Uses FREE_TIER_WORKER_URL
     requiresApiKey: false,
     // Note: This must match FREE_TIER_MODEL defined below
-    defaultModels: ["openai/gpt-oss-120b:free"],
+    defaultModels: ["nvidia/nemotron-3-nano-30b-a3b:free"],
   },
   OPENROUTER: {
     id: "openrouter",
@@ -392,10 +392,10 @@ export const FREE_TIER_ENABLED: boolean =
 /**
  * Free tier model to use via OpenRouter
  * Uses a Zero Data Retention (ZDR) endpoint for privacy
- * Default: openai/gpt-oss-120b:free
+ * Default: nvidia/nemotron-3-nano-30b-a3b:free
  */
 export const FREE_TIER_MODEL: string =
-  import.meta.env.VITE_FREE_TIER_MODEL || "openai/gpt-oss-120b:free";
+  import.meta.env.VITE_FREE_TIER_MODEL || "nvidia/nemotron-3-nano-30b-a3b:free";
 
 /**
  * Service tier types for hosted free provider

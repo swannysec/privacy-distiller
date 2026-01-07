@@ -88,7 +88,7 @@ export class HostedFreeTierProvider extends BaseLLMProvider {
 
   /**
    * Format any model name for display
-   * @param model - Full model ID (e.g., "openai/gpt-oss-120b:free")
+   * @param model - Full model ID (e.g., "nvidia/nemotron-3-nano-30b-a3b:free")
    * @returns Human-readable model name (e.g., "Gpt Oss 120b:free")
    */
   static formatModelDisplayName(model: string): string {

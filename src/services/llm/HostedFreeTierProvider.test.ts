@@ -40,7 +40,7 @@ describe("HostedFreeTierProvider", () => {
       expect(typeof displayName).toBe("string");
       expect(displayName.length).toBeGreaterThan(0);
       // Should return the raw model ID as-is
-      expect(displayName).toBe("openai/gpt-oss-120b:free");
+      expect(displayName).toBe("nvidia/nemotron-3-nano-30b-a3b:free");
     });
   });
 
@@ -92,7 +92,7 @@ describe("HostedFreeTierProvider", () => {
           tier: "paid-central",
           zdrEnabled: true,
           paidBudgetExhausted: false,
-          model: "openai/gpt-oss-120b",
+          model: "nvidia/nemotron-3-nano-30b-a3b",
         };
 
         vi.spyOn(provider, "getStatus").mockResolvedValue(mockStatus);
@@ -116,7 +116,7 @@ describe("HostedFreeTierProvider", () => {
           tier: "paid-central",
           zdrEnabled: true,
           paidBudgetExhausted: false,
-          model: "openai/gpt-oss-120b",
+          model: "nvidia/nemotron-3-nano-30b-a3b",
         };
 
         vi.spyOn(provider, "getStatus").mockResolvedValue(mockStatus);
@@ -143,7 +143,7 @@ describe("HostedFreeTierProvider", () => {
           tier: "paid-central",
           zdrEnabled: true,
           paidBudgetExhausted: false,
-          model: "openai/gpt-oss-120b",
+          model: "nvidia/nemotron-3-nano-30b-a3b",
         };
 
         vi.spyOn(provider, "getStatus").mockResolvedValue(mockStatus);
@@ -162,7 +162,7 @@ describe("HostedFreeTierProvider", () => {
           tier: "free",
           zdrEnabled: false,
           paidBudgetExhausted: true,
-          model: "openai/gpt-oss-120b:free",
+          model: "nvidia/nemotron-3-nano-30b-a3b:free",
         };
 
         vi.spyOn(provider, "getStatus").mockResolvedValue(mockStatus);
@@ -187,7 +187,7 @@ describe("HostedFreeTierProvider", () => {
           tier: "paid-central",
           zdrEnabled: true,
           paidBudgetExhausted: false,
-          model: "openai/gpt-oss-120b",
+          model: "nvidia/nemotron-3-nano-30b-a3b",
         };
 
         vi.spyOn(provider, "getStatus").mockResolvedValue(mockStatus);
@@ -206,7 +206,7 @@ describe("HostedFreeTierProvider", () => {
           tier: "free",
           zdrEnabled: false,
           paidBudgetExhausted: true,
-          model: "openai/gpt-oss-120b:free",
+          model: "nvidia/nemotron-3-nano-30b-a3b:free",
         };
 
         vi.spyOn(provider, "getStatus").mockResolvedValue(mockStatus);
